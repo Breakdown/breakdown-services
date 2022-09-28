@@ -35,12 +35,11 @@ async fn main() -> std::io::Result<()> {
                 config: Arc::new(config),
                 connection_pool,
             }))
-            // Enables logging. Use `RUST_LOG=tower_http=debug`
             .layer(TraceLayer::new_for_http()),
     );
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
-    tracing::debug!("listening on {}", addr);
+    tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await

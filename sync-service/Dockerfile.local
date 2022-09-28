@@ -1,6 +1,6 @@
 FROM rust:1.64.0
 
-ENV RUST_LOG=tower_http=info
+ENV RUST_LOG=tower_http=trace
 
 RUN cargo install cargo-watch
 
