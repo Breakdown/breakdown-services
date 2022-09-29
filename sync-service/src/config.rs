@@ -15,4 +15,10 @@ pub struct Config {
         default = "12345678901234567890123456789012345678901234567890"
     )]
     pub HMAC_KEY: String,
+
+    #[envconfig(from = "PROPUBLICA_API_KEY" default = "12345678901234567890123456789012345678901234567890")]
+    pub PROPUBLICA_API_KEY: String,
+
+    #[envconfig(from = "PROPUBLICA_BASE_URI" default = "https://api.propublica.org/congress/v1")]
+    pub PROPUBLICA_BASE_URI: String,
 }

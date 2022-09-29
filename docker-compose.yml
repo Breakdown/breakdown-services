@@ -28,9 +28,9 @@ services:
     ports:
       - 8080:8080
     environment:
-      NODE_ENV: ${NODE_ENV}
-      SERVER_PORT: ${SERVER_PORT}
-      POSTGRES_DB_URL: ${POSTGRES_DB_URL}
+      HMAC_KEY: ${HMAC_KEY}
+      DATABASE_URI: ${DATABASE_URI}
+      PROPUBLICA_API_KEY: ${PROPUBLICA_API_KEY}
     depends_on:
       - postgres
     command: cargo watch -x run
