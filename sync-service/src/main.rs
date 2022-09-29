@@ -29,6 +29,7 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Could not connect to database");
 
+    // sqlx::migrate!().run(&connection_pool).await?;
     let app = api_router().layer(
         ServiceBuilder::new()
             .layer(AddExtensionLayer::new(ApiContext {

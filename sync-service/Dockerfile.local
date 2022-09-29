@@ -2,14 +2,13 @@ FROM rust:1.64.0
 
 ENV RUST_LOG=tower_http=trace
 
+ENV POSTGRES_URL=${POSTGRES_URL}
+
 RUN cargo install cargo-watch
-
-# RUN cargo install sqlx
-
-# RUN sqlx migrate
+RUN cargo install sqlx-cli
 
 WORKDIR /usr/src/app
 
 EXPOSE 8080
 
-VOLUME ["/usr/local/cargo"]
+VOLUME ["/usr/local/cargo"] 
