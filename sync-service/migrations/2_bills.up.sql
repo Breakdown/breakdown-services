@@ -32,6 +32,8 @@ create table "bills"
   committees  text[],
   committee_codes  text[],
   subcommittee_codes  text[],
+  cosponsors_d  INTEGER,
+  cosponsors_r  INTEGER,
   subjects  text[],
   -- Breakdown Fields
   edited  BOOLEAN,
