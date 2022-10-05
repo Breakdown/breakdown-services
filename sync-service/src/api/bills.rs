@@ -1,56 +1,71 @@
+#![allow(non_snake_case)]
 use super::{error::ApiError, ApiContext, SuccessMessage};
 use axum::{routing::post, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 
 pub fn router() -> Router {
-    Router::new().route("/bills/sync", post(bills_sync))
+    let service_router = Router::new().route("/sync", post(bills_sync));
+    Router::new().nest("/bills", service_router)
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 struct CosponsorsByParty {
-    D: u16,
-    R: u16,
+    D: Option<u16>,
+    R: Option<u16>,
 }
 #[derive(Debug, Deserialize, Serialize)]
 struct ProPublicaBillResponse {
-    bill_id: String,
-    bill_slug: String,
-    bill_type: String,
-    number: String,
-    bill_uri: String,
-    title: String,
-    short_title: String,
-    sponsor_title: String,
-    sponsor_id: String,
-    sponsor_name: String,
-    sponsor_state: String,
-    sponsor_party: String,
-    sponsor_uri: String,
-    gpo_pdf_uri: String,
-    congressdotgov_url: String,
-    govtrack_url: String,
-    introduced_date: String,
-    active: bool,
-    last_vote: String,
-    house_passage: String,
-    senate_passage: String,
-    enacted: String,
-    vetoed: String,
-    cosponsors: u16,
-    cosponsors_by_party: CosponsorsByParty,
-    committees: String,
-    committee_codes: Vec<String>,
-    subcommittee_codes: Vec<String>,
-    primary_subject: String,
-    summary: String,
-    summary_short: String,
-    latest_major_action_date: String,
-    latest_major_action: String,
+    bill_id: Option<String>,
+    bill_slug: Option<String>,
+    bill_type: Option<String>,
+    number: Option<String>,
+    bill_uri: Option<String>,
+    title: Option<String>,
+    short_title: Option<String>,
+    sponsor_title: Option<String>,
+    sponsor_id: Option<String>,
+    sponsor_name: Option<String>,
+    sponsor_state: Option<String>,
+    sponsor_party: Option<String>,
+    sponsor_uri: Option<String>,
+    gpo_pdf_uri: Option<String>,
+    congressdotgov_url: Option<String>,
+    govtrack_url: Option<String>,
+    introduced_date: Option<String>,
+    active: Option<bool>,
+    last_vote: Option<String>,
+    house_passage: Option<String>,
+    senate_passage: Option<String>,
+    enacted: Option<String>,
+    vetoed: Option<String>,
+    cosponsors: Option<u16>,
+    cosponsors_by_party: Option<CosponsorsByParty>,
+    committees: Option<String>,
+    committee_codes: Option<Vec<String>>,
+    subcommittee_codes: Option<Vec<String>>,
+    primary_subject: Option<String>,
+    summary: Option<String>,
+    summary_short: Option<String>,
+    latest_major_action_date: Option<String>,
+    latest_major_action: Option<String>,
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+struct PropublicaBillsResult {
+    bills: Vec<ProPublicaBillResponse>,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 struct ProPublicaBillsResponse {
-    results: Vec<ProPublicaBillResponse>,
+    results: Vec<PropublicaBillsResult>,
 }
+
+// let response = reqwest::Client::new()
+//     .get("http://127.0.0.1:8090/lookup")
+//     .json(&job)
+//     .send()
+//     .await
+//     .map_err(|e|...)?;
 
 async fn bills_sync(ctx: Extension<ApiContext>) -> Result<Json<SuccessMessage>, ApiError> {
     // Fetch bills from ProPublica

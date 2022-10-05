@@ -2,15 +2,15 @@
 #![allow(non_snake_case)]
 use envconfig::Envconfig;
 
-// Outside of docker use this DATABASE_URI
+// Outside of docker use this DATABASE_URL
 // "postgres://postgres:postgres@localhost:5438"
 #[derive(Envconfig)]
 pub struct Config {
     #[envconfig(
-        from = "DATABASE_URI",
+        from = "DATABASE_URL",
         default = "postgres://postgres:postgres@localhost:5438"
     )]
-    pub DATABASE_URI: String,
+    pub DATABASE_URL: String,
 
     #[envconfig(
         from = "HMAC_KEY",

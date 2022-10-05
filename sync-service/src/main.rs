@@ -9,6 +9,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use sync_service::api::bills;
 use sync_service::api::health;
+use sync_service::api::scripts;
 use sync_service::api::ApiContext;
 use sync_service::config::Config;
 use sync_service::telemetry::{get_subscriber, init_subscriber};
@@ -22,7 +23,7 @@ async fn main() -> std::io::Result<()> {
     let config = Config::init_from_env().unwrap();
     let connection_pool = PgPoolOptions::new()
         .max_connections(50)
-        .connect(&config.DATABASE_URI)
+        .connect(&config.DATABASE_URL)
         .await
         .expect("Could not connect to database");
 
@@ -45,7 +46,9 @@ async fn main() -> std::io::Result<()> {
 }
 
 fn api_router() -> Router {
-    health::router().merge(bills::router())
+    health::router()
+        .merge(bills::router())
+        .merge(scripts::router())
 }
 
 async fn fallback_404() -> impl IntoResponse {

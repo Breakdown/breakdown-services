@@ -1,6 +1,6 @@
-create table "bills"
+create table bills
 (
-  id uuid  primary key  default uuid_generate_v1mc(),
+  id uuid  PRIMARY KEY  DEFAULT uuid_generate_v1mc(),
   propublica_id  TEXT UNIQUE  NOT NULL,
   -- number in ProPublica
   bill_code  TEXT,
@@ -29,12 +29,12 @@ create table "bills"
   last_updated  TEXT,
   legislative_day  TEXT,
   active  BOOLEAN,
-  committees  text[],
-  committee_codes  text[],
-  subcommittee_codes  text[],
+  committees  TEXT[],
+  committee_codes  TEXT[],
+  subcommittee_codes  TEXT[],
   cosponsors_d  INTEGER,
   cosponsors_r  INTEGER,
-  subjects  text[],
+  subjects  TEXT[],
   -- Breakdown Fields
   edited  BOOLEAN,
   human_summary  TEXT,
@@ -42,11 +42,10 @@ create table "bills"
   human_title  TEXT,
   human_short_title  TEXT,
   importance INTEGER,
-  created_at  TIMESTAMPTZ  NOT NULL  default now(),
+  created_at  TIMESTAMPTZ  NOT NULL  DEFAULT now(),
   updated_at  TIMESTAMPTZ
 );
 
-SELECT trigger_updated_at('"bills"');
+SELECT trigger_updated_at('bills');
 
--- 			table.string("primary_issue_id").nullable();
---      table.string("sponsor_id").nullable(); - Through join table or like this? >1 sponsor?
+--      table.string("sponsor_id").nullable(); - single sponsor, many cosponsors
