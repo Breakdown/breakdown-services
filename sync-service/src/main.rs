@@ -9,6 +9,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use sync_service::api::bills;
 use sync_service::api::health;
+use sync_service::api::reps;
 use sync_service::api::scripts;
 use sync_service::api::ApiContext;
 use sync_service::config::Config;
@@ -49,6 +50,7 @@ fn api_router() -> Router {
     health::router()
         .merge(bills::router())
         .merge(scripts::router())
+        .merge(reps::router())
 }
 
 async fn fallback_404() -> impl IntoResponse {
