@@ -14,3 +14,12 @@ To undo a migration:
 - Make sure your `.down` file correctly undoes all of the actions in your `.up` file
 - `docker exec -it {SERVICE_CONTAINER_ID} /bin/bash`
 - `sqlx migrate revert --database-url=postgres://postgres:postgres@postgres:5432`
+
+## Setup
+
+Necessary to have a logically consistent DB:
+
+- Run `POST /scripts/create_issues`
+- Run `POST /scripts/seed_states`
+- Run `POST /syncs/reps`
+- Run `POST /sync/bills`
