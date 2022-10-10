@@ -39,6 +39,7 @@ create table representatives
   phone  TEXT,
   fax  TEXT,
   state  TEXT,
+  district TEXT,
   senate_class  TEXT,
   state_rank  TEXT,
   lis_id  TEXT,
