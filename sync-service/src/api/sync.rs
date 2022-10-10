@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use super::{error::ApiError, ApiContext};
 use crate::{services::reps::save_propub_rep, types::propublica_api::ProPublicaRepsResponse};
 use axum::{routing::post, Extension, Router};
