@@ -3,45 +3,45 @@ use serde::{Deserialize, Serialize};
 
 // Bills
 #[derive(Debug, Deserialize, Serialize)]
-struct CosponsorsByParty {
+pub struct CosponsorsByParty {
     D: Option<u16>,
     R: Option<u16>,
 }
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ProPublicaBillResponse {
-    bill_id: Option<String>,
-    bill_slug: Option<String>,
-    bill_type: Option<String>,
-    number: Option<String>,
-    bill_uri: Option<String>,
-    title: Option<String>,
-    short_title: Option<String>,
-    sponsor_title: Option<String>,
-    sponsor_id: Option<String>,
-    sponsor_name: Option<String>,
-    sponsor_state: Option<String>,
-    sponsor_party: Option<String>,
-    sponsor_uri: Option<String>,
-    gpo_pdf_uri: Option<String>,
-    congressdotgov_url: Option<String>,
-    govtrack_url: Option<String>,
-    introduced_date: Option<String>,
-    active: Option<bool>,
-    last_vote: Option<String>,
-    house_passage: Option<String>,
-    senate_passage: Option<String>,
-    enacted: Option<String>,
-    vetoed: Option<String>,
-    cosponsors: Option<u16>,
-    cosponsors_by_party: Option<CosponsorsByParty>,
-    committees: Option<String>,
-    committee_codes: Option<Vec<String>>,
-    subcommittee_codes: Option<Vec<String>>,
-    primary_subject: Option<String>,
-    summary: Option<String>,
-    summary_short: Option<String>,
-    latest_major_action_date: Option<String>,
-    latest_major_action: Option<String>,
+pub struct ProPublicaBill {
+    pub bill_id: Option<String>,
+    pub bill_slug: Option<String>,
+    pub bill_type: Option<String>,
+    pub number: Option<String>,
+    pub bill_uri: Option<String>,
+    pub title: Option<String>,
+    pub short_title: Option<String>,
+    pub sponsor_title: Option<String>,
+    pub sponsor_id: Option<String>,
+    pub sponsor_name: Option<String>,
+    pub sponsor_state: Option<String>,
+    pub sponsor_party: Option<String>,
+    pub sponsor_uri: Option<String>,
+    pub gpo_pdf_uri: Option<String>,
+    pub congressdotgov_url: Option<String>,
+    pub govtrack_url: Option<String>,
+    pub introduced_date: Option<String>,
+    pub active: Option<bool>,
+    pub last_vote: Option<String>,
+    pub house_passage: Option<String>,
+    pub senate_passage: Option<String>,
+    pub enacted: Option<String>,
+    pub vetoed: Option<String>,
+    pub cosponsors: Option<u16>,
+    pub cosponsors_by_party: Option<CosponsorsByParty>,
+    pub committees: Option<String>,
+    pub committee_codes: Option<Vec<String>>,
+    pub subcommittee_codes: Option<Vec<String>>,
+    pub primary_subject: Option<String>,
+    pub summary: Option<String>,
+    pub summary_short: Option<String>,
+    pub latest_major_action_date: Option<String>,
+    pub latest_major_action: Option<String>,
 }
 
 // Reps
@@ -96,11 +96,21 @@ pub struct ProPublicaRep {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct PropublicaRepsResult {
+pub struct ProPublicaRepsResult {
     pub members: Vec<ProPublicaRep>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaRepsResponse {
-    pub results: Vec<PropublicaRepsResult>,
+    pub results: Vec<ProPublicaRepsResult>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProPublicaBillsResult {
+    pub members: Vec<ProPublicaBill>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProPublicaBillsResponse {
+    pub results: Vec<ProPublicaBillsResult>,
 }

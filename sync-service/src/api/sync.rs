@@ -1,5 +1,9 @@
+use crate::{
+    services::{propublica::propublica_get_bills_paginated, reps::save_propub_rep},
+    types::propublica_api::ProPublicaRepsResponse,
+};
+
 use super::{error::ApiError, ApiContext};
-use crate::{services::reps::save_propub_rep, types::propublica_api::ProPublicaRepsResponse};
 use axum::{routing::post, Extension, Router};
 
 pub fn router() -> Router {
@@ -53,4 +57,61 @@ async fn reps_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError>
     }
 
     Ok("Synced All Representatives and Senators")
+}
+
+async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError> {
+    let reqwest_client = reqwest::Client::new();
+    // Fetch reps from ProPublica
+    // Get last 100 passed bills
+    // Get last 100 enacted bills
+    let introduced_bills = propublica_get_bills_paginated(
+        &ctx.config.PROPUBLICA_BASE_URI,
+        &ctx.config.PROPUBLICA_API_KEY,
+        "both",
+        "introduced",
+        500,
+    )
+    .await;
+    let updated_bills = propublica_get_bills_paginated(
+        &ctx.config.PROPUBLICA_BASE_URI,
+        &ctx.config.PROPUBLICA_API_KEY,
+        "both",
+        "updated",
+        500,
+    )
+    .await;
+    let active_bills = propublica_get_bills_paginated(
+        &ctx.config.PROPUBLICA_BASE_URI,
+        &ctx.config.PROPUBLICA_API_KEY,
+        "both",
+        "active",
+        100,
+    )
+    .await;
+    let enacted_bills = propublica_get_bills_paginated(
+        &ctx.config.PROPUBLICA_BASE_URI,
+        &ctx.config.PROPUBLICA_API_KEY,
+        "both",
+        "enacted",
+        100,
+    )
+    .await;
+    let passed_bills = propublica_get_bills_paginated(
+        &ctx.config.PROPUBLICA_BASE_URI,
+        &ctx.config.PROPUBLICA_API_KEY,
+        "both",
+        "passed",
+        100,
+    )
+    .await;
+    let vetoed_bills = propublica_get_bills_paginated(
+        &ctx.config.PROPUBLICA_BASE_URI,
+        &ctx.config.PROPUBLICA_API_KEY,
+        "both",
+        "vetoed",
+        100,
+    )
+    .await;
+    // Format and upsert bills to DB
+    Ok("Synced All Bills")
 }
