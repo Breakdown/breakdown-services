@@ -1,14 +1,16 @@
 use crate::{
     services::{propublica::propublica_get_bills_paginated, reps::save_propub_rep},
-    types::propublica_api::ProPublicaRepsResponse,
+    types::propublica_api::{ProPublicaBill, ProPublicaRepsResponse},
 };
 
 use super::{error::ApiError, ApiContext};
 use axum::{routing::post, Extension, Router};
 
 pub fn router() -> Router {
-    let service_router = Router::new().route("/sync", post(reps_sync));
-    Router::new().nest("/reps", service_router)
+    let service_router = Router::new()
+        .route("/reps", post(reps_sync))
+        .route("/bills", post(bills_sync));
+    Router::new().nest("/sync", service_router)
 }
 
 async fn reps_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError> {
@@ -112,6 +114,15 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
         100,
     )
     .await;
+    // let meta_bills: Vec<ProPublicaBill> = introduced_bills
+    //     .into_iter()
+    //     .chain(updated_bills.into_iter())
+    //     .chain(active_bills.into_iter())
+    //     .chain(enacted_bills.into_iter())
+    //     .chain(passed_bills.into_iter())
+    //     .chain(vetoed_bills.into_iter())
+    //     .collect();
+    // println!("Total bills amount: {}", meta_bills.len());
     // Format and upsert bills to DB
     Ok("Synced All Bills")
 }

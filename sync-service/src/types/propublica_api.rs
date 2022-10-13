@@ -2,12 +2,12 @@
 use serde::{Deserialize, Serialize};
 
 // Bills
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CosponsorsByParty {
     D: Option<u16>,
     R: Option<u16>,
 }
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProPublicaBill {
     pub bill_id: Option<String>,
     pub bill_slug: Option<String>,
@@ -107,7 +107,7 @@ pub struct ProPublicaRepsResponse {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaBillsResult {
-    pub members: Vec<ProPublicaBill>,
+    pub bills: Vec<ProPublicaBill>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
