@@ -62,7 +62,6 @@ async fn reps_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError>
 }
 
 async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError> {
-    let reqwest_client = reqwest::Client::new();
     // Fetch reps from ProPublica
     // Get last 100 passed bills
     // Get last 100 enacted bills
@@ -114,15 +113,21 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
         100,
     )
     .await;
-    // let meta_bills: Vec<ProPublicaBill> = introduced_bills
-    //     .into_iter()
-    //     .chain(updated_bills.into_iter())
-    //     .chain(active_bills.into_iter())
-    //     .chain(enacted_bills.into_iter())
-    //     .chain(passed_bills.into_iter())
-    //     .chain(vetoed_bills.into_iter())
-    //     .collect();
-    // println!("Total bills amount: {}", meta_bills.len());
+    println!("introduced bills: {}", introduced_bills.len());
+    println!("updated_bills: {}", updated_bills.len());
+    println!("active_bills: {}", active_bills.len());
+    println!("enacted_bills: {}", enacted_bills.len());
+    println!("passed_bills: {}", passed_bills.len());
+    println!("vetoed_bills: {}", vetoed_bills.len());
+    let meta_bills: Vec<ProPublicaBill> = introduced_bills
+        .into_iter()
+        .chain(updated_bills.into_iter())
+        .chain(active_bills.into_iter())
+        .chain(enacted_bills.into_iter())
+        .chain(passed_bills.into_iter())
+        .chain(vetoed_bills.into_iter())
+        .collect();
+    println!("Total bills amount: {}", meta_bills.len());
     // Format and upsert bills to DB
     Ok("Synced All Bills")
 }
