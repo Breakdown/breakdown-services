@@ -1,5 +1,7 @@
 use crate::{
-    services::{propublica::propublica_get_bills_paginated, reps::save_propub_rep},
+    services::{
+        bills::save_propub_bill, propublica::propublica_get_bills_paginated, reps::save_propub_rep,
+    },
     types::propublica_api::{ProPublicaBill, ProPublicaRepsResponse},
 };
 
@@ -113,12 +115,6 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
         100,
     )
     .await;
-    println!("introduced bills: {}", introduced_bills.len());
-    println!("updated_bills: {}", updated_bills.len());
-    println!("active_bills: {}", active_bills.len());
-    println!("enacted_bills: {}", enacted_bills.len());
-    println!("passed_bills: {}", passed_bills.len());
-    println!("vetoed_bills: {}", vetoed_bills.len());
     let meta_bills: Vec<ProPublicaBill> = introduced_bills
         .into_iter()
         .chain(updated_bills.into_iter())
@@ -127,7 +123,14 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
         .chain(passed_bills.into_iter())
         .chain(vetoed_bills.into_iter())
         .collect();
-    println!("Total bills amount: {}", meta_bills.len());
+
+    println!("meta_bills: {}", meta_bills.len());
     // Format and upsert bills to DB
+    let upsert_futures = meta_bills.iter().map(|bill| {
+        let bill_ref = bill.clone();
+        save_propub_bill(bill_ref, &ctx.connection_pool)
+    });
+    futures::future::join_all(upsert_futures).await;
+
     Ok("Synced All Bills")
 }

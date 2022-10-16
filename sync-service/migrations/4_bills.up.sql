@@ -5,6 +5,7 @@ create table bills
   -- number in ProPublica
   bill_code  TEXT,
   bill_uri  TEXT,
+  bill_type TEXT,
   title  TEXT,
   short_title  TEXT,
   sponsor_propublica_id  TEXT,
@@ -15,8 +16,6 @@ create table bills
   govtrack_url  TEXT,
   introduced_date  TEXT,
   last_vote  TEXT,
-  status  TEXT,
-  introduced_on  TEXT,
   house_passage  TEXT,
   senate_passage  TEXT,
   enacted  TEXT,
@@ -42,10 +41,9 @@ create table bills
   human_title  TEXT,
   human_short_title  TEXT,
   importance INTEGER,
+  sponsor_id uuid  CONSTRAINT fk_state REFERENCES representatives(id) ON UPDATE CASCADE ON DELETE SET NULL,
   created_at  TIMESTAMPTZ  NOT NULL  DEFAULT now(),
   updated_at  TIMESTAMPTZ
 );
 
 SELECT trigger_updated_at('bills');
-
---      table.string("sponsor_id").nullable(); - single sponsor, many cosponsors

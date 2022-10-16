@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 // Bills
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CosponsorsByParty {
-    D: Option<u16>,
-    R: Option<u16>,
+    pub D: Option<u16>,
+    pub R: Option<u16>,
 }
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProPublicaBill {
