@@ -22,7 +22,7 @@ async fn main() -> std::io::Result<()> {
 
     let config = Config::init_from_env().unwrap();
     let connection_pool = PgPoolOptions::new()
-        .max_connections(50)
+        .max_connections(100)
         .connect(&config.DATABASE_URL)
         .await
         .expect("Could not connect to database");

@@ -7,6 +7,7 @@ use crate::{
 
 use super::{error::ApiError, ApiContext};
 use axum::{routing::post, Extension, Router};
+use log::{log, Level};
 
 pub fn router() -> Router {
     let service_router = Router::new()
@@ -124,13 +125,13 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
         .chain(vetoed_bills.into_iter())
         .collect();
 
-    println!("meta_bills: {}", meta_bills.len());
     // Format and upsert bills to DB
-    let upsert_futures = meta_bills.iter().map(|bill| {
+    for bill in meta_bills.iter() {
         let bill_ref = bill.clone();
-        save_propub_bill(bill_ref, &ctx.connection_pool)
-    });
-    futures::future::join_all(upsert_futures).await;
+        save_propub_bill(bill_ref, &ctx.connection_pool).await?;
+    }
+
+    log!(Level::Info, "Synced All Bills");
 
     Ok("Synced All Bills")
 }

@@ -76,7 +76,8 @@ pub async fn save_propub_bill(
                 committee_codes,
                 subcommittee_codes,
                 cosponsors_d,
-                cosponsors_r
+                cosponsors_r,
+                sponsor_id
             ) values (
                 $1,
                 $2,
@@ -106,7 +107,8 @@ pub async fn save_propub_bill(
                 $26,
                 $27,
                 $28,
-                $29
+                $29,
+                $30
             ) returning id"#,
                 bill.bill_id,
                 bill.bill_type,
@@ -114,7 +116,7 @@ pub async fn save_propub_bill(
                 bill.bill_uri,
                 bill.title,
                 bill.short_title,
-                bill_sponsor_id.to_string(),
+                bill.sponsor_id,
                 bill.sponsor_state,
                 bill.sponsor_party,
                 bill.gpo_pdf_uri,
@@ -137,6 +139,7 @@ pub async fn save_propub_bill(
                 subcommittee_codes,
                 cosponsors_d,
                 cosponsors_r,
+                bill_sponsor_id
             )
             .fetch_one(db_connection)
             .await?;
@@ -173,7 +176,8 @@ pub async fn save_propub_bill(
                         committee_codes = coalesce($26, bills.committee_codes),
                         subcommittee_codes = coalesce($27, bills.subcommittee_codes),
                         cosponsors_d = coalesce($28, bills.cosponsors_d),
-                        cosponsors_r = coalesce($29, bills.cosponsors_r)
+                        cosponsors_r = coalesce($29, bills.cosponsors_r),
+                        sponsor_id = coalesce($30, bills.sponsor_id)
                     WHERE id = $1
                     returning id
                 "#,
@@ -183,7 +187,7 @@ pub async fn save_propub_bill(
                 bill.bill_uri,
                 bill.title,
                 bill.short_title,
-                bill_sponsor_id.to_string(),
+                bill.sponsor_id,
                 bill.sponsor_state,
                 bill.sponsor_party,
                 bill.gpo_pdf_uri,
@@ -205,7 +209,8 @@ pub async fn save_propub_bill(
                 committee_codes,
                 subcommittee_codes,
                 cosponsors_d,
-                cosponsors_r
+                cosponsors_r,
+                bill_sponsor_id
             )
             .fetch_one(db_connection)
             .await?;
