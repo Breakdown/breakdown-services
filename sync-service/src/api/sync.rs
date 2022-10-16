@@ -74,58 +74,64 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
         "both",
         "introduced",
         500,
-    )
-    .await;
+    );
     let updated_bills = propublica_get_bills_paginated(
         &ctx.config.PROPUBLICA_BASE_URI,
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "updated",
         500,
-    )
-    .await;
+    );
     let active_bills = propublica_get_bills_paginated(
         &ctx.config.PROPUBLICA_BASE_URI,
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "active",
         100,
-    )
-    .await;
+    );
     let enacted_bills = propublica_get_bills_paginated(
         &ctx.config.PROPUBLICA_BASE_URI,
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "enacted",
         100,
-    )
-    .await;
+    );
     let passed_bills = propublica_get_bills_paginated(
         &ctx.config.PROPUBLICA_BASE_URI,
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "passed",
         100,
-    )
-    .await;
+    );
     let vetoed_bills = propublica_get_bills_paginated(
         &ctx.config.PROPUBLICA_BASE_URI,
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "vetoed",
         100,
-    )
-    .await;
-    let meta_bills: Vec<ProPublicaBill> = introduced_bills
+    );
+
+    let fetch_futures = vec![
+        introduced_bills,
+        updated_bills,
+        active_bills,
+        enacted_bills,
+        passed_bills,
+        vetoed_bills,
+    ];
+    let meta_bills = futures::future::join_all(fetch_futures)
+        .await
         .into_iter()
-        .chain(updated_bills.into_iter())
-        .chain(active_bills.into_iter())
-        .chain(enacted_bills.into_iter())
-        .chain(passed_bills.into_iter())
-        .chain(vetoed_bills.into_iter())
-        .collect();
+        .flatten()
+        .collect::<Vec<ProPublicaBill>>();
 
     // Format and upsert bills to DB
+    // let upsert_futures = meta_bills.iter().map(|bill| {
+    //     let bill_ref = bill.clone();
+    //     save_propub_bill(bill_ref, &ctx.connection_pool)
+    // });
+    // futures::future::join_all(upsert_futures).await;
+
     for bill in meta_bills.iter() {
         let bill_ref = bill.clone();
         save_propub_bill(bill_ref, &ctx.connection_pool).await?;
