@@ -126,12 +126,6 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
         .collect::<Vec<ProPublicaBill>>();
 
     // Format and upsert bills to DB
-    // let upsert_futures = meta_bills.iter().map(|bill| {
-    //     let bill_ref = bill.clone();
-    //     save_propub_bill(bill_ref, &ctx.connection_pool)
-    // });
-    // futures::future::join_all(upsert_futures).await;
-
     for bill in meta_bills.iter() {
         let bill_ref = bill.clone();
         save_propub_bill(bill_ref, &ctx.connection_pool).await?;
