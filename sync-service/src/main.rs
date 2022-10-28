@@ -4,8 +4,11 @@ use axum::response::IntoResponse;
 use axum::Extension;
 use axum::Router;
 use envconfig::Envconfig;
+use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::PgPoolOptions;
+use sqlx::ConnectOptions;
 use std::net::SocketAddr;
+use std::str::FromStr;
 use std::sync::Arc;
 use sync_service::api::health;
 use sync_service::api::scripts;
@@ -21,9 +24,14 @@ async fn main() -> std::io::Result<()> {
     init_subscriber(subscriber);
 
     let config = Config::init_from_env().unwrap();
+
+    let options = PgConnectOptions::from_str(&config.DATABASE_URL.as_str())
+        .unwrap()
+        .disable_statement_logging()
+        .clone();
     let connection_pool = PgPoolOptions::new()
-        .max_connections(100)
-        .connect(&config.DATABASE_URL)
+        .max_connections(config.DB_MAX_CONNECTIONS.parse::<u32>().unwrap())
+        .connect_with(options)
         .await
         .expect("Could not connect to database");
 

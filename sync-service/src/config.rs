@@ -12,6 +12,9 @@ pub struct Config {
     )]
     pub DATABASE_URL: String,
 
+    #[envconfig(from = "DB_MAX_CONNECTIONS", default = "100")]
+    pub DB_MAX_CONNECTIONS: String,
+
     #[envconfig(
         from = "HMAC_KEY",
         default = "12345678901234567890123456789012345678901234567890"

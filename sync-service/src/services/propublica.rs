@@ -4,6 +4,7 @@ use futures::future::join_all;
 const PAGE_SIZE: u32 = 20;
 
 async fn single_propublica_request(url: &str, api_key: &str) -> Vec<ProPublicaBill> {
+    println!("Fetching bills from {}", url);
     let reqwest_client = reqwest::Client::new();
     let response = reqwest_client
         .get(url)
