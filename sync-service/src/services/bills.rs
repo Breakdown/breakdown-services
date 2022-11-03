@@ -1,5 +1,34 @@
-use crate::{api::error::ApiError, types::propublica_api::ProPublicaBill};
+use std::collections::HashMap;
+
+use crate::{
+    api::{error::ApiError, ApiContext},
+    types::{db::BreakdownBill, propublica_api::ProPublicaBill},
+};
+use axum::{extract::Path, Extension, Json};
 use sqlx::{types::Uuid, PgPool};
+
+struct BillBody<T> {
+    bill: T,
+}
+
+pub async fn get_bill_by_id(
+    ctx: Extension<ApiContext>,
+    Path(params): Path<HashMap<String, String>>,
+) -> Result<Json<BillBody<BreakdownBill>>, ApiError> {
+    let bill_id = Uuid::parse_str(&params.get("id").unwrap().to_string()).unwrap();
+    let bill = sqlx::query_as!(
+        BreakdownBill,
+        r#"
+          SELECT * FROM bills WHERE id = $1
+        "#,
+        bill_id
+    )
+    .fetch_optional(&ctx.connection_pool)
+    .await?
+    .unwrap();
+
+    Ok(Json(BillBody { bill: bill }))
+}
 
 pub async fn save_propub_bill(
     bill: ProPublicaBill,

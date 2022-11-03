@@ -10,6 +10,7 @@ use sqlx::ConnectOptions;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::Arc;
+use sync_service::api::bills;
 use sync_service::api::health;
 use sync_service::api::scripts;
 use sync_service::api::sync;
@@ -25,6 +26,7 @@ async fn main() -> std::io::Result<()> {
 
     let config = Config::init_from_env().unwrap();
 
+    // TODO: Make the statement logging dependent on an environment variable
     let options = PgConnectOptions::from_str(&config.DATABASE_URL.as_str())
         .unwrap()
         .disable_statement_logging()
@@ -57,6 +59,7 @@ fn api_router() -> Router {
     health::router()
         .merge(scripts::router())
         .merge(sync::router())
+        .merge(bills::router())
 }
 
 async fn fallback_404() -> impl IntoResponse {

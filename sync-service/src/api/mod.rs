@@ -13,6 +13,7 @@ pub struct SuccessMessage {
     success: bool,
 }
 
+pub mod bills;
 pub mod error;
 pub mod health;
 pub mod scripts;
