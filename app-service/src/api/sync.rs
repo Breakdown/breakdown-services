@@ -1,19 +1,29 @@
+use std::{collections::HashMap, fs};
+
 use crate::{
     services::{
         bills::save_propub_bill, propublica::propublica_get_bills_paginated, reps::save_propub_rep,
     },
-    types::propublica_api::{ProPublicaBill, ProPublicaRepsResponse},
+    types::propublica::{ProPublicaBill, ProPublicaRepsResponse},
+    utils::api_error::ApiError,
 };
 
-use super::{error::ApiError, ApiContext};
 use axum::{routing::post, Extension, Router};
 use log::{log, Level};
+use serde::{Deserialize, Serialize};
+
+use super::ApiContext;
 
 pub fn router() -> Router {
-    let service_router = Router::new()
+    let syncs_router = Router::new()
         .route("/reps", post(reps_sync))
         .route("/bills", post(bills_sync));
-    Router::new().nest("/sync", service_router)
+    let scripts_router = Router::new()
+        .route("/create_issues", post(create_issues))
+        .route("/seed_states", post(seed_states));
+    Router::new()
+        .nest("/sync", syncs_router)
+        .nest("/scripts", scripts_router)
 }
 
 async fn reps_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError> {
@@ -66,8 +76,6 @@ async fn reps_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError>
 
 async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError> {
     // Fetch reps from ProPublica
-    // Get last 100 passed bills
-    // Get last 100 enacted bills
     let introduced_bills = propublica_get_bills_paginated(
         &ctx.config.PROPUBLICA_BASE_URI,
         &ctx.config.PROPUBLICA_API_KEY,
@@ -134,4 +142,56 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
     log!(Level::Info, "Synced All Bills");
 
     Ok("Synced All Bills")
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Issue {
+    name: String,
+    slug: String,
+    subjects: Vec<String>,
+}
+
+async fn create_issues(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError> {
+    let config = fs::read_to_string("./scripts/data/issuesToSubjectsMap.json")?;
+    let parsed: HashMap<String, Vec<String>> = serde_json::from_str(&config)?;
+
+    for (key, _) in &parsed {
+        let subjects = &parsed[key];
+        let issue = Issue {
+            name: key.to_string(),
+            slug: key.replace(" ", "_").to_lowercase(),
+            subjects: subjects.to_vec(),
+        };
+        println!("{:#?}", issue);
+        let record = sqlx::query!(
+            r#"INSERT INTO issues (name, slug, subjects) values ($1, $2, $3) returning id"#,
+            &issue.name,
+            &issue.slug,
+            &issue.subjects
+        )
+        .fetch_one(&ctx.connection_pool)
+        .await?;
+        println!("{:#?}", record);
+    }
+    Ok("Created Issues")
+}
+
+async fn seed_states(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError> {
+    let config = fs::read_to_string("./scripts/data/stateCodes.json")?;
+    let parsed: HashMap<String, String> = serde_json::from_str(&config)?;
+
+    for (key, val) in &parsed {
+        let state_code = key;
+        let state_name = val;
+        let record = sqlx::query!(
+            r#"INSERT INTO states (name, code) values ($1, $2) returning id"#,
+            &state_name,
+            &state_code,
+        )
+        .fetch_one(&ctx.connection_pool)
+        .await?;
+        println!("{:#?}", record);
+    }
+
+    Ok("Seeded States")
 }

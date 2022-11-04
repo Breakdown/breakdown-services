@@ -1,9 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{
-    types::{time::OffsetDateTime, Uuid},
-    FromRow,
-};
+use sqlx::{types::Uuid, FromRow};
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct BreakdownBill {

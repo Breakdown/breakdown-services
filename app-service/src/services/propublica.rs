@@ -1,4 +1,4 @@
-use crate::types::propublica_api::{ProPublicaBill, ProPublicaBillsResponse};
+use crate::types::propublica::{ProPublicaBill, ProPublicaBillsResponse};
 use futures::future::join_all;
 
 const PAGE_SIZE: u32 = 20;

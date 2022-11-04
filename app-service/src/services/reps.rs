@@ -1,4 +1,4 @@
-use crate::{api::error::ApiError, types::propublica_api::ProPublicaRep};
+use crate::{types::propublica::ProPublicaRep, utils::api_error::ApiError};
 use sqlx::{types::Uuid, PgPool};
 
 pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Result<Uuid, ApiError> {

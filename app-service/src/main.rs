@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 use app_service::api::bills;
 use app_service::api::health;
-use app_service::api::scripts;
 use app_service::api::sync;
 use app_service::api::ApiContext;
 use app_service::config::Config;
@@ -57,7 +56,6 @@ async fn main() -> std::io::Result<()> {
 
 fn api_router() -> Router {
     health::router()
-        .merge(scripts::router())
         .merge(sync::router())
         .merge(bills::router())
 }

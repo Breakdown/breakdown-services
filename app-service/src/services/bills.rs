@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
 use crate::{
-    api::{error::ApiError, ApiContext},
-    types::{db::BreakdownBill, propublica_api::ProPublicaBill},
+    api::ApiContext,
+    types::{db::BreakdownBill, propublica::ProPublicaBill},
+    utils::api_error::ApiError,
 };
 use axum::{extract::Path, Extension, Json};
 use axum_macros::debug_handler;
@@ -56,7 +57,7 @@ pub async fn save_propub_bill(
     )
     .fetch_one(db_connection)
     .await
-    .map_err(|e| ApiError::InternalError)?;
+    .map_err(|_e| ApiError::InternalError)?;
 
     let bill_sponsor_id = bill_sponsor.id;
     let committee_codes = &&bill.committee_codes.unwrap_or([].to_vec());
