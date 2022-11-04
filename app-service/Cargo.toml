@@ -1,7 +1,10 @@
 [package]
 name = "app-service"
 version = "0.1.0"
-edition = "2022"
+edition = "2021"
+
+[workspace]
+members = [".", "api", "migration"]
 
 [dependencies]
 api = { path = "api" }

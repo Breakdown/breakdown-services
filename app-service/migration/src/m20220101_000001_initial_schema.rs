@@ -6,43 +6,75 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Replace the sample below with your own migration scripts
-        todo!();
-
         manager
             .create_table(
-                Table::create()
-                    .table(Post::Table)
+                sea_query::Table::create()
+                    .table(Bill::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Post::Id)
-                            .integer()
+                        ColumnDef::new(Bill::Id)
+                            .uuid()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Post::Title).string().not_null())
-                    .col(ColumnDef::new(Post::Text).string().not_null())
+                    .col(ColumnDef::new(Bill::Title).string().not_null())
+                    .col(ColumnDef::new(Bill::Text).string().not_null())
                     .to_owned(),
             )
             .await
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Replace the sample below with your own migration scripts
-        todo!();
-
         manager
-            .drop_table(Table::drop().table(Post::Table).to_owned())
+            .drop_table(Table::drop().table(Bill::Table).to_owned())
             .await
     }
 }
 
-/// Learn more at https://docs.rs/sea-query#iden
 #[derive(Iden)]
-enum Post {
+enum Bill {
     Table,
     Id,
+    PropublicaId,
+    BillCode,
+    BillUri,
+    BillType,
     Title,
-    Text,
+    ShortTitle,
+    SponsorPropublicaId,
+    SponsorState,
+    SponsorParty,
+    GpoPdfUri,
+    CongressdotgovUrl,
+    GovtrackUrl,
+    IntroducedDate,
+    Active,
+    LastVote,
+    HousePassage,
+    SenatePassage,
+    Enacted,
+    Vetoed,
+    Cosponsors,
+    PrimarySubject,
+    Summary,
+    SummaryShort,
+    LatestMajorActionDate,
+    LatestMajorAction,
+    LastUpdated,
+    LegislativeDay,
+    Committees,
+    CommitteeCodes,
+    SubcommitteeCodes,
+    CosponsorsD,
+    CosponsorsR,
+    Subjects,
+    Edited,
+    HumanSummary,
+    HumanShortSummary,
+    HumanTitle,
+    HumanShortTitle,
+    Importance,
+    CreatedAt,
+    UpdatedAt,
 }
