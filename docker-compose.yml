@@ -15,16 +15,16 @@ services:
       - breakdown-dev
     volumes:
       - breakdown-postgres-data:/var/lib/postgresql/data
-  # sync-service:
+  # app-service:
   #   networks:
   #     - breakdown-dev
   #   privileged: true
   #   volumes:
-  #     - ./sync-service:/usr/src/app
-  #     - bd-sync-service-registry:/root/.cargo/registry
+  #     - ./app-service:/usr/src/app
+  #     - bd-app-service-registry:/root/.cargo/registry
   #   build:
   #     context: .
-  #     dockerfile: ./sync-service/Dockerfile.local
+  #     dockerfile: ./app-service/Dockerfile.local
   #   ports:
   #     - 8080:8080
   #   environment:
@@ -40,5 +40,5 @@ networks:
     driver: bridge
 volumes:
   breakdown-postgres-data: {}
-  bd-sync-service-registry:
+  bd-app-service-registry:
     driver: local

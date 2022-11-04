@@ -1,15 +1,16 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::types::{
-    time::{Date, OffsetDateTime},
-    Uuid,
+use sqlx::{
+    types::{time::OffsetDateTime, Uuid},
+    FromRow,
 };
 
-// #[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct BreakdownBill {
     pub id: Uuid,
-    pub primary_issue_id: Uuid,
+    pub primary_issue_id: Option<Uuid>,
     pub sponsor_id: Option<Uuid>,
-    pub propublica_id: Option<String>,
+    pub propublica_id: String,
     pub bill_code: Option<String>,
     pub bill_uri: Option<String>,
     pub bill_type: Option<String>,
@@ -34,19 +35,19 @@ pub struct BreakdownBill {
     pub latest_major_action: Option<String>,
     pub last_updated: Option<String>,
     pub legislative_day: Option<String>,
-    pub active: bool,
+    pub active: Option<bool>,
     pub committees: Option<Vec<String>>,
     pub committee_codes: Option<Vec<String>>,
     pub subcommittee_codes: Option<Vec<String>>,
     pub cosponsors_d: Option<i32>,
     pub cosponsors_r: Option<i32>,
     pub subjects: Option<Vec<String>>,
-    pub edited: bool,
-    pub human_summary: String,
-    pub human_short_summary: String,
-    pub human_title: String,
-    pub human_short_title: String,
+    pub edited: Option<bool>,
+    pub human_summary: Option<String>,
+    pub human_short_summary: Option<String>,
+    pub human_title: Option<String>,
+    pub human_short_title: Option<String>,
     pub importance: Option<i32>,
-    pub created_at: OffsetDateTime,
-    pub updated_at: OffsetDateTime,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
 }

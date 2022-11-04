@@ -2,4 +2,4 @@
 run:
 	docker compose down
 	docker compose up -d
-	cd sync-service; cargo watch -x run
+	cd app-service; cargo watch -x run

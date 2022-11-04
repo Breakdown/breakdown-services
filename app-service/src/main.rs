@@ -1,4 +1,11 @@
 #![allow(dead_code)]
+use app_service::api::bills;
+use app_service::api::health;
+use app_service::api::scripts;
+use app_service::api::sync;
+use app_service::api::ApiContext;
+use app_service::config::Config;
+use app_service::telemetry::{get_subscriber, init_subscriber};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Extension;
@@ -10,18 +17,11 @@ use sqlx::ConnectOptions;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::Arc;
-use sync_service::api::bills;
-use sync_service::api::health;
-use sync_service::api::scripts;
-use sync_service::api::sync;
-use sync_service::api::ApiContext;
-use sync_service::config::Config;
-use sync_service::telemetry::{get_subscriber, init_subscriber};
 use tower_http::trace::TraceLayer;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let subscriber = get_subscriber("sync-service".into(), "info".into(), std::io::stdout);
+    let subscriber = get_subscriber("app-service".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
 
     let config = Config::init_from_env().unwrap();

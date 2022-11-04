@@ -5,16 +5,20 @@ use crate::{
     types::{db::BreakdownBill, propublica_api::ProPublicaBill},
 };
 use axum::{extract::Path, Extension, Json};
+use axum_macros::debug_handler;
+use serde::Serialize;
 use sqlx::{types::Uuid, PgPool};
 
-struct BillBody<T> {
-    bill: T,
+#[derive(Debug, Serialize)]
+pub struct ResponseBody<T> {
+    data: T,
 }
 
+#[debug_handler]
 pub async fn get_bill_by_id(
     ctx: Extension<ApiContext>,
     Path(params): Path<HashMap<String, String>>,
-) -> Result<Json<BillBody<BreakdownBill>>, ApiError> {
+) -> Result<Json<ResponseBody<BreakdownBill>>, ApiError> {
     let bill_id = Uuid::parse_str(&params.get("id").unwrap().to_string()).unwrap();
     let bill = sqlx::query_as!(
         BreakdownBill,
@@ -25,9 +29,9 @@ pub async fn get_bill_by_id(
     )
     .fetch_optional(&ctx.connection_pool)
     .await?
-    .unwrap();
+    .ok_or(ApiError::NotFound)?;
 
-    Ok(Json(BillBody { bill: bill }))
+    Ok(Json(ResponseBody { data: bill }))
 }
 
 pub async fn save_propub_bill(
@@ -51,7 +55,8 @@ pub async fn save_propub_bill(
         bill.sponsor_id
     )
     .fetch_one(db_connection)
-    .await?;
+    .await
+    .map_err(|e| ApiError::InternalError)?;
 
     let bill_sponsor_id = bill_sponsor.id;
     let committee_codes = &&bill.committee_codes.unwrap_or([].to_vec());
