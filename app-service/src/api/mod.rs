@@ -10,4 +10,5 @@ pub struct ApiContext {
 
 pub mod bills;
 pub mod health;
+pub mod reps;
 pub mod sync;

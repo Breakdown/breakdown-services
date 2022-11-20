@@ -27,13 +27,13 @@ create table representatives
   contact_form  TEXT,
   in_office  BOOLEAN,
   cook_pvi  TEXT,
-  dw_nominate  float,
+  dw_nominate  NUMERIC(5, 2),
   seniority  TEXT,
   next_election  TEXT,
-  total_votes  float,
-  missed_votes  float,
-  total_present  float,
-  last_updated  TEXT,
+  total_votes  INTEGER,
+  missed_votes  INTEGER,
+  total_present  INTEGER,
+  last_updated  TIMESTAMPTZ,
   ocd_id  TEXT,
   office  TEXT,
   phone  TEXT,
@@ -43,9 +43,9 @@ create table representatives
   senate_class  TEXT,
   state_rank  TEXT,
   lis_id  TEXT,
-  missed_votes_pct  float,
-  votes_with_party_pct  float,
-  votes_against_party_pct  float,
+  missed_votes_pct  NUMERIC(5, 2),
+  votes_with_party_pct  NUMERIC(5, 2),
+  votes_against_party_pct  NUMERIC(5, 2),
   -- Breakdown Fields
   propublica_id  TEXT UNIQUE NOT NULL,
   house TEXT NOT NULL,
@@ -54,4 +54,5 @@ create table representatives
   created_at  TIMESTAMPTZ  NOT NULL  default now(),
   updated_at  TIMESTAMPTZ
 );
+
 SELECT trigger_updated_at('representatives');

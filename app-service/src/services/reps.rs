@@ -1,5 +1,75 @@
-use crate::{types::propublica::ProPublicaRep, utils::api_error::ApiError};
-use sqlx::{types::Uuid, PgPool};
+use crate::{
+    api::ApiContext,
+    types::{
+        api::{GetRepsPagination, ResponseBody},
+        db::BreakdownRep,
+        propublica::ProPublicaRep,
+    },
+    utils::api_error::ApiError,
+};
+use axum::{
+    extract::{Path, Query},
+    Extension, Json,
+};
+use num_traits::cast::FromPrimitive;
+use sqlx::{
+    types::{BigDecimal, Uuid},
+    PgPool,
+};
+use std::collections::HashMap;
+
+fn convert_to_bigdecimal(num: &Option<f64>) -> Option<BigDecimal> {
+    let num = num.unwrap_or(0.0);
+    if num > 0.0 {
+        Some(BigDecimal::from_f64(num).unwrap())
+    } else {
+        None
+    }
+}
+
+pub async fn get_rep_by_id(
+    ctx: Extension<ApiContext>,
+    Path(params): Path<HashMap<String, String>>,
+) -> Result<Json<ResponseBody<BreakdownRep>>, ApiError> {
+    let rep_id = match Uuid::parse_str(&params.get("id").unwrap().to_string()) {
+        Ok(rep_id) => rep_id,
+        Err(_) => return Err(ApiError::NotFound),
+    };
+    let rep = sqlx::query_as!(
+        BreakdownRep,
+        r#"
+          SELECT * FROM representatives WHERE id = $1
+        "#,
+        rep_id
+    )
+    .fetch_optional(&ctx.connection_pool)
+    .await?
+    .ok_or(ApiError::NotFound)?;
+
+    Ok(Json(ResponseBody { data: rep }))
+}
+
+pub async fn get_reps(
+    ctx: Extension<ApiContext>,
+    pagination: Query<GetRepsPagination>,
+) -> Result<Json<ResponseBody<Vec<BreakdownRep>>>, ApiError> {
+    let query_params: GetRepsPagination = pagination.0;
+    let reps = sqlx::query_as!(
+        BreakdownRep,
+        r#"
+            SELECT * FROM representatives
+            ORDER BY last_updated DESC
+            LIMIT COALESCE($1, 50)
+            OFFSET COALESCE($2, 0)
+        "#,
+        query_params.limit,
+        query_params.offset
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+
+    Ok(Json(ResponseBody { data: reps }))
+}
 
 pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Result<Uuid, ApiError> {
     let existing_rep = sqlx::query!(
@@ -10,6 +80,9 @@ pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Resu
     )
     .fetch_optional(db_connection)
     .await?;
+
+    let dwnominate = convert_to_bigdecimal(&rep.dw_nominate);
+    println!("dwnominate: {:?}", dwnominate);
 
     // Insert or update
     match existing_rep {
@@ -101,7 +174,7 @@ pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Resu
                   $30,
                   $31,
                   $32,
-                  $33,
+                  TO_TIMESTAMP($33, 'YYYY-MM-DD HH24:MI:ss TZHTZM'),
                   $34,
                   $35,
                   $36,
@@ -142,7 +215,7 @@ pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Resu
                 rep.contact_form,
                 rep.in_office,
                 rep.cook_pvi,
-                rep.dw_nominate,
+                convert_to_bigdecimal(&rep.dw_nominate),
                 rep.seniority,
                 rep.next_election,
                 rep.total_votes,
@@ -157,14 +230,18 @@ pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Resu
                 rep.senate_class,
                 rep.state_rank,
                 rep.lis_id,
-                rep.missed_votes_pct,
-                rep.votes_with_party_pct,
-                rep.votes_against_party_pct,
+                convert_to_bigdecimal(&rep.missed_votes_pct),
+                convert_to_bigdecimal(&rep.votes_with_party_pct),
+                convert_to_bigdecimal(&rep.votes_against_party_pct),
                 rep.id,
                 house_val.to_string()
             )
             .fetch_one(db_connection)
-            .await?;
+            .await
+            .map_err(|e| {
+                println!("Error inserting rep: {:?}", rep.id);
+                ApiError::Sqlx(e)
+            })?;
             Ok(query_result.id)
         }
         Some(existing_rep) => {
@@ -200,7 +277,7 @@ pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Resu
                       total_votes = coalesce($27, representatives.total_votes),
                       missed_votes = coalesce($28, representatives.missed_votes),
                       total_present = coalesce($29, representatives.total_present),
-                      last_updated = coalesce($30, representatives.last_updated),
+                      last_updated = coalesce(TO_TIMESTAMP($30, 'YYYY-MM-DD HH24:MI:ss TZHTZM'), representatives.last_updated),
                       ocd_id = coalesce($31, representatives.ocd_id),
                       office = coalesce($32, representatives.office),
                       phone = coalesce($33, representatives.phone),
@@ -216,49 +293,52 @@ pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Resu
               WHERE id = $1
               returning id
           "#,
-              existing_rep.id,
-              rep.title,
-              rep.short_title,
-              rep.api_uri,
-              rep.date_of_birth,
-              rep.gender,
-              rep.party,
-              rep.leadership_role,
-              rep.twitter_account,
-              rep.facebook_account,
-              rep.youtube_account,
-              rep.govtrack_id,
-              rep.cspan_id,
-              rep.votesmart_id,
-              rep.icpsr_id,
-              rep.crp_id,
-              rep.google_entity_id,
-              rep.fec_candidate_id,
-              rep.url,
-              rep.rss_url,
-              rep.contact_form,
-              rep.in_office,
-              rep.cook_pvi,
-              rep.dw_nominate,
-              rep.seniority,
-              rep.next_election,
-              rep.total_votes,
-              rep.missed_votes,
-              rep.total_present,
-              rep.last_updated,
-              rep.ocd_id,
-              rep.office,
-              rep.phone,
-              rep.fax,
-              rep.state,
-              rep.district,
-              rep.senate_class,
-              rep.state_rank,
-              rep.lis_id,
-              rep.missed_votes_pct,
-              rep.votes_with_party_pct,
-              rep.votes_against_party_pct
-          ).fetch_one(db_connection).await?;
+            existing_rep.id,
+            rep.title,
+            rep.short_title,
+            rep.api_uri,
+            rep.date_of_birth,
+            rep.gender,
+            rep.party,
+            rep.leadership_role,
+            rep.twitter_account,
+            rep.facebook_account,
+            rep.youtube_account,
+            rep.govtrack_id,
+            rep.cspan_id,
+            rep.votesmart_id,
+            rep.icpsr_id,
+            rep.crp_id,
+            rep.google_entity_id,
+            rep.fec_candidate_id,
+            rep.url,
+            rep.rss_url,
+            rep.contact_form,
+            rep.in_office,
+            rep.cook_pvi,
+            convert_to_bigdecimal(&rep.dw_nominate),
+            rep.seniority,
+            rep.next_election,
+            rep.total_votes,
+            rep.missed_votes,
+            rep.total_present,
+            rep.last_updated,
+            rep.ocd_id,
+            rep.office,
+            rep.phone,
+            rep.fax,
+            rep.state,
+            rep.district,
+            rep.senate_class,
+            rep.state_rank,
+            rep.lis_id,
+            convert_to_bigdecimal(&rep.missed_votes_pct),
+            convert_to_bigdecimal(&rep.votes_with_party_pct),
+            convert_to_bigdecimal(&rep.votes_against_party_pct),
+          ).fetch_one(db_connection).await.map_err(|e| {
+            println!("Error updating rep: {:?}", rep.id);
+            ApiError::Sqlx(e)
+        })?;
             Ok(query_result.id)
         }
     }

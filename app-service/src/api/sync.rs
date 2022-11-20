@@ -81,57 +81,67 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "introduced",
-        500,
-    );
+        300,
+    )
+    .await;
     let updated_bills = propublica_get_bills_paginated(
         &ctx.config.PROPUBLICA_BASE_URI,
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "updated",
-        500,
-    );
+        300,
+    )
+    .await;
     let active_bills = propublica_get_bills_paginated(
         &ctx.config.PROPUBLICA_BASE_URI,
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "active",
         100,
-    );
+    )
+    .await;
     let enacted_bills = propublica_get_bills_paginated(
         &ctx.config.PROPUBLICA_BASE_URI,
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "enacted",
         100,
-    );
+    )
+    .await;
     let passed_bills = propublica_get_bills_paginated(
         &ctx.config.PROPUBLICA_BASE_URI,
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "passed",
         100,
-    );
+    )
+    .await;
     let vetoed_bills = propublica_get_bills_paginated(
         &ctx.config.PROPUBLICA_BASE_URI,
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "vetoed",
-        100,
-    );
+        20,
+    )
+    .await;
 
-    let fetch_futures = vec![
+    let meta_bills = vec![
         introduced_bills,
         updated_bills,
         active_bills,
         enacted_bills,
         passed_bills,
         vetoed_bills,
-    ];
-    let meta_bills = futures::future::join_all(fetch_futures)
-        .await
-        .into_iter()
-        .flatten()
-        .collect::<Vec<ProPublicaBill>>();
+    ]
+    .into_iter()
+    .flatten()
+    .collect::<Vec<ProPublicaBill>>();
+    // Old concurrent way - too many requests at a time? Killing server?
+    // let meta_bills = futures::future::join_all(fetch_futures)
+    //     .await
+    //     .into_iter()
+    //     .flatten()
+    //     .collect::<Vec<ProPublicaBill>>();
 
     // Format and upsert bills to DB
     for bill in meta_bills.iter() {

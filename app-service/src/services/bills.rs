@@ -1,26 +1,27 @@
-use std::collections::HashMap;
-
 use crate::{
     api::ApiContext,
-    types::{db::BreakdownBill, propublica::ProPublicaBill},
+    types::{
+        api::{GetBillsPagination, ResponseBody},
+        db::BreakdownBill,
+        propublica::ProPublicaBill,
+    },
     utils::api_error::ApiError,
 };
-use axum::{extract::Path, Extension, Json};
-use axum_macros::debug_handler;
-use serde::Serialize;
+use axum::{
+    extract::{Path, Query},
+    Extension, Json,
+};
 use sqlx::{types::Uuid, PgPool};
+use std::collections::HashMap;
 
-#[derive(Debug, Serialize)]
-pub struct ResponseBody<T> {
-    data: T,
-}
-
-#[debug_handler]
 pub async fn get_bill_by_id(
     ctx: Extension<ApiContext>,
     Path(params): Path<HashMap<String, String>>,
 ) -> Result<Json<ResponseBody<BreakdownBill>>, ApiError> {
-    let bill_id = Uuid::parse_str(&params.get("id").unwrap().to_string()).unwrap();
+    let bill_id = match Uuid::parse_str(&params.get("id").unwrap().to_string()) {
+        Ok(bill_id) => bill_id,
+        Err(_) => return Err(ApiError::NotFound),
+    };
     let bill = sqlx::query_as!(
         BreakdownBill,
         r#"
@@ -35,15 +36,38 @@ pub async fn get_bill_by_id(
     Ok(Json(ResponseBody { data: bill }))
 }
 
+pub async fn get_bills(
+    ctx: Extension<ApiContext>,
+    pagination: Query<GetBillsPagination>,
+) -> Result<Json<ResponseBody<Vec<BreakdownBill>>>, ApiError> {
+    let query_params: GetBillsPagination = pagination.0;
+    let bills = sqlx::query_as!(
+        BreakdownBill,
+        r#"
+            SELECT * FROM bills
+            ORDER BY latest_major_action_date DESC
+            LIMIT COALESCE($1, 50)
+            OFFSET COALESCE($2, 0)
+        "#,
+        query_params.limit,
+        query_params.offset
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+
+    Ok(Json(ResponseBody { data: bills }))
+}
+
 pub async fn save_propub_bill(
     bill: ProPublicaBill,
     db_connection: &PgPool,
 ) -> Result<Uuid, ApiError> {
     // TODO: Guard clause for no bill_id
+    println!("Saving bill: {:#?}", bill);
     let existing_bill = sqlx::query!(
         r#"
-        SELECT * FROM bills WHERE propublica_id = $1
-      "#,
+            SELECT * FROM bills WHERE propublica_id = $1
+        "#,
         bill.bill_id
     )
     .fetch_optional(db_connection)
@@ -51,13 +75,15 @@ pub async fn save_propub_bill(
 
     let bill_sponsor = sqlx::query!(
         r#"
-          SELECT * FROM representatives WHERE propublica_id = $1
+            SELECT * FROM representatives WHERE propublica_id = $1
         "#,
         bill.sponsor_id
     )
     .fetch_one(db_connection)
     .await
-    .map_err(|_e| ApiError::InternalError)?;
+    .map_err(|e| anyhow::anyhow!("Failed to fetch bill sponsor for bill : {}", e))?;
+
+    println!("Bill sponsor: {:#?}", bill_sponsor);
 
     let bill_sponsor_id = bill_sponsor.id;
     let committee_codes = &&bill.committee_codes.unwrap_or([].to_vec());
@@ -76,6 +102,7 @@ pub async fn save_propub_bill(
         .R
         .unwrap_or(0)
         .into();
+    println!("Cosponsors: {:#?}", bill.cosponsors_by_party);
 
     let committees = &vec![bill.committees.unwrap_or("".to_string())];
     // Insert or update
@@ -126,7 +153,7 @@ pub async fn save_propub_bill(
                 $10,
                 $11,
                 $12,
-                $13,
+                TO_TIMESTAMP($13, 'YYYY-MM-DD'),
                 $14,
                 $15,
                 $16,
@@ -135,7 +162,7 @@ pub async fn save_propub_bill(
                 $19,
                 $20,
                 $21,
-                $22,
+                TO_TIMESTAMP($22, 'YYYY-MM-DD'),
                 $23,
                 $24,
                 $25,
@@ -157,7 +184,7 @@ pub async fn save_propub_bill(
                 bill.gpo_pdf_uri,
                 bill.congressdotgov_url,
                 bill.govtrack_url,
-                bill.introduced_date, // TODO: Convert to UTC timestamp
+                bill.introduced_date,
                 bill.last_vote,
                 bill.house_passage,
                 bill.senate_passage,
@@ -195,7 +222,7 @@ pub async fn save_propub_bill(
                         gpo_pdf_uri = coalesce($10, bills.gpo_pdf_uri),
                         congressdotgov_url = coalesce($11, bills.congressdotgov_url),
                         govtrack_url = coalesce($12, bills.govtrack_url),
-                        introduced_date = coalesce($13, bills.introduced_date),
+                        introduced_date = coalesce(TO_TIMESTAMP($13, 'YYYY-MM-DD'), bills.introduced_date),
                         last_vote = coalesce($14, bills.last_vote),
                         house_passage = coalesce($15, bills.house_passage),
                         senate_passage = coalesce($16, bills.senate_passage),
@@ -204,7 +231,7 @@ pub async fn save_propub_bill(
                         primary_subject = coalesce($19, bills.primary_subject),
                         summary = coalesce($20, bills.summary),
                         summary_short = coalesce($21, bills.summary_short),
-                        latest_major_action_date = coalesce($22, bills.latest_major_action_date),
+                        latest_major_action_date = coalesce(TO_TIMESTAMP($22, 'YYYY-MM-DD'), bills.latest_major_action_date),
                         latest_major_action = coalesce($23, bills.latest_major_action),
                         active = coalesce($24, bills.active),
                         committees = coalesce($25, bills.committees),

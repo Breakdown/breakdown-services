@@ -4,7 +4,7 @@ use envconfig::Envconfig;
 
 // Outside of docker use this DATABASE_URL
 // "postgres://postgres:postgres@localhost:5438"
-#[derive(Envconfig)]
+#[derive(Envconfig, Clone)]
 pub struct Config {
     #[envconfig(
         from = "DATABASE_URL",
@@ -32,4 +32,10 @@ pub struct Config {
         default = "https://api.propublica.org/congress/v1"
     )]
     pub PROPUBLICA_BASE_URI: String,
+
+    #[envconfig(
+        from = "SESSION_SECRET",
+        default = "123456789012345678901234567890123456789012345678901234567890"
+    )]
+    pub SESSION_SECRET: String,
 }

@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use app_service::api::bills;
 use app_service::api::health;
+use app_service::api::reps;
 use app_service::api::sync;
 use app_service::api::ApiContext;
 use app_service::config::Config;
@@ -58,6 +59,7 @@ fn api_router() -> Router {
     health::router()
         .merge(sync::router())
         .merge(bills::router())
+        .merge(reps::router())
 }
 
 async fn fallback_404() -> impl IntoResponse {

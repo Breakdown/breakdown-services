@@ -20,8 +20,7 @@ services:
   #     - breakdown-dev
   #   privileged: true
   #   volumes:
-  #     - ./app-service:/usr/src/app
-  #     - bd-app-service-registry:/root/.cargo/registry
+  #     - ./app-service:/app
   #   build:
   #     context: .
   #     dockerfile: ./app-service/Dockerfile.local
@@ -31,9 +30,9 @@ services:
   #     HMAC_KEY: ${HMAC_KEY}
   #     DATABASE_URL: ${DATABASE_URL}
   #     PROPUBLICA_API_KEY: ${PROPUBLICA_API_KEY}
+  #   command: sh -c "cargo watch -x run"
   #   depends_on:
   #     - postgres
-  #   command: cargo watch -x run
 
 networks:
   breakdown-dev:

@@ -4,8 +4,8 @@ use futures::future::join_all;
 const PAGE_SIZE: u32 = 20;
 
 async fn single_propublica_request(url: &str, api_key: &str) -> Vec<ProPublicaBill> {
-    println!("Fetching bills from {}", url);
     let reqwest_client = reqwest::Client::new();
+    println!("Fetching bills from {}", url);
     let response = reqwest_client
         .get(url)
         .header("X-API-Key", api_key)
@@ -15,6 +15,7 @@ async fn single_propublica_request(url: &str, api_key: &str) -> Vec<ProPublicaBi
         .json::<ProPublicaBillsResponse>()
         .await
         .expect("Failed to parse json");
+    println!("Fetched {} bills", response.results[0].bills.len());
     let results = &response.results[0].bills;
     return results.to_vec();
 }
