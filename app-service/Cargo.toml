@@ -30,3 +30,5 @@ num-traits = "0.2.15"
 bigdecimal = { version = "0.3.0", features = ["serde"] }
 async-session = "3.0.0"
 async-redis-session = "0.2.2"
+argon2 = "0.4.1"
+rand = "0.8.5"

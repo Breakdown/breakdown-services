@@ -8,8 +8,8 @@ CREATE TABLE users
   onboarded BOOLEAN NOT NULL DEFAULT FALSE,
   -- Demographic Fields
   address TEXT,
-  state_id CONSTRAINT fk_state REFERENCES states(id) ON UPDATE CASCADE ON DELETE SET NULL,
-  district_id CONSTRAINT fk_district REFERENCES districts(id) ON UPDATE CASCADE ON DELETE SET NULL,
+  state_id uuid CONSTRAINT fk_state REFERENCES states(id) ON UPDATE CASCADE ON DELETE SET NULL,
+  district_id uuid CONSTRAINT fk_district REFERENCES districts(id) ON UPDATE CASCADE ON DELETE SET NULL,
   created_at  TIMESTAMPTZ  NOT NULL  DEFAULT now(),
   updated_at  TIMESTAMPTZ
 );

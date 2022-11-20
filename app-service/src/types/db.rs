@@ -106,3 +106,18 @@ pub struct BreakdownRep {
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct User {
+    pub id: Uuid,
+    pub email: String,
+    pub password: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub onboarded: bool,
+    pub address: Option<String>,
+    pub state_id: Option<Uuid>,
+    pub district_id: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
+}

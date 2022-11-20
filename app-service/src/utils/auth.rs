@@ -10,7 +10,8 @@ pub async fn create_session_layer() -> Result<SessionLayer<RedisSessionStore>, A
         "redis://:{}@{}:{}",
         cfg.REDIS_PASSWORD, cfg.REDIS_HOST, cfg.REDIS_PORT
     );
-    let store = RedisSessionStore::new(redis_url).map_err(|e| ApiError::Unauthorized)?;
+    let store = RedisSessionStore::new(redis_url)
+        .map_err(|_| anyhow::anyhow!("Could not connect to Redis"))?;
     let secret = cfg.SESSION_SECRET.as_bytes();
 
     Ok(SessionLayer::new(store, &secret))

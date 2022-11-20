@@ -40,7 +40,7 @@ create table bills
   human_title  TEXT,
   human_short_title  TEXT,
   importance INTEGER,
-  sponsor_id uuid  CONSTRAINT fk_state REFERENCES representatives(id) ON UPDATE CASCADE ON DELETE SET NULL,
+  sponsor_id uuid  CONSTRAINT fk_b_sponsor REFERENCES representatives(id) ON UPDATE CASCADE ON DELETE SET NULL,
   created_at  TIMESTAMPTZ  NOT NULL  DEFAULT now(),
   updated_at  TIMESTAMPTZ
 );

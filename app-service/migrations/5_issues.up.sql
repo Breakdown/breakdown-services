@@ -16,6 +16,6 @@ ALTER TABLE bills ADD COLUMN primary_issue_id uuid
 -- issues_bills join table
 CREATE TABLE bills_issues (
   bill_id uuid REFERENCES bills (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  issue_id uuid REFERENCES issues (id) ON UPDATE CASCADE,
+  issue_id uuid REFERENCES issues (id) ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT bills_issues_pkey PRIMARY KEY (bill_id, issue_id)
 );
