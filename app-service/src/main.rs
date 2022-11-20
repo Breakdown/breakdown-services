@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use app_service::api::auth;
 use app_service::api::bills;
 use app_service::api::health;
 use app_service::api::reps;
@@ -6,6 +7,8 @@ use app_service::api::sync;
 use app_service::api::ApiContext;
 use app_service::config::Config;
 use app_service::telemetry::{get_subscriber, init_subscriber};
+use app_service::utils::api_error::ApiError;
+use app_service::utils::auth::create_session_layer;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Extension;
@@ -26,6 +29,11 @@ async fn main() -> std::io::Result<()> {
 
     let config = Config::init_from_env().unwrap();
 
+    let session_layer = create_session_layer()
+        .await
+        .map_err(|_| ApiError::InternalError)
+        .unwrap();
+
     // TODO: Make the statement logging dependent on an environment variable
     let options = PgConnectOptions::from_str(&config.DATABASE_URL.as_str())
         .unwrap()
@@ -44,7 +52,8 @@ async fn main() -> std::io::Result<()> {
 
     let app = api_router()
         .layer(Extension(state))
-        .layer(TraceLayer::new_for_http());
+        .layer(TraceLayer::new_for_http())
+        .layer(session_layer);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
     tracing::info!("listening on {}", addr);
@@ -60,6 +69,7 @@ fn api_router() -> Router {
         .merge(sync::router())
         .merge(bills::router())
         .merge(reps::router())
+        .merge(auth::router())
 }
 
 async fn fallback_404() -> impl IntoResponse {
