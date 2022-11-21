@@ -81,9 +81,6 @@ pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Resu
     .fetch_optional(db_connection)
     .await?;
 
-    let dwnominate = convert_to_bigdecimal(&rep.dw_nominate);
-    println!("dwnominate: {:?}", dwnominate);
-
     // Insert or update
     match existing_rep {
         None => {

@@ -172,7 +172,6 @@ async fn create_issues(ctx: Extension<ApiContext>) -> Result<&'static str, ApiEr
             slug: key.replace(" ", "_").to_lowercase(),
             subjects: subjects.to_vec(),
         };
-        println!("{:#?}", issue);
         let record = sqlx::query!(
             r#"INSERT INTO issues (name, slug, subjects) values ($1, $2, $3) returning id"#,
             &issue.name,
@@ -181,7 +180,6 @@ async fn create_issues(ctx: Extension<ApiContext>) -> Result<&'static str, ApiEr
         )
         .fetch_one(&ctx.connection_pool)
         .await?;
-        println!("{:#?}", record);
     }
     Ok("Created Issues")
 }
@@ -200,7 +198,6 @@ async fn seed_states(ctx: Extension<ApiContext>) -> Result<&'static str, ApiErro
         )
         .fetch_one(&ctx.connection_pool)
         .await?;
-        println!("{:#?}", record);
     }
 
     Ok("Seeded States")
