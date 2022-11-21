@@ -1,3 +1,4 @@
+#![allow(unused_must_use)]
 use super::users::create_user;
 use crate::types::api::ResponseBody;
 use crate::{api::ApiContext, types::db::User, utils::api_error::ApiError};
@@ -7,7 +8,6 @@ use argon2::{Argon2, PasswordHash};
 use axum::{Extension, Json};
 use axum_sessions::extractors::WritableSession;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 pub async fn hash_password(password: String) -> Result<String, ApiError> {
     // Argon2 hashing is designed to be computationally intensive,
@@ -50,13 +50,13 @@ async fn verify_password(password: String, password_hash: String) -> Result<bool
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct LoginRequestBody {
+pub struct SigninRequestBody {
     pub email: String,
     pub password: String,
 }
-pub async fn login(
+pub async fn signin(
     ctx: Extension<ApiContext>,
-    Json(body): Json<LoginRequestBody>,
+    Json(body): Json<SigninRequestBody>,
     mut session: WritableSession,
 ) -> Result<Json<ResponseBody<String>>, ApiError> {
     let user = sqlx::query_as!(

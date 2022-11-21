@@ -11,9 +11,9 @@ pub async fn create_user(
 ) -> Result<(), ApiError> {
     let hashed_password = hash_password(password.to_owned())
         .await
-        .map_err(|e| ApiError::Anyhow(anyhow!("Error hashing password")))
+        .map_err(|_| ApiError::Anyhow(anyhow!("Error hashing password")))
         .unwrap();
-    let result = sqlx::query_as!(
+    sqlx::query_as!(
         User,
         r#"
             INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *

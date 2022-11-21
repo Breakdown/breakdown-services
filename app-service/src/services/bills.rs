@@ -63,7 +63,6 @@ pub async fn save_propub_bill(
     db_connection: &PgPool,
 ) -> Result<Uuid, ApiError> {
     // TODO: Guard clause for no bill_id
-    println!("Saving bill: {:#?}", bill);
     let existing_bill = sqlx::query!(
         r#"
             SELECT * FROM bills WHERE propublica_id = $1

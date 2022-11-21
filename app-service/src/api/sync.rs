@@ -1,23 +1,30 @@
-use std::{collections::HashMap, fs};
-
+#![allow(unused_variables)]
+#![allow(unused_must_use)]
+use super::ApiContext;
 use crate::{
     services::{
         bills::save_propub_bill, propublica::propublica_get_bills_paginated, reps::save_propub_rep,
     },
-    types::propublica::{ProPublicaBill, ProPublicaRepsResponse},
+    types::{
+        api::ResponseBody,
+        db::{BreakdownBill, BreakdownIssue},
+        propublica::{ProPublicaBill, ProPublicaRepsResponse},
+    },
     utils::api_error::ApiError,
 };
-
-use axum::{routing::post, Extension, Router};
+use axum::{routing::post, Extension, Json, Router};
+use axum_macros::debug_handler;
+use itertools::Itertools;
 use log::{log, Level};
 use serde::{Deserialize, Serialize};
-
-use super::ApiContext;
+use std::{collections::HashMap, fs};
+use uuid::Uuid;
 
 pub fn router() -> Router {
     let syncs_router = Router::new()
         .route("/reps", post(reps_sync))
-        .route("/bills", post(bills_sync));
+        .route("/bills", post(bills_sync))
+        .route("/relate_issues", post(associate_bills_and_issues));
     let scripts_router = Router::new()
         .route("/create_issues", post(create_issues))
         .route("/seed_states", post(seed_states));
@@ -201,4 +208,67 @@ async fn seed_states(ctx: Extension<ApiContext>) -> Result<&'static str, ApiErro
     }
 
     Ok("Seeded States")
+}
+
+#[debug_handler]
+pub async fn associate_bills_and_issues(
+    ctx: Extension<ApiContext>,
+) -> Result<Json<ResponseBody<String>>, ApiError> {
+    let mut tx = ctx.connection_pool.begin().await?;
+    let all_bills = sqlx::query_as!(
+        BreakdownBill,
+        r#"
+        SELECT * FROM bills
+        "#,
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+    let all_issues = sqlx::query_as!(
+        BreakdownIssue,
+        r#"
+        SELECT * FROM issues
+        "#,
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+
+    for bill in all_bills {
+        let bill_primary_subject = bill.primary_subject.unwrap();
+        let bill_subjects = bill.subjects.unwrap();
+        if (!bill_primary_subject.len() > 0) && (!bill_subjects.len() > 0) {
+            continue;
+        }
+        let mut associated_issue_ids: Vec<Uuid> = vec![];
+        for issue in all_issues.clone() {
+            let issue_subjects = issue.subjects.unwrap();
+            if issue_subjects.contains(&bill_primary_subject) {
+                associated_issue_ids.push(issue.id);
+            }
+            for subject in bill_subjects.clone() {
+                if issue_subjects.contains(&subject) {
+                    associated_issue_ids.push(issue.id);
+                }
+            }
+        }
+        let associated_issue_ids = associated_issue_ids
+            .into_iter()
+            .unique()
+            .collect::<Vec<Uuid>>();
+
+        for issue_id in associated_issue_ids.into_iter() {
+            sqlx::query!(
+                r#"
+                INSERT INTO bills_issues (bill_id, issue_id) values ($1, $2)
+                "#,
+                &bill.id,
+                &issue_id,
+            )
+            .execute(&mut tx);
+        }
+    }
+    tx.commit().await?;
+
+    Ok(Json(ResponseBody {
+        data: "ok".to_string(),
+    }))
 }

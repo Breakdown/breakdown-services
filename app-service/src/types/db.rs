@@ -108,6 +108,16 @@ pub struct BreakdownRep {
 }
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct BreakdownIssue {
+    pub id: Uuid,
+    pub name: Option<String>,
+    pub slug: String,
+    pub subjects: Option<Vec<String>>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct User {
     pub id: Uuid,
     pub email: String,

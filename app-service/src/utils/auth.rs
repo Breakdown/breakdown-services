@@ -14,5 +14,6 @@ pub async fn create_session_layer() -> Result<SessionLayer<RedisSessionStore>, A
         .map_err(|_| anyhow::anyhow!("Could not connect to Redis"))?;
     let secret = cfg.SESSION_SECRET.as_bytes();
 
-    Ok(SessionLayer::new(store, &secret))
+    // TODO: with_cookie_domain
+    Ok(SessionLayer::new(store, &secret).with_cookie_name("bd_session"))
 }
