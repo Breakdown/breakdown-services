@@ -82,8 +82,6 @@ pub async fn save_propub_bill(
     .await
     .map_err(|e| anyhow::anyhow!("Failed to fetch bill sponsor for bill : {}", e))?;
 
-    println!("Bill sponsor: {:#?}", bill_sponsor);
-
     let bill_sponsor_id = bill_sponsor.id;
     let committee_codes = &&bill.committee_codes.unwrap_or([].to_vec());
     let subcommittee_codes = &&bill.subcommittee_codes.unwrap_or([].to_vec());
@@ -101,7 +99,6 @@ pub async fn save_propub_bill(
         .R
         .unwrap_or(0)
         .into();
-    println!("Cosponsors: {:#?}", bill.cosponsors_by_party);
 
     let committees = &vec![bill.committees.unwrap_or("".to_string())];
     // Insert or update

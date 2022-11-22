@@ -1,5 +1,6 @@
 #![allow(unused_variables)]
 #![allow(unused_must_use)]
+#![allow(non_snake_case)]
 use super::ApiContext;
 use crate::{
     services::{
@@ -168,17 +169,70 @@ struct Issue {
     subjects: Vec<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct SubjectUrlNameMapping {
+    name: String,
+    url_name: String,
+}
+#[derive(Serialize, Deserialize, Debug)]
+struct SlugifyFile {
+    allSubjectsFiltered: Vec<SubjectUrlNameMapping>,
+}
+
+pub fn capitalize(s: &str) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        None => String::new(),
+        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+    }
+}
+
 async fn create_issues(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError> {
     let config = fs::read_to_string("./scripts/data/issuesToSubjectsMap.json")?;
     let parsed: HashMap<String, Vec<String>> = serde_json::from_str(&config)?;
 
+    let all_subjects_config = fs::read_to_string("./scripts/data/allSubjects.json")?;
+    let all_subjects_parsed: SlugifyFile = serde_json::from_str(&all_subjects_config)?;
+
+    let default_slugified = SubjectUrlNameMapping {
+        name: "".to_string(),
+        url_name: "".to_string(),
+    };
+
     for (key, _) in &parsed {
         let subjects = &parsed[key];
+        let mut subjects_named: Vec<String> = vec![];
+
+        for subject_slug in subjects.iter() {
+            let subject_unslugified = capitalize(subject_slug).replace("-", " ");
+            let subject_named = all_subjects_parsed
+                .allSubjectsFiltered
+                .iter()
+                .find(|subject| subject.url_name == *subject_slug)
+                .unwrap_or(&default_slugified)
+                .clone();
+            if subject_named.name.chars().count() > 0 {
+                subjects_named.push(subject_named.name.to_string());
+            } else {
+                if !subject_unslugified.chars().any(|c| c.is_whitespace()) {
+                    subjects_named.push(subject_unslugified);
+                } else {
+                    log!(
+                        Level::Info,
+                        "Could not find subject named for slug: {}",
+                        subject_slug
+                    );
+                    subjects_named.push(subject_unslugified);
+                }
+            }
+        }
+
         let issue = Issue {
             name: key.to_string(),
             slug: key.replace(" ", "_").to_lowercase(),
-            subjects: subjects.to_vec(),
+            subjects: subjects_named,
         };
+
         let record = sqlx::query!(
             r#"INSERT INTO issues (name, slug, subjects) values ($1, $2, $3) returning id"#,
             &issue.name,
@@ -188,6 +242,7 @@ async fn create_issues(ctx: Extension<ApiContext>) -> Result<&'static str, ApiEr
         .fetch_one(&ctx.connection_pool)
         .await?;
     }
+    println!("Created Issues");
     Ok("Created Issues")
 }
 
@@ -233,15 +288,21 @@ pub async fn associate_bills_and_issues(
     .await?;
 
     for bill in all_bills {
-        let bill_primary_subject = bill.primary_subject.unwrap();
-        let bill_subjects = bill.subjects.unwrap();
-        if (!bill_primary_subject.len() > 0) && (!bill_subjects.len() > 0) {
+        let bill_primary_subject = bill.primary_subject.unwrap_or("".to_string());
+        let bill_subjects = bill.subjects.unwrap_or(vec![]);
+        if (bill_primary_subject.chars().count() == 0) && (bill_subjects.len() == 0) {
             continue;
         }
         let mut associated_issue_ids: Vec<Uuid> = vec![];
         for issue in all_issues.clone() {
             let issue_subjects = issue.subjects.unwrap();
-            if issue_subjects.contains(&bill_primary_subject) {
+            println!("issue subjects: {:?}", issue_subjects);
+            // TODO: Primary Issue ID
+            if issue_subjects
+                .iter()
+                .any(|subject| subject == &bill_primary_subject)
+            {
+                println!("associated issue: {:#?}", issue.name);
                 associated_issue_ids.push(issue.id);
             }
             for subject in bill_subjects.clone() {
@@ -256,6 +317,7 @@ pub async fn associate_bills_and_issues(
             .collect::<Vec<Uuid>>();
 
         for issue_id in associated_issue_ids.into_iter() {
+            println!("Associating bill {} with issue {}", bill.id, issue_id);
             sqlx::query!(
                 r#"
                 INSERT INTO bills_issues (bill_id, issue_id) values ($1, $2)
@@ -263,10 +325,13 @@ pub async fn associate_bills_and_issues(
                 &bill.id,
                 &issue_id,
             )
-            .execute(&mut tx);
+            .execute(&mut tx)
+            .await?;
         }
     }
     tx.commit().await?;
+
+    println!("Associated Bills and Issues");
 
     Ok(Json(ResponseBody {
         data: "ok".to_string(),
