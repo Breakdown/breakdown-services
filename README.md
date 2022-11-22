@@ -23,3 +23,4 @@ Necessary to have a logically consistent DB:
 - Run `POST /scripts/seed_states`
 - Run `POST /syncs/reps`
 - Run `POST /syncs/bills`
+- Run `POST /associate_bills_issues`

@@ -25,7 +25,7 @@ pub fn router() -> Router {
     let syncs_router = Router::new()
         .route("/reps", post(reps_sync))
         .route("/bills", post(bills_sync))
-        .route("/relate_issues", post(associate_bills_and_issues));
+        .route("/associate_bills_issues", post(associate_bills_and_issues));
     let scripts_router = Router::new()
         .route("/create_issues", post(create_issues))
         .route("/seed_states", post(seed_states));
