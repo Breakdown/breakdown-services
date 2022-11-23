@@ -14,3 +14,4 @@ pub mod health;
 pub mod issues;
 pub mod reps;
 pub mod sync;
+pub mod users;

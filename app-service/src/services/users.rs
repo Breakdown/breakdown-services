@@ -1,7 +1,9 @@
+use crate::api::ApiContext;
 use crate::services::auth::hash_password;
 use crate::types::db::User;
 use crate::utils::api_error::ApiError;
 use anyhow::anyhow;
+use axum::Extension;
 use sqlx::PgPool;
 
 pub async fn create_user(
