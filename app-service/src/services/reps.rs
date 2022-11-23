@@ -18,15 +18,6 @@ use sqlx::{
 };
 use std::collections::HashMap;
 
-fn convert_to_bigdecimal(num: &Option<f64>) -> Option<BigDecimal> {
-    let num = num.unwrap_or(0.0);
-    if num > 0.0 {
-        Some(BigDecimal::from_f64(num).unwrap())
-    } else {
-        None
-    }
-}
-
 pub async fn get_rep_by_id(
     ctx: Extension<ApiContext>,
     Path(params): Path<HashMap<String, String>>,
@@ -69,6 +60,33 @@ pub async fn get_reps(
     .await?;
 
     Ok(Json(ResponseBody { data: reps }))
+}
+
+fn convert_to_bigdecimal(num: &Option<f64>) -> Option<BigDecimal> {
+    let num = num.unwrap_or(0.0);
+    if num > 0.0 {
+        Some(BigDecimal::from_f64(num).unwrap())
+    } else {
+        None
+    }
+}
+
+pub async fn fetch_rep_by_id(
+    ctx: &Extension<ApiContext>,
+    rep_id: Uuid,
+) -> Result<BreakdownRep, ApiError> {
+    let rep = sqlx::query_as!(
+        BreakdownRep,
+        r#"
+          SELECT * FROM representatives WHERE id = $1
+        "#,
+        rep_id
+    )
+    .fetch_optional(&ctx.connection_pool)
+    .await?
+    .ok_or(ApiError::NotFound)?;
+
+    Ok(rep)
 }
 
 pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Result<Uuid, ApiError> {

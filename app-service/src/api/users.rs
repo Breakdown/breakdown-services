@@ -1,8 +1,4 @@
-use axum::{
-    middleware,
-    routing::{get, post},
-    Router,
-};
+use axum::{middleware, routing::post, Router};
 
 use crate::utils::auth::create_session_auth_layer;
 

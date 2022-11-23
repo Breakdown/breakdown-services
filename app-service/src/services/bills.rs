@@ -22,17 +22,7 @@ pub async fn get_bill_by_id(
         Ok(bill_id) => bill_id,
         Err(_) => return Err(ApiError::NotFound),
     };
-    let bill = sqlx::query_as!(
-        BreakdownBill,
-        r#"
-          SELECT * FROM bills WHERE id = $1
-        "#,
-        bill_id
-    )
-    .fetch_optional(&ctx.connection_pool)
-    .await?
-    .ok_or(ApiError::NotFound)?;
-
+    let bill = fetch_bill_by_id(&ctx, bill_id).await?;
     Ok(Json(ResponseBody { data: bill }))
 }
 
@@ -56,6 +46,24 @@ pub async fn get_bills(
     .await?;
 
     Ok(Json(ResponseBody { data: bills }))
+}
+
+pub async fn fetch_bill_by_id(
+    ctx: &Extension<ApiContext>,
+    bill_id: Uuid,
+) -> Result<BreakdownBill, ApiError> {
+    let bill = sqlx::query_as!(
+        BreakdownBill,
+        r#"
+          SELECT * FROM bills WHERE id = $1
+        "#,
+        bill_id
+    )
+    .fetch_optional(&ctx.connection_pool)
+    .await?
+    .ok_or(ApiError::NotFound)?;
+
+    Ok(bill)
 }
 
 pub async fn save_propub_bill(

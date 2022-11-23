@@ -12,8 +12,11 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::{
-    services::bills::{get_bill_by_id, get_bills},
-    types::api::ResponseBody,
+    services::{
+        bills::{fetch_bill_by_id, get_bill_by_id, get_bills},
+        reps::fetch_rep_by_id,
+    },
+    types::{api::ResponseBody, db::BreakdownRep},
     utils::{api_error::ApiError, auth::create_session_auth_layer},
 };
 
@@ -24,6 +27,7 @@ pub fn router() -> Router {
         .route("/:id", get(get_bill_by_id))
         .route("/", get(get_bills))
         .route("/:id/vote", post(post_vote_on_bill))
+        .route("/:id/sponsor", get(get_bill_sponsor))
         .route_layer(middleware::from_fn(create_session_auth_layer));
     Router::new().nest("/bills", service_router)
 }
@@ -92,4 +96,20 @@ async fn post_vote_on_bill(
             }));
         }
     }
+}
+
+async fn get_bill_sponsor(
+    ctx: Extension<ApiContext>,
+    Path(params): Path<HashMap<String, String>>,
+) -> Result<Json<ResponseBody<Vec<BreakdownRep>>>, ApiError> {
+    let bill_id = match Uuid::parse_str(&params.get("id").unwrap().to_string()) {
+        Ok(bill_id) => bill_id,
+        Err(_) => return Err(ApiError::NotFound),
+    };
+    let bill = fetch_bill_by_id(&ctx, bill_id).await?;
+    let sponsor = fetch_rep_by_id(&ctx, bill.sponsor_id.unwrap()).await?;
+
+    Ok(Json(ResponseBody {
+        data: vec![sponsor],
+    }))
 }
