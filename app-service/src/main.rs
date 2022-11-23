@@ -2,6 +2,7 @@
 use app_service::api::auth;
 use app_service::api::bills;
 use app_service::api::health;
+use app_service::api::issues;
 use app_service::api::reps;
 use app_service::api::sync;
 use app_service::api::ApiContext;
@@ -70,6 +71,7 @@ fn api_router() -> Router {
         .merge(bills::router())
         .merge(reps::router())
         .merge(auth::router())
+        .merge(issues::router())
 }
 
 async fn fallback_404() -> impl IntoResponse {

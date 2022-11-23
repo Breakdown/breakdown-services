@@ -11,5 +11,6 @@ pub struct ApiContext {
 pub mod auth;
 pub mod bills;
 pub mod health;
+pub mod issues;
 pub mod reps;
 pub mod sync;
