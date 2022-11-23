@@ -5,7 +5,7 @@ use axum::{
 };
 
 use crate::{
-    services::issues::{follow_issue, get_issue_by_id, get_issues},
+    services::issues::{follow_issue, get_issue_by_id, get_issues, unfollow_issue},
     utils::auth::create_session_auth_layer,
 };
 
@@ -14,6 +14,7 @@ pub fn router() -> Router {
         .route("/", get(get_issues))
         .route("/:id", get(get_issue_by_id))
         .route("/:id/follow", post(follow_issue))
+        .route("/:id/unfollow", post(unfollow_issue))
         .route_layer(middleware::from_fn(create_session_auth_layer));
     Router::new().nest("/issues", service_router)
 }
