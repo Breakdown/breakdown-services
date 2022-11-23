@@ -16,3 +16,8 @@ pub struct GetRepsPagination {
 pub struct ResponseBody<T> {
     pub data: T,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RequestState {
+    pub user_id: String,
+}

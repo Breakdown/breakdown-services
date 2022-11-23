@@ -1,7 +1,8 @@
 use super::api_error::ApiError;
 use crate::config::Config;
 use async_redis_session::RedisSessionStore;
-use axum_sessions::SessionLayer;
+use axum::{http::Request, middleware::Next, response::Response};
+use axum_sessions::{SessionHandle, SessionLayer};
 use envconfig::Envconfig;
 
 pub async fn create_session_layer() -> Result<SessionLayer<RedisSessionStore>, ApiError> {
@@ -16,4 +17,16 @@ pub async fn create_session_layer() -> Result<SessionLayer<RedisSessionStore>, A
 
     // TODO: with_cookie_domain
     Ok(SessionLayer::new(store, &secret).with_cookie_name("bd_session"))
+}
+
+pub async fn create_session_auth_layer<B>(
+    req: Request<B>,
+    next: Next<B>,
+) -> Result<Response, ApiError> {
+    let session_handle = req.extensions().get::<SessionHandle>().unwrap().to_owned();
+    let session = session_handle.read().await;
+    match session.get::<String>("user_id") {
+        Some(_) => Ok(next.run(req).await),
+        _ => Err(ApiError::Unauthorized),
+    }
 }

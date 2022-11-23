@@ -25,6 +25,7 @@ use tower_http::trace::TraceLayer;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
+    // Tracing - need to have RUST_LOG=tower_http=trace env var set
     let subscriber = get_subscriber("app-service".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
 
@@ -35,7 +36,7 @@ async fn main() -> std::io::Result<()> {
         .map_err(|_| ApiError::InternalError)
         .unwrap();
 
-    // TODO: Make the statement logging dependent on an environment variable
+    // Disable sqlx default statement logging - VERY verbose
     let options = PgConnectOptions::from_str(&config.DATABASE_URL.as_str())
         .unwrap()
         .disable_statement_logging()

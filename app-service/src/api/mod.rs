@@ -2,7 +2,7 @@ use crate::config::Config;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ApiContext {
     pub config: Arc<Config>,
     pub connection_pool: PgPool,

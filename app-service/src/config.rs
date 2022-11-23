@@ -4,7 +4,7 @@ use envconfig::Envconfig;
 
 // Outside of docker use this DATABASE_URL
 // "postgres://postgres:postgres@localhost:5438"
-#[derive(Envconfig, Clone)]
+#[derive(Envconfig, Clone, Debug)]
 pub struct Config {
     #[envconfig(
         from = "DATABASE_URL",

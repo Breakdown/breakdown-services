@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use axum::{extract::Path, Extension, Json};
+use axum_sessions::extractors::ReadableSession;
 use uuid::Uuid;
 
 use crate::{
@@ -44,4 +45,18 @@ pub async fn get_issues(
     .await?;
 
     Ok(Json(ResponseBody { data: issues }))
+}
+
+pub async fn follow_issue(
+    ctx: Extension<ApiContext>,
+    Path(params): Path<HashMap<String, String>>,
+    session: ReadableSession,
+) -> Result<Json<ResponseBody<BreakdownIssue>>, ApiError> {
+    let issue_id = match Uuid::parse_str(&params.get("id").unwrap().to_string()) {
+        Ok(issue_id) => issue_id,
+        Err(_) => return Err(ApiError::NotFound),
+    };
+    println!("user_id: {:?}", session.get::<Uuid>("user_id").unwrap());
+    // TODO: Follow issue
+    todo!();
 }
