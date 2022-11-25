@@ -2,7 +2,7 @@ use crate::{
     api::ApiContext,
     types::{
         api::{GetRepsPagination, ResponseBody},
-        db::{BreakdownRep, RepresentativeVote},
+        db::{BreakdownBill, BreakdownRep, RepresentativeVote},
         propublica::ProPublicaRep,
     },
     utils::api_error::ApiError,
@@ -361,10 +361,10 @@ pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Resu
 }
 
 #[debug_handler]
-pub async fn get_rep_vote_on_bill(
+pub async fn get_rep_votes_on_bill(
     ctx: Extension<ApiContext>,
     Path(params): Path<HashMap<String, String>>,
-) -> Result<Json<ResponseBody<RepresentativeVote>>, ApiError> {
+) -> Result<Json<ResponseBody<Vec<RepresentativeVote>>>, ApiError> {
     let bill_id = match Uuid::parse_str(&params.get("bill_id").unwrap().to_string()) {
         Ok(bill_id) => bill_id,
         Err(_) => return Err(ApiError::NotFound),
@@ -374,7 +374,7 @@ pub async fn get_rep_vote_on_bill(
         Err(_) => return Err(ApiError::NotFound),
     };
 
-    let vote = sqlx::query_as!(
+    let votes = sqlx::query_as!(
         RepresentativeVote,
         r#"
             SELECT * FROM representatives_votes
@@ -383,14 +383,14 @@ pub async fn get_rep_vote_on_bill(
         bill_id,
         rep_id
     )
-    .fetch_one(&ctx.connection_pool)
+    .fetch_all(&ctx.connection_pool)
     .await
     .map_err(|e| {
         println!("Error getting rep vote on bill: {:?}", e);
         return ApiError::NotFound;
     })?;
 
-    Ok(Json(ResponseBody { data: vote }))
+    Ok(Json(ResponseBody { data: votes }))
 }
 
 #[debug_handler]
@@ -408,6 +408,7 @@ pub async fn get_rep_votes(
         r#"
             SELECT * FROM representatives_votes
             WHERE representative_id = $1
+            ORDER BY voted_at DESC
         "#,
         rep_id
     )
@@ -419,4 +420,64 @@ pub async fn get_rep_votes(
     })?;
 
     Ok(Json(ResponseBody { data: votes }))
+}
+
+pub async fn get_rep_sponsored_bills(
+    ctx: Extension<ApiContext>,
+    Path(params): Path<HashMap<String, String>>,
+) -> Result<Json<ResponseBody<Vec<BreakdownBill>>>, ApiError> {
+    let rep_id = match Uuid::parse_str(&params.get("id").unwrap().to_string()) {
+        Ok(rep_id) => rep_id,
+        Err(_) => return Err(ApiError::NotFound),
+    };
+
+    let bills = sqlx::query_as!(
+        BreakdownBill,
+        r#"
+            SELECT * FROM bills
+            WHERE sponsor_id = $1
+            ORDER BY latest_major_action_date DESC
+        "#,
+        rep_id
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await
+    .map_err(|_| {
+        println!("Error getting rep sponsored bills: rep_id {}", rep_id);
+        return ApiError::NotFound;
+    })?;
+
+    Ok(Json(ResponseBody { data: bills }))
+}
+
+pub async fn get_rep_cosponsored_bills(
+    ctx: Extension<ApiContext>,
+    Path(params): Path<HashMap<String, String>>,
+) -> Result<Json<ResponseBody<Vec<BreakdownBill>>>, ApiError> {
+    let rep_id = match Uuid::parse_str(&params.get("id").unwrap().to_string()) {
+        Ok(rep_id) => rep_id,
+        Err(_) => return Err(ApiError::NotFound),
+    };
+
+    // Get cosponsored bills for this rep_id
+    let bills = sqlx::query_as!(
+        BreakdownBill,
+        r#"
+            SELECT * FROM bills
+            WHERE id IN (
+                SELECT bill_id FROM cosponsors
+                WHERE rep_id = $1
+            )
+            ORDER BY latest_major_action_date DESC
+        "#,
+        rep_id
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await
+    .map_err(|_| {
+        println!("Error getting rep sponsored bills: rep_id {}", rep_id);
+        return ApiError::NotFound;
+    })?;
+
+    Ok(Json(ResponseBody { data: bills }))
 }
