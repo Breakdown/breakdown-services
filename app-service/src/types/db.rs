@@ -131,3 +131,22 @@ pub struct User {
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct RepresentativeVote {
+    pub rep_propublica_id: Option<String>,
+    pub chamber: Option<String>,
+    pub congress: Option<String>,
+    pub congressional_session: Option<String>,
+    pub roll_call: Option<String>,
+    pub vote_uri: Option<String>,
+    pub bill_propublica_id: String,
+    pub question: Option<String>,
+    pub result: Option<String>,
+    pub position: bool,
+    pub voted_at: Option<DateTime<Utc>>,
+    pub bill_id: Option<Uuid>,
+    pub representative_id: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
+}

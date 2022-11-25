@@ -1,0 +1,1 @@
+drop table "representatives_votes";

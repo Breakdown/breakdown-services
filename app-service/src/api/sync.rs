@@ -4,12 +4,15 @@
 use super::ApiContext;
 use crate::{
     services::{
-        bills::save_propub_bill, propublica::propublica_get_bills_paginated, reps::save_propub_rep,
+        bills::save_propub_bill,
+        propublica::{propublica_get_bills_paginated, propublica_get_votes_paginated},
+        reps::save_propub_rep,
+        votes::save_propub_vote,
     },
     types::{
         api::ResponseBody,
         db::{BreakdownBill, BreakdownIssue},
-        propublica::{ProPublicaBill, ProPublicaRepsResponse},
+        propublica::{ProPublicaBill, ProPublicaRepsResponse, ProPublicaVote},
     },
     utils::api_error::ApiError,
 };
@@ -25,7 +28,8 @@ pub fn router() -> Router {
     let syncs_router = Router::new()
         .route("/reps", post(reps_sync))
         .route("/bills", post(bills_sync))
-        .route("/associate_bills_issues", post(associate_bills_and_issues));
+        .route("/associate_bills_issues", post(associate_bills_and_issues))
+        .route("/votes", post(sync_votes));
     let scripts_router = Router::new()
         .route("/create_issues", post(create_issues))
         .route("/seed_states", post(seed_states));
@@ -160,6 +164,52 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
     log!(Level::Info, "Synced All Bills");
 
     Ok("Synced All Bills")
+}
+
+async fn sync_votes(ctx: Extension<ApiContext>) -> Result<String, ApiError> {
+    let representatives = sqlx::query!(
+        r#"
+        SELECT id, propublica_id
+        FROM representatives
+        "#,
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+
+    let mut fetch_futures = vec![];
+    // let mut vote_upsert_queries = vec![];
+    for rep in representatives.iter() {
+        let rep_ref = rep.clone();
+        let rep_votes = propublica_get_votes_paginated(
+            &ctx.config.PROPUBLICA_BASE_URI,
+            &ctx.config.PROPUBLICA_API_KEY,
+            &rep.propublica_id,
+            20,
+        );
+        fetch_futures.push(rep_votes);
+    }
+    log!(Level::Info, "Fetching Votes in parallel");
+    // Parallellize requests
+    let rep_votes = futures::future::join_all(fetch_futures)
+        .await
+        .into_iter()
+        .flatten()
+        .collect::<Vec<ProPublicaVote>>();
+
+    log!(Level::Info, "Fetched Votes, Building Saves");
+    let mut vote_upsert_queries = vec![];
+    log!(Level::Info, "Saving Votes");
+    for (i, vote) in rep_votes.iter().enumerate() {
+        let vote_ref = vote.clone();
+        vote_upsert_queries.push(save_propub_vote(vote_ref, &ctx.connection_pool));
+        if i % 100 == 0 {
+            // Parallellize saves in chunks of 100
+            futures::future::join_all(vote_upsert_queries).await;
+            vote_upsert_queries = vec![];
+        }
+    }
+
+    Ok("Synced All Votes".to_string())
 }
 
 #[derive(Serialize, Deserialize, Debug)]

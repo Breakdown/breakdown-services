@@ -4,3 +4,4 @@ pub mod issues;
 pub mod propublica;
 pub mod reps;
 pub mod users;
+pub mod votes;

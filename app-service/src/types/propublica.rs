@@ -95,6 +95,32 @@ pub struct ProPublicaRep {
     pub votes_against_party_pct: Option<f64>,
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ProPublicaVoteBill {
+    pub bill_id: Option<String>,
+    pub number: Option<String>,
+    pub sponsor_id: Option<String>,
+    pub bill_uri: Option<String>,
+    pub title: Option<String>,
+    pub latest_action: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ProPublicaVote {
+    pub member_id: Option<String>,
+    pub chamber: Option<String>,
+    pub congress: Option<String>,
+    pub session: Option<String>,
+    pub roll_call: Option<String>,
+    pub vote_uri: Option<String>,
+    pub bill: Option<ProPublicaVoteBill>,
+    pub question: Option<String>,
+    pub result: Option<String>,
+    pub date: Option<String>,
+    pub time: Option<String>,
+    pub position: Option<String>,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaRepsResult {
     pub members: Vec<ProPublicaRep>,
@@ -113,4 +139,14 @@ pub struct ProPublicaBillsResult {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaBillsResponse {
     pub results: Vec<ProPublicaBillsResult>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProPublicaVotesResult {
+    pub votes: Vec<ProPublicaVote>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProPublicaVotesResponse {
+    pub results: Vec<ProPublicaVotesResult>,
 }

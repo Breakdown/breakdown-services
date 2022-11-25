@@ -1,9 +1,11 @@
-use crate::types::propublica::{ProPublicaBill, ProPublicaBillsResponse};
+use crate::types::propublica::{
+    ProPublicaBill, ProPublicaBillsResponse, ProPublicaVote, ProPublicaVotesResponse,
+};
 use futures::future::join_all;
 
 const PAGE_SIZE: u32 = 20;
 
-async fn single_propublica_request(url: &str, api_key: &str) -> Vec<ProPublicaBill> {
+pub async fn single_propublica_bills_req(url: &str, api_key: &str) -> Vec<ProPublicaBill> {
     let reqwest_client = reqwest::Client::new();
     println!("Fetching bills from {}", url);
     let response = reqwest_client
@@ -18,6 +20,39 @@ async fn single_propublica_request(url: &str, api_key: &str) -> Vec<ProPublicaBi
     println!("Fetched {} bills", response.results[0].bills.len());
     let results = &response.results[0].bills;
     return results.to_vec();
+}
+
+pub async fn single_propublica_votes_req(url: &str, api_key: &str) -> Vec<ProPublicaVote> {
+    let reqwest_client = reqwest::Client::new();
+    println!("Fetching votes from {}", url);
+    let response = reqwest_client
+        .get(url)
+        .header("X-API-Key", api_key)
+        .send()
+        .await;
+    let results = match response {
+        Ok(response) => {
+            let response = response.json::<ProPublicaVotesResponse>().await;
+            let votes = match response {
+                Ok(response) => {
+                    let votes = response.results[0].votes.to_vec();
+                    votes
+                }
+                Err(e) => {
+                    // println!("Failed to parse json: {}", e);
+                    let result: Vec<ProPublicaVote> = vec![];
+                    result
+                }
+            };
+            return votes;
+        }
+        Err(e) => {
+            // println!("Error fetching votes for url: {}", url);
+            vec![]
+        }
+    };
+
+    return results;
 }
 
 pub async fn propublica_get_bills_paginated(
@@ -40,7 +75,7 @@ pub async fn propublica_get_bills_paginated(
 
     let fetch_futures = urls
         .iter()
-        .map(|url| single_propublica_request(url, api_key));
+        .map(|url| single_propublica_bills_req(url, api_key));
 
     let results = join_all(fetch_futures).await;
 
@@ -48,5 +83,35 @@ pub async fn propublica_get_bills_paginated(
         .into_iter()
         .flatten()
         .collect::<Vec<ProPublicaBill>>();
+    return flattened_results;
+}
+
+pub async fn propublica_get_votes_paginated(
+    base_url: &str,
+    api_key: &str,
+    member_id: &str,
+    total: u32,
+) -> Vec<ProPublicaVote> {
+    let request_url = format!("{}/members/{}/votes.json", base_url, member_id);
+    let mut offset = 0;
+    let mut urls = Vec::new();
+    // Construct URLs for all necessary fetches
+    let num_pages = total / PAGE_SIZE;
+    for _ in 0..num_pages {
+        let url = format!("{}?offset={}", request_url, offset);
+        urls.push(url);
+        offset += PAGE_SIZE;
+    }
+
+    let fetch_futures = urls
+        .iter()
+        .map(|url| single_propublica_votes_req(url, api_key));
+
+    let results = join_all(fetch_futures).await;
+
+    let flattened_results = results
+        .into_iter()
+        .flatten()
+        .collect::<Vec<ProPublicaVote>>();
     return flattened_results;
 }
