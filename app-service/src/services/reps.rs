@@ -2,7 +2,7 @@ use crate::{
     api::ApiContext,
     types::{
         api::{GetRepsPagination, ResponseBody},
-        db::BreakdownRep,
+        db::{BreakdownRep, RepresentativeVote},
         propublica::ProPublicaRep,
     },
     utils::api_error::ApiError,
@@ -11,6 +11,7 @@ use axum::{
     extract::{Path, Query},
     Extension, Json,
 };
+use axum_macros::debug_handler;
 use num_traits::cast::FromPrimitive;
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -357,4 +358,65 @@ pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Resu
             Ok(query_result.id)
         }
     }
+}
+
+#[debug_handler]
+pub async fn get_rep_vote_on_bill(
+    ctx: Extension<ApiContext>,
+    Path(params): Path<HashMap<String, String>>,
+) -> Result<Json<ResponseBody<RepresentativeVote>>, ApiError> {
+    let bill_id = match Uuid::parse_str(&params.get("bill_id").unwrap().to_string()) {
+        Ok(bill_id) => bill_id,
+        Err(_) => return Err(ApiError::NotFound),
+    };
+    let rep_id = match Uuid::parse_str(&params.get("id").unwrap().to_string()) {
+        Ok(rep_id) => rep_id,
+        Err(_) => return Err(ApiError::NotFound),
+    };
+
+    let vote = sqlx::query_as!(
+        RepresentativeVote,
+        r#"
+            SELECT * FROM representatives_votes
+            WHERE bill_id = $1 AND representative_id = $2
+        "#,
+        bill_id,
+        rep_id
+    )
+    .fetch_one(&ctx.connection_pool)
+    .await
+    .map_err(|e| {
+        println!("Error getting rep vote on bill: {:?}", e);
+        return ApiError::NotFound;
+    })?;
+
+    Ok(Json(ResponseBody { data: vote }))
+}
+
+#[debug_handler]
+pub async fn get_rep_votes(
+    ctx: Extension<ApiContext>,
+    Path(params): Path<HashMap<String, String>>,
+) -> Result<Json<ResponseBody<Vec<RepresentativeVote>>>, ApiError> {
+    let rep_id = match Uuid::parse_str(&params.get("id").unwrap().to_string()) {
+        Ok(rep_id) => rep_id,
+        Err(_) => return Err(ApiError::NotFound),
+    };
+
+    let votes = sqlx::query_as!(
+        RepresentativeVote,
+        r#"
+            SELECT * FROM representatives_votes
+            WHERE representative_id = $1
+        "#,
+        rep_id
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await
+    .map_err(|_| {
+        println!("Error getting rep votes: rep_id {}", rep_id);
+        return ApiError::NotFound;
+    })?;
+
+    Ok(Json(ResponseBody { data: votes }))
 }
