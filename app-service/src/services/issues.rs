@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     api::ApiContext,
-    types::{api::ResponseBody, db::BreakdownIssue},
+    types::{api::ResponseBody, db::BreakdownBill, db::BreakdownIssue},
     utils::api_error::ApiError,
 };
 
@@ -111,5 +111,46 @@ pub async fn unfollow_issue(
     .await?;
     Ok(Json(ResponseBody {
         data: "ok".to_string(),
+    }))
+}
+
+pub async fn get_issue_bills(
+    ctx: Extension<ApiContext>,
+    Path(params): Path<HashMap<String, String>>,
+) -> Result<Json<ResponseBody<Vec<BreakdownBill>>>, ApiError> {
+    let issue_id = match Uuid::parse_str(&params.get("id").unwrap().to_string()) {
+        Ok(issue_id) => issue_id,
+        Err(_) => return Err(ApiError::NotFound),
+    };
+    // Get bills where primary issue is issue_id
+    // Get bills joined on bills_issues
+    let mut primary_issue_bills = sqlx::query_as!(
+        BreakdownBill,
+        r#"
+          SELECT * FROM bills WHERE primary_issue_id = $1
+        "#,
+        issue_id
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+
+    let issue_bills = sqlx::query_as!(
+        BreakdownBill,
+        r#"
+            SELECT * FROM bills
+            WHERE id IN (
+                SELECT bill_id FROM bills_issues
+                WHERE issue_id = $1
+            )
+            ORDER BY latest_major_action_date DESC
+        "#,
+        issue_id
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+
+    primary_issue_bills.append(&mut issue_bills.clone());
+    Ok(Json(ResponseBody {
+        data: primary_issue_bills,
     }))
 }
