@@ -88,7 +88,7 @@ pub async fn save_propub_bill(
     )
     .fetch_one(db_connection)
     .await
-    .map_err(|e| anyhow::anyhow!("Failed to fetch bill sponsor for bill : {}", e))?;
+    .map_err(|e| return anyhow::anyhow!("Failed to fetch bill sponsor for bill : {}", e))?;
 
     let bill_sponsor_id = bill_sponsor.id;
     let committee_codes = &&bill.committee_codes.unwrap_or([].to_vec());

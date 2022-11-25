@@ -21,6 +21,8 @@ Necessary to have a logically consistent DB:
 
 - Run `POST /scripts/create_issues`
 - Run `POST /scripts/seed_states`
-- Run `POST /syncs/reps`
-- Run `POST /syncs/bills`
+- Run `POST /sync/reps`
+- Run `POST /sync/votes`
+- Run `POST /sync/bills`
+- Run `POST /sync/cosponsors`
 - Run `POST /associate_bills_issues`

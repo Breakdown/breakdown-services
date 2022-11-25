@@ -1,7 +1,4 @@
-use crate::{
-    types::{db::RepresentativeVote, propublica::ProPublicaVote},
-    utils::api_error::ApiError,
-};
+use crate::{types::propublica::ProPublicaVote, utils::api_error::ApiError};
 use sqlx::PgPool;
 
 pub async fn save_propub_vote(
@@ -103,7 +100,7 @@ pub async fn save_propub_vote(
             })?;
             Ok("Saved".to_string())
         }
-        Some(existing_vote) => {
+        Some(_) => {
             // Do nothing for now
             Ok("Already exists".to_string())
         }

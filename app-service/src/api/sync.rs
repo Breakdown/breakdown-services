@@ -5,13 +5,16 @@ use super::ApiContext;
 use crate::{
     services::{
         bills::save_propub_bill,
-        propublica::{propublica_get_bills_paginated, propublica_get_votes_paginated},
+        propublica::{
+            propublica_get_bills_paginated, propublica_get_cosponsored_bills_paginated,
+            propublica_get_votes_paginated,
+        },
         reps::save_propub_rep,
         votes::save_propub_vote,
     },
     types::{
         api::ResponseBody,
-        db::{BreakdownBill, BreakdownIssue},
+        db::{BreakdownBill, BreakdownIssue, BreakdownRep},
         propublica::{ProPublicaBill, ProPublicaRepsResponse, ProPublicaVote},
     },
     utils::api_error::ApiError,
@@ -29,7 +32,8 @@ pub fn router() -> Router {
         .route("/reps", post(reps_sync))
         .route("/bills", post(bills_sync))
         .route("/associate_bills_issues", post(associate_bills_and_issues))
-        .route("/votes", post(sync_votes));
+        .route("/votes", post(sync_votes))
+        .route("/cosponsors", post(sync_cosponsors));
     let scripts_router = Router::new()
         .route("/create_issues", post(create_issues))
         .route("/seed_states", post(seed_states));
@@ -93,7 +97,7 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "introduced",
-        300,
+        600,
     )
     .await;
     let updated_bills = propublica_get_bills_paginated(
@@ -101,7 +105,7 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "updated",
-        300,
+        600,
     )
     .await;
     let active_bills = propublica_get_bills_paginated(
@@ -109,7 +113,7 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "active",
-        100,
+        200,
     )
     .await;
     let enacted_bills = propublica_get_bills_paginated(
@@ -117,7 +121,7 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
         &ctx.config.PROPUBLICA_API_KEY,
         "both",
         "enacted",
-        100,
+        200,
     )
     .await;
     let passed_bills = propublica_get_bills_paginated(
@@ -148,18 +152,41 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
     .into_iter()
     .flatten()
     .collect::<Vec<ProPublicaBill>>();
+
+    let mut bill_id_map = HashMap::new();
+    // let unique_bills = meta_bills
+    //     .into_iter()
+    //     .filter(|bill| {
+    //         let bill_id = bill.bill_id.as_ref().unwrap().clone();
+    //         if bill_id_map.contains_key(&bill_id.to_string()) {
+    //             false
+    //         } else {
+    //             bill_id_map.insert(bill_id, true);
+    //             true
+    //         }
+    //     })
+    //     .collect::<Vec<ProPublicaBill>>();
     // Old concurrent way - too many requests at a time? Killing server?
     // let meta_bills = futures::future::join_all(fetch_futures)
     //     .await
     //     .into_iter()
     //     .flatten()
     //     .collect::<Vec<ProPublicaBill>>();
+    // println!("Saving {} bills", meta_bills.len());
 
     // Format and upsert bills to DB
-    for bill in meta_bills.iter() {
+    for (i, bill) in meta_bills.clone().iter().enumerate() {
         let bill_ref = bill.clone();
+        println!("Saving bill {} of {}", i, meta_bills.len());
         save_propub_bill(bill_ref, &ctx.connection_pool).await?;
+        if bill_id_map.contains_key(&bill.bill_id.as_ref().unwrap().to_string()) {
+            println!("Bill duplicate {}", bill.bill_id.as_ref().unwrap());
+            continue;
+        } else {
+            bill_id_map.insert(bill.bill_id.as_ref().unwrap().to_string(), true);
+        }
     }
+    println!("Duplicates count: {}", meta_bills.len() - bill_id_map.len());
 
     log!(Level::Info, "Synced All Bills");
 
@@ -386,4 +413,98 @@ pub async fn associate_bills_and_issues(
     Ok(Json(ResponseBody {
         data: "ok".to_string(),
     }))
+}
+
+pub async fn sync_cosponsors(ctx: Extension<ApiContext>) -> Result<String, ApiError> {
+    let representatives = sqlx::query_as!(
+        BreakdownRep,
+        r#"
+        SELECT *
+        FROM representatives
+        "#,
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+
+    let mut fetch_futures = vec![];
+    // let mut vote_upsert_queries = vec![];
+    let mut rep_ids_ordered_for_fetch_futures = vec![];
+    // Introduced
+    for rep in representatives.iter() {
+        let rep_cosponsored_bills = propublica_get_cosponsored_bills_paginated(
+            &ctx.config.PROPUBLICA_BASE_URI,
+            &ctx.config.PROPUBLICA_API_KEY,
+            &rep.propublica_id,
+            "introduced",
+            40,
+        );
+        rep_ids_ordered_for_fetch_futures.push(&rep.id);
+        fetch_futures.push(rep_cosponsored_bills);
+    }
+    // Updated
+    for rep in representatives.iter() {
+        let rep_ref = rep.clone();
+        let rep_cosponsored_bills = propublica_get_cosponsored_bills_paginated(
+            &ctx.config.PROPUBLICA_BASE_URI,
+            &ctx.config.PROPUBLICA_API_KEY,
+            &rep.propublica_id,
+            "updated",
+            40,
+        );
+        rep_ids_ordered_for_fetch_futures.push(&rep.id);
+        fetch_futures.push(rep_cosponsored_bills);
+    }
+
+    println!("Fetching cosponsored bills for all reps");
+
+    let results = futures::future::join_all(fetch_futures)
+        .await
+        .into_iter()
+        .collect::<Vec<Vec<ProPublicaBill>>>();
+
+    let mut bill_count = 0;
+    println!("Saving Reps Cosponsored Bills: {}", results.len());
+    for (i, result) in results.into_iter().enumerate() {
+        let rep_id = rep_ids_ordered_for_fetch_futures[i];
+        println!(
+            "Saving Reps Cosponsored Bills: {}: {} bills",
+            rep_id,
+            result.len()
+        );
+        bill_count += result.len();
+        for bill in result {
+            let bill_id = bill.bill_id;
+            let bill_record = sqlx::query!(
+                r#"
+                SELECT id
+                FROM bills
+                WHERE propublica_id = $1
+                "#,
+                bill_id
+            )
+            .fetch_optional(&ctx.connection_pool)
+            .await?;
+            if let Some(bill_record) = bill_record {
+                let bill_id = bill_record.id;
+                match sqlx::query!(
+                    r#"
+                        INSERT INTO cosponsors (bill_id, rep_id) values ($1, $2)
+                    "#,
+                    &bill_id,
+                    &rep_id
+                )
+                .execute(&ctx.connection_pool)
+                .await
+                {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("Error inserting cosponsor: {}", e);
+                    }
+                }
+            }
+        }
+    }
+    println!("Saved Reps Cosponsored Bills: {}", bill_count);
+
+    Ok("Synced All Cosponsored bills".to_string())
 }
