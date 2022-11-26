@@ -120,14 +120,17 @@ pub struct BreakdownIssue {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct User {
     pub id: Uuid,
-    pub email: String,
-    pub password: String,
+    pub email: Option<String>,
+    pub password: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub onboarded: bool,
     pub address: Option<String>,
     pub state_id: Option<Uuid>,
     pub district_id: Option<Uuid>,
+    pub phone: Option<String>,
+    pub phone_verified: bool,
+    pub email_verified: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }
@@ -138,7 +141,7 @@ pub struct RepresentativeVote {
     pub chamber: Option<String>,
     pub congress: Option<String>,
     pub congressional_session: Option<String>,
-    pub roll_call: String, // maybe?
+    pub roll_call: String,
     pub vote_uri: Option<String>,
     pub bill_propublica_id: String,
     pub question: Option<String>,

@@ -1,5 +1,5 @@
 #![allow(unused_must_use)]
-use super::users::create_user;
+use super::users::{create_user, CreateUserArgs};
 use crate::types::api::ResponseBody;
 use crate::{api::ApiContext, types::db::User, utils::api_error::ApiError};
 use anyhow::anyhow;
@@ -70,7 +70,7 @@ pub async fn signin(
     .await
     .map_err(|_| return ApiError::NotFound)?;
 
-    verify_password(body.password, user.password).await?;
+    verify_password(body.password, user.password.unwrap()).await?;
 
     session
         .insert("user_id", user.id.to_string())
@@ -106,7 +106,59 @@ pub async fn signup(
         return Err(ApiError::Anyhow(anyhow!("User already exists")));
     }
 
-    create_user(&ctx.connection_pool, &body.email, &body.password).await?;
+    create_user(
+        &ctx.connection_pool,
+        CreateUserArgs {
+            email: Some(body.email),
+            password: Some(body.password),
+            phone: None,
+        },
+    )
+    .await?;
+
+    Ok(Json(ResponseBody {
+        data: "ok".to_string(),
+    }))
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SignupSMSRequestBody {
+    pub phone: String,
+}
+pub async fn signup_sms(
+    ctx: Extension<ApiContext>,
+    Json(body): Json<SignupSMSRequestBody>,
+) -> Result<Json<ResponseBody<String>>, ApiError> {
+    if body.phone.len() == 0 {
+        return Err(ApiError::Anyhow(anyhow!("Phone number is required")));
+    }
+    let phone_exists = sqlx::query_as!(
+        User,
+        r#"
+          SELECT * FROM users WHERE phone = $1
+        "#,
+        body.phone
+    )
+    .fetch_one(&ctx.connection_pool)
+    .await
+    .is_ok();
+
+    // Guard clauses
+    if phone_exists {
+        return Err(ApiError::Anyhow(anyhow!(
+            "User with phone number already exists"
+        )));
+    }
+
+    create_user(
+        &ctx.connection_pool,
+        CreateUserArgs {
+            phone: Some(body.phone),
+            email: None,
+            password: None,
+        },
+    )
+    .await?;
 
     Ok(Json(ResponseBody {
         data: "ok".to_string(),
