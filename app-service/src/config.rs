@@ -47,4 +47,19 @@ pub struct Config {
 
     #[envconfig(from = "REDIS_PORT", default = "6378")]
     pub REDIS_PORT: String,
+
+    #[envconfig(
+        from = "TWILIO_ACCOUNT_ID",
+        default = "AC68fa2499ded39b8c5ea486b120b361b4"
+    )]
+    pub TWILIO_ACCOUNT_ID: String,
+
+    #[envconfig(
+        from = "TWILIO_AUTH_TOKEN",
+        default = "3b07753a6ca09ccb7cb65d6365a03f28"
+    )]
+    pub TWILIO_AUTH_TOKEN: String,
+
+    #[envconfig(from = "TWILIO_PHONE_NUMBER", default = "+17816509756")]
+    pub TWILIO_PHONE_NUMBER: String,
 }

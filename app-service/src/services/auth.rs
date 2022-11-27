@@ -1,12 +1,14 @@
 #![allow(unused_must_use)]
 use super::users::{create_user, CreateUserArgs};
 use crate::types::api::ResponseBody;
+use crate::utils::twilio::send_sms_message;
 use crate::{api::ApiContext, types::db::User, utils::api_error::ApiError};
 use anyhow::anyhow;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash};
 use axum::{Extension, Json};
 use axum_sessions::extractors::WritableSession;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 pub async fn hash_password(password: String) -> Result<String, ApiError> {
@@ -89,6 +91,7 @@ pub struct SignupRequestBody {
 pub async fn signup(
     ctx: Extension<ApiContext>,
     Json(body): Json<SignupRequestBody>,
+    mut session: WritableSession,
 ) -> Result<Json<ResponseBody<String>>, ApiError> {
     let email_exists = sqlx::query_as!(
         User,
@@ -106,7 +109,7 @@ pub async fn signup(
         return Err(ApiError::Anyhow(anyhow!("User already exists")));
     }
 
-    create_user(
+    let user = create_user(
         &ctx.connection_pool,
         CreateUserArgs {
             email: Some(body.email),
@@ -115,6 +118,10 @@ pub async fn signup(
         },
     )
     .await?;
+
+    session
+        .insert("user_id", user.id.to_string())
+        .map_err(|e| ApiError::Anyhow(anyhow!("Failed to insert user_id into session: {}", e)));
 
     Ok(Json(ResponseBody {
         data: "ok".to_string(),
@@ -128,7 +135,9 @@ pub struct SignupSMSRequestBody {
 pub async fn signup_sms(
     ctx: Extension<ApiContext>,
     Json(body): Json<SignupSMSRequestBody>,
+    mut session: WritableSession,
 ) -> Result<Json<ResponseBody<String>>, ApiError> {
+    let phone_number = body.phone.to_string().to_owned();
     if body.phone.len() == 0 {
         return Err(ApiError::Anyhow(anyhow!("Phone number is required")));
     }
@@ -153,15 +162,36 @@ pub async fn signup_sms(
     create_user(
         &ctx.connection_pool,
         CreateUserArgs {
-            phone: Some(body.phone),
+            phone: Some(phone_number.to_owned()),
             email: None,
             password: None,
         },
     )
     .await?;
 
+    // Generate a 6 digit random code and save to the user under phone_verification_code
+    let p = 10i32.pow(5);
+    let code: i32 = rand::thread_rng().gen_range(p..10 * p);
+    let user = sqlx::query_as!(
+        User,
+        r#"
+          UPDATE users SET phone_verification_code = $1 WHERE phone = $2 RETURNING *
+        "#,
+        code,
+        phone_number
+    )
+    .fetch_one(&ctx.connection_pool)
+    .await?;
+    // Send SMS for verification
+    let sms_body = "Your Breakdown verification code is: ".to_string() + &code.to_string();
+    send_sms_message(&ctx, &user.phone.unwrap(), &sms_body).await?;
+
+    session
+        .insert("user_id", user.id.to_string())
+        .map_err(|e| ApiError::Anyhow(anyhow!("Failed to insert user_id into session: {}", e)));
+
     Ok(Json(ResponseBody {
-        data: "ok".to_string(),
+        data: code.to_string(),
     }))
 }
 

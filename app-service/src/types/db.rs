@@ -129,6 +129,7 @@ pub struct User {
     pub state_id: Option<Uuid>,
     pub district_id: Option<Uuid>,
     pub phone: Option<String>,
+    pub phone_verification_code: Option<i32>,
     pub phone_verified: bool,
     pub email_verified: bool,
     pub created_at: DateTime<Utc>,
