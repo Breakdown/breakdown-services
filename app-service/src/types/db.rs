@@ -4,7 +4,9 @@ use sqlx::{
     types::{BigDecimal, Uuid},
     FromRow,
 };
+use typeshare::typeshare;
 
+#[typeshare]
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct BreakdownBill {
     pub id: Uuid,
@@ -51,6 +53,7 @@ pub struct BreakdownBill {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
+#[typeshare]
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct BreakdownRep {
     pub id: Uuid,
@@ -107,6 +110,7 @@ pub struct BreakdownRep {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
+#[typeshare]
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct BreakdownIssue {
     pub id: Uuid,
@@ -117,6 +121,7 @@ pub struct BreakdownIssue {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
+#[typeshare]
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct User {
     pub id: Uuid,
@@ -136,6 +141,7 @@ pub struct User {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
+#[typeshare]
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct RepresentativeVote {
     pub rep_propublica_id: Option<String>,
