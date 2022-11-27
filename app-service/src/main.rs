@@ -1,12 +1,6 @@
 #![allow(dead_code)]
 use app_service::api::auth;
-use app_service::api::bills;
-use app_service::api::health;
-use app_service::api::issues;
-use app_service::api::reps;
-use app_service::api::sync;
-use app_service::api::users;
-use app_service::api::ApiContext;
+use app_service::api::{bills, health, issues, reps, sync, users, ApiContext};
 use app_service::config::Config;
 use app_service::telemetry::{get_subscriber, init_subscriber};
 use app_service::utils::api_error::ApiError;
