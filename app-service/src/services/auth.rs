@@ -7,7 +7,7 @@ use anyhow::anyhow;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash};
 use axum::{Extension, Json};
-use axum_sessions::extractors::WritableSession;
+use axum_sessions::extractors::{ReadableSession, WritableSession};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -135,7 +135,6 @@ pub struct SignupSMSRequestBody {
 pub async fn signup_sms(
     ctx: Extension<ApiContext>,
     Json(body): Json<SignupSMSRequestBody>,
-    mut session: WritableSession,
 ) -> Result<Json<ResponseBody<String>>, ApiError> {
     let phone_number = body.phone.to_string().to_owned();
     if body.phone.len() == 0 {
@@ -186,12 +185,135 @@ pub async fn signup_sms(
     let sms_body = "Your Breakdown verification code is: ".to_string() + &code.to_string();
     send_sms_message(&ctx, &user.phone.unwrap(), &sms_body).await?;
 
+    Ok(Json(ResponseBody {
+        data: code.to_string(),
+    }))
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SigninSMSRequestBody {
+    pub phone: String,
+}
+pub async fn signin_sms(
+    ctx: Extension<ApiContext>,
+    Json(body): Json<SigninSMSRequestBody>,
+) -> Result<Json<ResponseBody<String>>, ApiError> {
+    let phone_number = body.phone.to_string().to_owned();
+    if body.phone.len() == 0 {
+        return Err(ApiError::Anyhow(anyhow!("Phone number is required")));
+    }
+    let user = sqlx::query_as!(
+        User,
+        r#"
+          SELECT * FROM users WHERE phone = $1
+        "#,
+        body.phone
+    )
+    .fetch_optional(&ctx.connection_pool)
+    .await?;
+
+    // Guard clauses
+    if user.is_none() {
+        return Err(ApiError::Anyhow(anyhow!(
+            "User with phone number already exists"
+        )));
+    }
+
+    // Generate a 6 digit random code and save to the user under phone_verification_code
+    let p = 10i32.pow(5);
+    let code: i32 = rand::thread_rng().gen_range(p..10 * p);
+    let user = sqlx::query_as!(
+        User,
+        r#"
+          UPDATE users SET phone_verification_code = $1 WHERE phone = $2 RETURNING *
+        "#,
+        code,
+        phone_number
+    )
+    .fetch_one(&ctx.connection_pool)
+    .await?;
+    // Send SMS for verification
+    let sms_body = "Your Breakdown verification code is: ".to_string() + &code.to_string();
+    send_sms_message(&ctx, &user.phone.unwrap(), &sms_body).await?;
+
+    Ok(Json(ResponseBody {
+        data: code.to_string(),
+    }))
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct VerifySMSRequestBody {
+    pub phone: String,
+    pub code: String,
+}
+
+pub async fn verify_sms(
+    ctx: Extension<ApiContext>,
+    Json(body): Json<VerifySMSRequestBody>,
+    mut session: WritableSession,
+) -> Result<Json<ResponseBody<String>>, ApiError> {
+    let phone_number = body.phone.to_string().to_owned();
+    let user = sqlx::query_as!(
+        User,
+        r#"
+          SELECT * FROM users WHERE phone = $1
+        "#,
+        phone_number
+    )
+    .fetch_one(&ctx.connection_pool)
+    .await?;
+
+    if user.phone_verification_code.unwrap() != body.code.parse::<i32>().unwrap() {
+        println!("Need to return error");
+        return Err(ApiError::Anyhow(anyhow!("Invalid verification code")));
+    } else {
+        // Update the user to set phone_verified to true
+        sqlx::query_as!(
+            User,
+            r#"
+              UPDATE users SET phone_verified = true WHERE phone = $1 RETURNING *
+            "#,
+            phone_number
+        )
+        .fetch_one(&ctx.connection_pool)
+        .await?;
+    }
+
     session
         .insert("user_id", user.id.to_string())
         .map_err(|e| ApiError::Anyhow(anyhow!("Failed to insert user_id into session: {}", e)));
 
     Ok(Json(ResponseBody {
-        data: code.to_string(),
+        data: "ok".to_string(),
+    }))
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ResendSMSRequestBody {
+    pub phone: String,
+}
+pub async fn resend_sms(
+    ctx: Extension<ApiContext>,
+    Json(body): Json<ResendSMSRequestBody>,
+) -> Result<Json<ResponseBody<String>>, ApiError> {
+    let p = 10i32.pow(5);
+    let code: i32 = rand::thread_rng().gen_range(p..10 * p);
+    let user = sqlx::query_as!(
+        User,
+        r#"
+          UPDATE users SET phone_verification_code = $1 WHERE phone = $2 RETURNING *
+        "#,
+        code,
+        body.phone
+    )
+    .fetch_one(&ctx.connection_pool)
+    .await?;
+    // Send SMS for verification
+    let sms_body = "Your Breakdown verification code is: ".to_string() + &code.to_string();
+    send_sms_message(&ctx, &user.phone.unwrap(), &sms_body).await?;
+
+    Ok(Json(ResponseBody {
+        data: "ok".to_string(),
     }))
 }
 

@@ -19,6 +19,5 @@ pub async fn send_sms_message(
         .run()
         .await
         .map_err(|_| ApiError::InternalError)?;
-    println!("Message sent - from: {}, to: {}, body: {}", from, to, body);
     Ok("ok".to_string())
 }
