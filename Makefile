@@ -9,4 +9,4 @@ run-app:
 	cd mobile; npx expo start
 
 .PHONY: run
-run: make -j 2 run-backend run-app
+run: -j 2 run-backend run-app

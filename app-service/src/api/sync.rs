@@ -154,25 +154,6 @@ async fn bills_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError
     .collect::<Vec<ProPublicaBill>>();
 
     let mut bill_id_map = HashMap::new();
-    // let unique_bills = meta_bills
-    //     .into_iter()
-    //     .filter(|bill| {
-    //         let bill_id = bill.bill_id.as_ref().unwrap().clone();
-    //         if bill_id_map.contains_key(&bill_id.to_string()) {
-    //             false
-    //         } else {
-    //             bill_id_map.insert(bill_id, true);
-    //             true
-    //         }
-    //     })
-    //     .collect::<Vec<ProPublicaBill>>();
-    // Old concurrent way - too many requests at a time? Killing server?
-    // let meta_bills = futures::future::join_all(fetch_futures)
-    //     .await
-    //     .into_iter()
-    //     .flatten()
-    //     .collect::<Vec<ProPublicaBill>>();
-    // println!("Saving {} bills", meta_bills.len());
 
     // Format and upsert bills to DB
     for (i, bill) in meta_bills.clone().iter().enumerate() {

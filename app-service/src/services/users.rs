@@ -70,3 +70,47 @@ pub async fn create_user(db_connection: &PgPool, args: CreateUserArgs) -> Result
         Ok(user)
     }
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PatchUserArgs {
+    pub email: Option<String>,
+    pub password: Option<String>,
+    pub phone: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub onboarded: Option<bool>,
+    pub address: Option<String>,
+}
+pub async fn patch_user(
+    ctx: Extension<ApiContext>,
+    session: ReadableSession,
+    Json(args): Json<PatchUserArgs>,
+) -> Result<Json<ResponseBody<User>>, ApiError> {
+    let user_id = session.get::<Uuid>("user_id").unwrap();
+    let user = sqlx::query_as!(
+        User,
+        r#"
+        UPDATE users
+            SET email = coalesce($2, users.email),
+                password = coalesce($3, users.password),
+                phone = coalesce($4, users.phone),
+                first_name = coalesce($5, users.first_name),
+                last_name = coalesce($6, users.last_name),
+                onboarded = coalesce($7, users.onboarded),
+                address = coalesce($8, users.address)
+            WHERE id = $1 RETURNING *
+        "#,
+        user_id,
+        args.email,
+        args.password,
+        args.phone,
+        args.first_name,
+        args.last_name,
+        args.onboarded,
+        args.address
+    )
+    .fetch_one(&ctx.connection_pool)
+    .await
+    .unwrap();
+    Ok(Json(ResponseBody { data: user }))
+}
