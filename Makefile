@@ -1,3 +1,5 @@
+MAKEFLAGS += -j2
+
 .PHONY: run-backend
 run-backend:
 	docker compose down
@@ -9,4 +11,4 @@ run-app:
 	cd mobile; npx expo start
 
 .PHONY: run
-run: -j 2 run-backend run-app
+run: run-backend run-app

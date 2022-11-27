@@ -7,7 +7,7 @@ use anyhow::anyhow;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash};
 use axum::{Extension, Json};
-use axum_sessions::extractors::{ReadableSession, WritableSession};
+use axum_sessions::extractors::WritableSession;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
