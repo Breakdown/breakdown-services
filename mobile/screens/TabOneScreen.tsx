@@ -1,9 +1,25 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { signInEmailPassword } from "../data/mutations";
 
 export default function TabOneScreen() {
+  const signinMutation = useMutation({
+    mutationFn: signInEmailPassword,
+  });
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Tab One</Text>
+      <TouchableOpacity
+        onPress={() => {
+          signinMutation.mutate({
+            email: "ryan@breakdown.us",
+            password: "123456",
+          });
+        }}
+      >
+        <Text>Signin</Text>
+      </TouchableOpacity>
     </View>
   );
 }

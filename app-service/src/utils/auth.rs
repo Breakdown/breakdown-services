@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use super::api_error::ApiError;
 use crate::config::Config;
 use async_redis_session::RedisSessionStore;
@@ -15,8 +17,12 @@ pub async fn create_session_layer() -> Result<SessionLayer<RedisSessionStore>, A
         .map_err(|_| anyhow::anyhow!("Could not connect to Redis"))?;
     let secret = cfg.SESSION_SECRET.as_bytes();
 
-    // TODO: with_cookie_domain
-    Ok(SessionLayer::new(store, &secret).with_cookie_name("bd_session"))
+    // TODO: with_cookie_domain?
+    Ok(
+        SessionLayer::new(store, &secret)
+            .with_cookie_name("bd_session")
+            .with_session_ttl(Some(Duration::from_secs(60 * 60 * 24 * 30))), // 1 month
+    )
 }
 
 pub async fn create_session_auth_layer<B>(
