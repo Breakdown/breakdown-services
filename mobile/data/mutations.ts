@@ -13,11 +13,16 @@ export const signInEmailPassword = async ({
     method: "POST",
     body: { email, password },
   });
-  if (response.ok) {
-    return response.json();
-  } else {
-    throw new Error(response.statusText);
-  }
+  return response;
 };
 
-export const signInSMS = async (phoneNumber: string) => {};
+export const MUTATION_SIGNIN_SMS = "MUTATION_SIGNIN_SMS";
+export const signInSMS = async ({ phoneNumber }: { phoneNumber: string }) => {
+  const response = await baseFetch({
+    url: "/auth/signin-sms",
+    method: "POST",
+    // Needs to be in format "+11234567890"
+    body: { phone: phoneNumber },
+  });
+  return response;
+};
