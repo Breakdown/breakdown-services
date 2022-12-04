@@ -1,13 +1,31 @@
-import { Button as BaseButton, ButtonProps } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableOpacityBase,
+  TouchableOpacityProps,
+} from "react-native";
+import { buttonDefault, buttonText } from "../styles";
 
-interface Props {
-  children: React.ReactNode;
+interface Props extends TouchableOpacityProps {
+  children?: React.ReactNode;
   title: string;
-  onClick: () => void;
+  onPress: () => void;
 }
 
-function Button(props: Props) {
-  return <></>;
-}
+const Button = ({ children, title, onPress, ...otherProps }: Props) => {
+  return (
+    <TouchableOpacity style={styles.button} onPress={onPress} {...otherProps}>
+      <Text style={styles.buttonText}>{title}</Text>
+    </TouchableOpacity>
+  );
+};
+
+const styles = StyleSheet.create({
+  button: { ...buttonDefault },
+  buttonText: {
+    ...buttonText,
+  },
+});
 
 export default Button;
