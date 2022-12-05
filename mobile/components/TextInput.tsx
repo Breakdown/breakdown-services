@@ -12,13 +12,14 @@ interface Props extends TextInputProps {
   label?: string;
   placeholder?: string;
   value?: string;
+  onChangeText?: (text: string) => void;
 }
 
 export default ({
   error,
   label,
   value,
-  onChange,
+  onChangeText,
   placeholder,
   ...otherProps
 }: Props) => {
@@ -28,7 +29,7 @@ export default ({
       <TextInput
         style={styles.input}
         value={value}
-        onChange={onChange}
+        onChangeText={(e) => onChangeText?.(e.toString())}
         placeholder={placeholder}
         {...otherProps}
       />
@@ -48,8 +49,8 @@ const styles = StyleSheet.create({
     borderColor: "#20232a40",
     borderWidth: 1,
     width: "100%",
-    paddingHorizontal: 5,
-    paddingVertical: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 12,
     borderRadius: 5,
   },
 });

@@ -1,7 +1,7 @@
 import { Text, View, ViewProps } from "react-native";
 
 interface Props extends ViewProps {
-  label: string;
+  label?: string;
 }
 const Divider = (props: Props) => {
   return (
@@ -13,20 +13,24 @@ const Divider = (props: Props) => {
         width: "100%",
         marginVertical: 10,
       }}
+      {...props}
     >
       <View
         style={{
-          borderBottomColor: "#E5E5E5",
+          borderBottomColor: "#20232a40",
           borderBottomWidth: 1,
           width: "45%",
         }}
       />
-      <Text style={{ fontSize: 14, color: "#d3d3d3", marginHorizontal: 6 }}>
-        {props.label}
-      </Text>
+      {props.label && (
+        <Text style={{ fontSize: 16, color: "#20232a40", marginHorizontal: 6 }}>
+          {props.label}
+        </Text>
+      )}
+
       <View
         style={{
-          borderBottomColor: "#E5E5E5",
+          borderBottomColor: "#20232a40",
           borderBottomWidth: 1,
           width: "45%",
         }}

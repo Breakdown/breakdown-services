@@ -26,3 +26,19 @@ export const signInSMS = async ({ phoneNumber }: { phoneNumber: string }) => {
   });
   return response;
 };
+
+export const MUTATION_VERIFY_SMS = "MUTATION_VERIFY_SMS";
+export const verifyCodeSMS = async ({
+  phoneNumber,
+  verificationCode,
+}: {
+  verificationCode: string;
+  phoneNumber: string;
+}) => {
+  const response = await baseFetch({
+    url: "/auth/verify-sms",
+    method: "POST",
+    body: { phone: phoneNumber, code: verificationCode },
+  });
+  return response;
+};
