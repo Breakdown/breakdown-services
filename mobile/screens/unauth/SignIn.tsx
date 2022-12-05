@@ -10,10 +10,11 @@ import {
   TextInputChangeEventData,
   View,
 } from "react-native";
-import PhoneInput from "react-native-phone-number-input";
 import Button, { ButtonType } from "../../components/Button";
 import Divider from "../../components/Divider";
 import KeyboardAvoidView from "../../components/hoc/KeyboardAvoidView";
+import BasePhoneInput from "react-native-phone-number-input";
+import PhoneInput from "../../components/PhoneInput";
 import TextInput from "../../components/TextInput";
 import {
   signInEmailPassword,
@@ -30,7 +31,7 @@ export default function SignIn() {
   const [password, setPassword] = useState(null);
   const [phone, setPhone] = useState(null);
   const [formattedPhone, setFormattedPhone] = useState(null);
-  const phoneInput = useRef<PhoneInput>(null);
+  const phoneInput = useRef<BasePhoneInput>(null);
   const [displayVerificationField, setDisplayVerificationField] =
     useState(false);
 
@@ -99,7 +100,7 @@ export default function SignIn() {
           keyboardDismissMode="interactive"
         >
           <View style={styles.formContainer}>
-            <Text style={styles.title}>Sign In With Email</Text>
+            <Text style={styles.title}>Sign In with Email</Text>
             <TextInput
               value={email}
               onChangeText={setEmail}
@@ -119,7 +120,7 @@ export default function SignIn() {
             />
             <Divider label={"OR"} />
             <Text style={styles.title}>
-              {displayVerificationField ? "Verify Code" : "Sign In With SMS"}
+              {displayVerificationField ? "Verify Code" : "Sign In with SMS"}
             </Text>
 
             {displayVerificationField ? (
@@ -131,37 +132,10 @@ export default function SignIn() {
               />
             ) : (
               <PhoneInput
-                containerStyle={{
-                  backgroundColor: "transparent",
-                  borderColor: "#20232a40",
-                  borderWidth: 1,
-                  borderRadius: 5,
-                  marginVertical: 12,
-                  height: 52,
-                }}
-                textContainerStyle={{
-                  backgroundColor: "transparent",
-                  padding: 0,
-                  height: "100%",
-                }}
-                textInputStyle={{
-                  fontSize: 14,
-                }}
-                flagButtonStyle={{
-                  borderTopLeftRadius: 8,
-                  borderBottomLeftRadius: 8,
-                  width: "20%",
-                }}
                 ref={phoneInput}
-                defaultValue={phone}
-                defaultCode="US"
-                layout="second"
-                onChangeText={(text) => {
-                  setPhone(text);
-                }}
-                onChangeFormattedText={(text) => {
-                  setFormattedPhone(text);
-                }}
+                value={phone}
+                setPhone={setPhone}
+                setFormattedPhone={setFormattedPhone}
               />
             )}
 
