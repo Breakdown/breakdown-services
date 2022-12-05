@@ -132,7 +132,7 @@ export default function SignIn() {
               />
             ) : (
               <PhoneInput
-                ref={phoneInput}
+                inputRef={phoneInput}
                 value={phone}
                 setPhone={setPhone}
                 setFormattedPhone={setFormattedPhone}

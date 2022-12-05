@@ -1,16 +1,19 @@
+import { Ionicons } from "@expo/vector-icons";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
   DarkTheme,
   DefaultTheme,
   NavigationContainer,
 } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import { ColorSchemeName } from "react-native";
+import { ColorSchemeName, useColorScheme } from "react-native";
 import useAuth from "../hooks/useAuth";
+import Feed from "../screens/Feed";
 import NotFoundScreen from "../screens/NotFound";
 import SignIn from "../screens/unauth/SignIn";
 import SignUp from "../screens/unauth/SignUp";
 import WelcomeScreen from "../screens/unauth/WelcomeScreen";
-import { BaseNavigator } from "./navigator";
+import { BD_PURPLE } from "../styles";
 
 const Stack = createStackNavigator();
 
@@ -29,16 +32,47 @@ export const Navigation = ({ colorScheme }: Props) => {
   );
 };
 
-const AuthenticatedStack = () => {
+function TabBarIcon(props) {
+  return <Ionicons size={30} style={{ marginBottom: -3 }} {...props} />;
+}
+
+const FirstTabStack = () => {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Root" component={BaseNavigator} />
+      <Stack.Screen name="Feed" component={Feed} />
       <Stack.Screen
         name="NotFound"
         component={NotFoundScreen}
         options={{ title: "Oops!" }}
       />
     </Stack.Navigator>
+  );
+};
+
+const BottomTab = createBottomTabNavigator();
+
+export const AuthenticatedStack = () => {
+  const colorScheme = useColorScheme();
+
+  return (
+    <BottomTab.Navigator
+      initialRouteName="Feed"
+      screenOptions={{ tabBarActiveTintColor: "#d3d3d3" }}
+    >
+      <BottomTab.Screen
+        name="Feed"
+        component={FirstTabStack}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon
+              name="ios-home"
+              color={focused ? BD_PURPLE : "#D3D3D3"}
+            />
+          ),
+        }}
+      />
+    </BottomTab.Navigator>
   );
 };
 

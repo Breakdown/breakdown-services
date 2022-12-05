@@ -3,7 +3,9 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Button, { ButtonType } from "../../components/Button";
+import Divider from "../../components/Divider";
 import { signInEmailPassword } from "../../data/mutations";
+import { titleText } from "../../styles";
 
 export default function WelcomeScreen() {
   const navigation = useNavigation();
@@ -16,6 +18,7 @@ export default function WelcomeScreen() {
           // @ts-ignore
           onPress={() => navigation.navigate("SignIn")}
         />
+        <Divider label={"OR"} />
         <Button
           title={"Sign Up"}
           type={ButtonType.Bordered}
@@ -34,8 +37,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    fontSize: 20,
-    fontWeight: "bold",
+    ...titleText,
+    marginBottom: 12,
+    textAlign: "center",
   },
   separator: {
     marginVertical: 30,

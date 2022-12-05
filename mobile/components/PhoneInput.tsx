@@ -1,8 +1,7 @@
-import { Text, View } from "react-native";
 import BasePhoneInput from "react-native-phone-number-input";
 
 interface Props {
-  ref: React.RefObject<BasePhoneInput>;
+  inputRef: React.RefObject<BasePhoneInput>;
   value: string;
   setPhone: (value: string) => void;
   setFormattedPhone: (value: string) => void;
@@ -32,7 +31,7 @@ const PhoneInput = (props: Props) => {
         borderBottomLeftRadius: 8,
         width: "20%",
       }}
-      ref={props.ref}
+      ref={props.inputRef}
       defaultValue={props.value}
       defaultCode="US"
       layout="second"

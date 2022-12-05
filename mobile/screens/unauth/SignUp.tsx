@@ -127,7 +127,9 @@ export default function SignUp() {
             />
             <Divider label={"OR"} />
             <Text style={styles.title}>
-              {displayVerificationField ? "Verify Code" : "Sign Up with SMS"}
+              {displayVerificationField
+                ? "Enter Your Verification Code"
+                : "Sign Up with SMS"}
             </Text>
 
             {displayVerificationField ? (
@@ -139,23 +141,23 @@ export default function SignUp() {
               />
             ) : (
               <PhoneInput
-                ref={phoneInput}
+                inputRef={phoneInput}
                 value={phone}
                 setPhone={setPhone}
                 setFormattedPhone={setFormattedPhone}
               />
             )}
 
-            <Button
-              onPress={onSubmitSms}
-              type={ButtonType.Bordered}
-              title={
-                displayVerificationField ? "Verify" : "Send Verification Code"
-              }
-              loading={
-                signUpSmsMutation.isLoading || verifyCodeSMSMutation.isLoading
-              }
-            />
+            {!displayVerificationField && (
+              <Button
+                onPress={onSubmitSms}
+                type={ButtonType.Bordered}
+                title={"Send Verification Code"}
+                loading={
+                  signUpSmsMutation.isLoading || verifyCodeSMSMutation.isLoading
+                }
+              />
+            )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

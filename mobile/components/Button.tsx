@@ -3,7 +3,6 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableOpacityBase,
   TouchableOpacityProps,
 } from "react-native";
 import {
@@ -11,6 +10,7 @@ import {
   buttonText,
   buttonBordered,
   buttonTextInverted,
+  BD_PURPLE,
 } from "../styles";
 
 export enum ButtonType {
@@ -36,7 +36,10 @@ const Button = ({
   return (
     <TouchableOpacity style={styles[type]} onPress={onPress} {...otherProps}>
       {loading ? (
-        <ActivityIndicator size="small" color="#fff" />
+        <ActivityIndicator
+          size="small"
+          color={[ButtonType.Bordered].includes(type) ? BD_PURPLE : "white"}
+        />
       ) : (
         <Text
           style={

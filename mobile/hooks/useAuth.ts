@@ -10,10 +10,6 @@ interface UseAuthExport {
   refetch: () => void;
 }
 
-const logout = async () => {
-  await SecureStore.deleteItemAsync("session");
-};
-
 export default function useAuth({
   allowUnauth,
 }: {
@@ -28,6 +24,9 @@ export default function useAuth({
     refetchOnWindowFocus: false,
     retry: false,
   });
+  const logout = async () => {
+    await SecureStore.deleteItemAsync("session");
+  };
 
   useEffect(() => {
     if (data?.data) {
