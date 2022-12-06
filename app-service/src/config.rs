@@ -42,9 +42,6 @@ pub struct Config {
     #[envconfig(from = "REDIS_HOST", default = "localhost")]
     pub REDIS_HOST: String,
 
-    #[envconfig(from = "REDIS_PASSWORD", default = "password_to_redis")]
-    pub REDIS_PASSWORD: String,
-
     #[envconfig(from = "REDIS_PORT", default = "6378")]
     pub REDIS_PORT: String,
 

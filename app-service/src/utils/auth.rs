@@ -9,10 +9,7 @@ use envconfig::Envconfig;
 
 pub async fn create_session_layer() -> Result<SessionLayer<RedisSessionStore>, ApiError> {
     let cfg = Config::init_from_env().unwrap();
-    let redis_url = format!(
-        "redis://:{}@{}:{}",
-        cfg.REDIS_PASSWORD, cfg.REDIS_HOST, cfg.REDIS_PORT
-    );
+    let redis_url = format!("redis://{}:{}", cfg.REDIS_HOST, cfg.REDIS_PORT);
     let store = RedisSessionStore::new(redis_url)
         .map_err(|_| anyhow::anyhow!("Could not connect to Redis"))?;
     let secret = cfg.SESSION_SECRET.as_bytes();
