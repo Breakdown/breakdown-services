@@ -15,6 +15,9 @@ pub struct Config {
     )]
     pub DATABASE_URL: String,
 
+    #[envconfig(from = "PORT", default = "8080")]
+    pub PORT: String,
+
     #[envconfig(from = "DB_MAX_CONNECTIONS", default = "100")]
     pub DB_MAX_CONNECTIONS: String,
 

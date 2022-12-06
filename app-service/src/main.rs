@@ -9,6 +9,7 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Extension;
 use axum::Router;
+use bigdecimal::ToPrimitive;
 use envconfig::Envconfig;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::PgPoolOptions;
@@ -25,10 +26,11 @@ async fn main() -> std::io::Result<()> {
     init_subscriber(subscriber);
 
     let config = Config::init_from_env().unwrap();
+    let port = config.PORT.parse::<u16>().unwrap();
 
     let session_layer = create_session_layer()
         .await
-        .map_err(|_| ApiError::InternalError)
+        .map_err(|_| return ApiError::InternalError)
         .unwrap();
 
     // Disable sqlx default statement logging - VERY verbose
@@ -60,7 +62,7 @@ async fn main() -> std::io::Result<()> {
         .layer(TraceLayer::new_for_http())
         .layer(session_layer);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
