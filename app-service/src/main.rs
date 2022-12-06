@@ -42,6 +42,14 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Could not connect to database");
 
+    // Run migrations
+    if ["DEV", "PRODUCTION"].contains(&config.ENVIRONMENT.as_str()) {
+        sqlx::migrate!("./migrations")
+            .run(&connection_pool)
+            .await
+            .expect("Could not run migrations");
+    }
+
     let state = ApiContext {
         config: Arc::new(config),
         connection_pool,

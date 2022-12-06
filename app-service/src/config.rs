@@ -6,6 +6,9 @@ use envconfig::Envconfig;
 // "postgres://postgres:postgres@localhost:5438"
 #[derive(Envconfig, Clone, Debug)]
 pub struct Config {
+    #[envconfig(from = "ENVIRONMENT", default = "local")]
+    pub ENVIRONMENT: String,
+
     #[envconfig(
         from = "DATABASE_URL",
         default = "postgres://postgres:postgres@localhost:5438"
