@@ -43,7 +43,7 @@ async fn main() -> std::io::Result<()> {
         .expect("Could not connect to database");
 
     // Run migrations
-    if ["DEV", "PRODUCTION"].contains(&config.ENVIRONMENT.as_str()) {
+    if ["dev", "production"].contains(&config.ENVIRONMENT.as_str()) {
         sqlx::migrate!("./migrations")
             .run(&connection_pool)
             .await
