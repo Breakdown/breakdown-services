@@ -1,8 +1,9 @@
-use crate::types::api::ResponseBody;
-use crate::types::db::User;
+use crate::types::api::{GetFeedPagination, GetMeResponse, ResponseBody};
+use crate::types::db::{BreakdownBill, User};
 use crate::utils::api_error::ApiError;
 use crate::{api::ApiContext, services::auth::hash_password};
 use anyhow::anyhow;
+use axum::extract::Query;
 use axum::{Extension, Json};
 use axum_sessions::extractors::ReadableSession;
 use log::log;
@@ -10,10 +11,37 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
 
+pub async fn get_feed(
+    ctx: Extension<ApiContext>,
+    session: ReadableSession,
+    pagination: Query<GetFeedPagination>,
+) -> Result<Json<ResponseBody<Vec<BreakdownBill>>>, ApiError> {
+    let query_params: GetFeedPagination = pagination.0;
+    let bills = sqlx::query!(
+        r#"
+            SELECT b.* FROM bills b
+            LEFT OUTER JOIN issues i
+            ON b.primary_issue_id = i.id
+            ORDER BY latest_major_action_date DESC
+            LIMIT COALESCE($1, 50)
+            OFFSET COALESCE($2, 0)
+        "#,
+        query_params.limit,
+        query_params.offset
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+    println!("hello");
+    println!("bills: {:#?}", bills[1]);
+
+    todo!()
+    // Ok(Json(ResponseBody { data: bills }))
+}
+
 pub async fn get_me(
     ctx: Extension<ApiContext>,
     session: ReadableSession,
-) -> Result<Json<ResponseBody<User>>, ApiError> {
+) -> Result<Json<ResponseBody<GetMeResponse>>, ApiError> {
     let user_id = session.get::<Uuid>("user_id").unwrap();
     let user = sqlx::query_as!(
         User,
@@ -25,7 +53,23 @@ pub async fn get_me(
     .fetch_one(&ctx.connection_pool)
     .await
     .unwrap();
-    Ok(Json(ResponseBody { data: user }))
+    let response = GetMeResponse {
+        id: user.id,
+        email: user.email,
+        password: user.password,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        onboarded: user.onboarded,
+        address: user.address,
+        state_id: user.state_id,
+        district_id: user.district_id,
+        phone: user.phone,
+        phone_verified: user.phone_verified,
+        email_verified: user.email_verified,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+    };
+    Ok(Json(ResponseBody { data: response }))
 }
 
 #[derive(Serialize, Deserialize, Debug)]

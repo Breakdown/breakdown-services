@@ -6,6 +6,7 @@ use crate::{
     types::api::ResponseBody,
     utils::api_error::ApiError,
 };
+use anyhow::anyhow;
 use axum::{routing::post, Extension, Json, Router};
 use axum_macros::debug_handler;
 use log::{log, Level};
@@ -158,7 +159,10 @@ async fn seed_states(ctx: Extension<ApiContext>) -> Result<&'static str, ApiErro
             &state_code,
         )
         .fetch_one(&ctx.connection_pool)
-        .await?;
+        .await
+        .map_err(|e| {
+            return ApiError::Anyhow(anyhow!("Error upserting state"));
+        });
     }
 
     Ok("Seeded States")

@@ -198,7 +198,6 @@ pub async fn signin_sms(
     ctx: Extension<ApiContext>,
     Json(body): Json<SigninSMSRequestBody>,
 ) -> Result<Json<ResponseBody<String>>, ApiError> {
-    println!("{:#?}", body);
     let phone_number = body.phone.to_string().to_owned();
     if body.phone.len() == 0 {
         return Err(ApiError::Anyhow(anyhow!("Phone number is required")));
@@ -237,7 +236,6 @@ pub async fn signin_sms(
     let sms_body = "Your Breakdown verification code is: ".to_string() + &code.to_string();
     send_sms_message(&ctx, &user.phone.unwrap(), &sms_body).await?;
 
-    println!("code: {}", code);
     Ok(Json(ResponseBody {
         data: code.to_string(),
     }))
@@ -266,7 +264,6 @@ pub async fn verify_sms(
     .await?;
 
     if user.phone_verification_code.unwrap() != body.code.parse::<i32>().unwrap() {
-        println!("Need to return error");
         return Err(ApiError::Anyhow(anyhow!("Invalid verification code")));
     } else {
         // Update the user to set phone_verified to true

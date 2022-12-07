@@ -254,7 +254,7 @@ pub async fn sync_bills_and_issues(connection_pool: &Pool<Postgres>) -> Result<(
             println!("Associating bill {} with issue {}", bill.id, issue_id);
             sqlx::query!(
                 r#"
-                INSERT INTO bills_issues (bill_id, issue_id) values ($1, $2)
+                INSERT INTO bills_issues (bill_id, issue_id) values ($1, $2) ON CONFLICT DO NOTHING
                 "#,
                 &bill.id,
                 &issue_id,

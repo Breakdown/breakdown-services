@@ -9,7 +9,6 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Extension;
 use axum::Router;
-use bigdecimal::ToPrimitive;
 use envconfig::Envconfig;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::PgPoolOptions;
