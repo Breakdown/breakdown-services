@@ -1,4 +1,4 @@
-use crate::types::api::{GetFeedPagination, GetMeResponse, ResponseBody};
+use crate::types::api::{FeedBill, GetFeedPagination, GetMeResponse, ResponseBody};
 use crate::types::db::{BreakdownBill, User};
 use crate::utils::api_error::ApiError;
 use crate::{api::ApiContext, services::auth::hash_password};
@@ -13,15 +13,24 @@ use uuid::Uuid;
 
 pub async fn get_feed(
     ctx: Extension<ApiContext>,
-    session: ReadableSession,
     pagination: Query<GetFeedPagination>,
-) -> Result<Json<ResponseBody<Vec<BreakdownBill>>>, ApiError> {
+) -> Result<Json<ResponseBody<Vec<FeedBill>>>, ApiError> {
     let query_params: GetFeedPagination = pagination.0;
-    let bills = sqlx::query!(
+    let bills = sqlx::query_as!(
+        FeedBill,
         r#"
-            SELECT b.*, r.first_name as sponsor_first_name, r.last_name as sponsor_last_name FROM bills b
+            SELECT b.*,
+                r.first_name as sponsor_first_name,
+                r.last_name as sponsor_last_name,
+                r.image_url as sponsor_image_url,
+                r.short_title as sponsor_short_title,
+                pi.name as primary_issue_name,
+                pi.image_url as primary_issue_image_url
+            FROM bills b
             LEFT OUTER JOIN representatives r
             ON b.sponsor_id = r.id
+            LEFT OUTER JOIN issues pi
+            ON b.primary_issue_id = pi.id
             ORDER BY latest_major_action_date DESC
             LIMIT COALESCE($1, 50)
             OFFSET COALESCE($2, 0)
@@ -31,11 +40,8 @@ pub async fn get_feed(
     )
     .fetch_all(&ctx.connection_pool)
     .await?;
-    println!("hello");
-    println!("bills: {:#?}", bills[2]);
 
-    todo!()
-    // Ok(Json(ResponseBody { data: bills }))
+    Ok(Json(ResponseBody { data: bills }))
 }
 
 pub async fn get_me(

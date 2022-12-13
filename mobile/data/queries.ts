@@ -19,3 +19,12 @@ export const getBills = async () => {
   });
   return response;
 };
+
+export const QUERY_GET_BILL = "QUERY_GET_BILL";
+export const getBillById = async (billId: string) => {
+  const response = await baseFetch({
+    url: `/bills/${billId}`,
+    method: "GET",
+  });
+  return response;
+};

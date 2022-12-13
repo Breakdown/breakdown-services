@@ -227,6 +227,8 @@ pub async fn sync_bills_and_issues(connection_pool: &Pool<Postgres>) -> Result<(
         if (bill_primary_subject.chars().count() == 0) && (bill_subjects.len() == 0) {
             continue;
         }
+
+        // Issues
         let mut associated_issue_ids: Vec<Uuid> = vec![];
         for issue in all_issues.clone() {
             let issue_subjects = issue.subjects.unwrap();
@@ -261,6 +263,33 @@ pub async fn sync_bills_and_issues(connection_pool: &Pool<Postgres>) -> Result<(
             )
             .execute(&mut tx)
             .await?;
+        }
+
+        // Primary Issue
+        if (bill_primary_subject.chars().count() == 0) {
+            continue;
+        }
+        let primary_issue = sqlx::query_as!(
+            BreakdownIssue,
+            r#"
+            SELECT * FROM issues WHERE $1 = ANY(subjects)
+            "#,
+            &bill_primary_subject
+        )
+        .fetch_optional(connection_pool)
+        .await?;
+        if primary_issue.is_some() {
+            sqlx::query!(
+                r#"
+                UPDATE bills SET primary_issue_id = $1 WHERE id = $2
+                "#,
+                &primary_issue.unwrap().id,
+                &bill.id
+            )
+            .execute(connection_pool)
+            .await?;
+        } else {
+            continue;
         }
     }
     tx.commit().await?;

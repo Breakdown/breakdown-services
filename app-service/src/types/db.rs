@@ -104,6 +104,7 @@ pub struct BreakdownRep {
     pub votes_against_party_pct: Option<BigDecimal>,
     pub propublica_id: String,
     pub house: String,
+    pub image_url: Option<String>,
     pub state_id: Option<Uuid>,
     pub district_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
@@ -117,6 +118,7 @@ pub struct BreakdownIssue {
     pub name: Option<String>,
     pub slug: String,
     pub subjects: Option<Vec<String>>,
+    pub image_url: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }
