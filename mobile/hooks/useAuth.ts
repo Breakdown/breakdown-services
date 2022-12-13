@@ -18,9 +18,8 @@ export default function useAuth({
   const [user, setUser] = useState<User | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
   const { data, error, refetch } = useQuery([QUERY_GET_ME], {
-    enabled: !allowUnauth,
     queryFn: getMe,
-    refetchInterval: 1000 * 60 * 20, // 20 minutes
+    refetchInterval: 1000 * 60, // 1 minute
     refetchOnWindowFocus: false,
     retry: false,
   });
@@ -32,11 +31,6 @@ export default function useAuth({
     if (data?.data) {
       setUser(data.data);
       setAuthenticated(true);
-    } else {
-      // TODO: Logout
-      setUser(null);
-      setAuthenticated(false);
-      logout();
     }
   }, [data]);
 

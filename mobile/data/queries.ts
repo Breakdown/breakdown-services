@@ -8,3 +8,14 @@ export const getMe = async () => {
   });
   return response;
 };
+
+// TODO: Pagination
+// Make sure to include pagination parameters in query key
+export const QUERY_GET_BILLS = "QUERY_GET_BILLS";
+export const getBills = async () => {
+  const response = await baseFetch({
+    url: "/bills",
+    method: "GET",
+  });
+  return response;
+};

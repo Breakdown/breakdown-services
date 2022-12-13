@@ -6,8 +6,10 @@ import {
   NavigationContainer,
 } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import { ColorSchemeName, useColorScheme } from "react-native";
+import { useEffect } from "react";
+import { ColorSchemeName, Text, useColorScheme } from "react-native";
 import useAuth from "../hooks/useAuth";
+import Bill from "../screens/Bill";
 import Feed from "../screens/Feed";
 import NotFoundScreen from "../screens/NotFound";
 import SignIn from "../screens/unauth/SignIn";
@@ -36,10 +38,11 @@ function TabBarIcon(props) {
   return <Ionicons size={30} style={{ marginBottom: -3 }} {...props} />;
 }
 
-const FirstTabStack = () => {
+const HomeStack = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen name="Feed" component={Feed} />
+      <Stack.Screen name="Bill" component={Bill} />
       <Stack.Screen
         name="NotFound"
         component={NotFoundScreen}
@@ -60,9 +63,10 @@ export const AuthenticatedStack = () => {
       screenOptions={{ tabBarActiveTintColor: "#d3d3d3" }}
     >
       <BottomTab.Screen
-        name="Feed"
-        component={FirstTabStack}
+        name="Home"
+        component={HomeStack}
         options={{
+          tabBarShowLabel: false,
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabBarIcon
@@ -77,6 +81,11 @@ export const AuthenticatedStack = () => {
 };
 
 const UnauthenticatedStack = () => {
+  const { authenticated } = useAuth({ allowUnauth: true });
+  useEffect(() => {
+    console.log("authenticated", authenticated);
+  }, [authenticated]);
+
   return (
     <Stack.Navigator
       screenOptions={{

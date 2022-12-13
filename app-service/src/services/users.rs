@@ -19,9 +19,9 @@ pub async fn get_feed(
     let query_params: GetFeedPagination = pagination.0;
     let bills = sqlx::query!(
         r#"
-            SELECT b.* FROM bills b
-            LEFT OUTER JOIN issues i
-            ON b.primary_issue_id = i.id
+            SELECT b.*, r.first_name as sponsor_first_name, r.last_name as sponsor_last_name FROM bills b
+            LEFT OUTER JOIN representatives r
+            ON b.sponsor_id = r.id
             ORDER BY latest_major_action_date DESC
             LIMIT COALESCE($1, 50)
             OFFSET COALESCE($2, 0)
@@ -32,7 +32,7 @@ pub async fn get_feed(
     .fetch_all(&ctx.connection_pool)
     .await?;
     println!("hello");
-    println!("bills: {:#?}", bills[1]);
+    println!("bills: {:#?}", bills[2]);
 
     todo!()
     // Ok(Json(ResponseBody { data: bills }))

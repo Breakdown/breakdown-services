@@ -21,17 +21,17 @@ export default ({
   value,
   onChangeText,
   placeholder,
+  style,
   ...otherProps
 }: Props) => {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
         style={styles.input}
         value={value}
         onChangeText={(e) => onChangeText?.(e.toString())}
         placeholder={placeholder}
-        {...otherProps}
       />
       {error && <Text>{error}</Text>}
     </View>
@@ -52,5 +52,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 12,
     borderRadius: 5,
+    height: 50,
   },
 });

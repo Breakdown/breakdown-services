@@ -52,7 +52,12 @@ pub struct GetMeResponse {
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }
-// #[derive(Debug, Serialize, Deserialize)]
-// pub struct GetFeedResponse {
-//     pub bills: Vec,
-// }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BillWithIssues {
+    
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetFeedResponse {
+    pub bills: Vec<BillWithIssues>,
+}

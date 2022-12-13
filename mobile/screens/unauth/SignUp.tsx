@@ -117,7 +117,7 @@ export default function SignUp() {
             <TextInput
               value={verifyPassword}
               onChangeText={setVerifyPassword}
-              textContentType={"password"}
+              textContentType={"newPassword"}
               placeholder={"Verify Password"}
             />
             <Button
@@ -138,6 +138,9 @@ export default function SignUp() {
                 onChangeText={handleVerificationFieldInput}
                 textContentType={"oneTimeCode"}
                 placeholder={"123456"}
+                style={{
+                  marginBottom: 12,
+                }}
               />
             ) : (
               <PhoneInput

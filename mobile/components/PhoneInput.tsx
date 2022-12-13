@@ -16,7 +16,7 @@ const PhoneInput = (props: Props) => {
         borderWidth: 1,
         borderRadius: 5,
         marginVertical: 12,
-        height: 52,
+        height: 50,
       }}
       textContainerStyle={{
         backgroundColor: "transparent",

@@ -105,6 +105,7 @@ export default function SignIn() {
               value={email}
               onChangeText={setEmail}
               textContentType={"emailAddress"}
+              keyboardType={"email-address"}
               placeholder={"Email"}
             />
             <TextInput
@@ -129,6 +130,9 @@ export default function SignIn() {
                 onChangeText={handleVerificationFieldInput}
                 textContentType={"oneTimeCode"}
                 placeholder={"123456"}
+                style={{
+                  marginBottom: 12,
+                }}
               />
             ) : (
               <PhoneInput
