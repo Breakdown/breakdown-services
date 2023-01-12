@@ -131,6 +131,7 @@ pub struct User {
     pub password: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
+    pub role: String,
     pub onboarded: bool,
     pub address: Option<String>,
     pub state_id: Option<Uuid>,

@@ -14,6 +14,26 @@ use axum::{
 use sqlx::{types::Uuid, PgPool};
 use std::collections::HashMap;
 
+pub enum HouseEnum {
+    House,
+    Senate,
+    Joint,
+    Unknown,
+}
+pub fn get_house_from_bill_type(bill_type: &str) -> HouseEnum {
+    match bill_type {
+        "hr" => HouseEnum::House,
+        "s" => HouseEnum::Senate,
+        "hjres" => HouseEnum::Joint,
+        "sconres" => HouseEnum::Joint,
+        "hconres" => HouseEnum::Joint,
+        "sjres" => HouseEnum::Joint,
+        "hres" => HouseEnum::House,
+        "sres" => HouseEnum::Senate,
+        _ => HouseEnum::Unknown,
+    }
+}
+
 pub async fn get_bill_by_id(
     ctx: Extension<ApiContext>,
     Path(params): Path<HashMap<String, String>>,

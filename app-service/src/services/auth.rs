@@ -214,9 +214,7 @@ pub async fn signin_sms(
 
     // Guard clauses
     if user.is_none() {
-        return Err(ApiError::Anyhow(anyhow!(
-            "User with phone number already exists"
-        )));
+        return Err(ApiError::Anyhow(anyhow!("User not found for phone number")));
     }
 
     // Generate a 6 digit random code and save to the user under phone_verification_code

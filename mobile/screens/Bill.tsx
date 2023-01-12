@@ -8,7 +8,9 @@ const Bill = ({ navigation, route }) => {
     queryKey: [QUERY_GET_BILL, billId],
     queryFn: () => getBillById(billId),
   });
-  return <ScrollView style={styles.container}></ScrollView>;
+  return <View style={styles.container}>
+    
+  </View>;
 };
 
 const styles = StyleSheet.create({

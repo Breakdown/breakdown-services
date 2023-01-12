@@ -1,8 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use typeshare::typeshare;
 use uuid::Uuid;
-
-use super::db::User;
 
 // Requests
 #[derive(Deserialize)]
@@ -35,6 +34,7 @@ pub struct RequestState {
 
 // Responses
 
+#[typeshare]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetMeResponse {
     pub id: Uuid,
@@ -53,13 +53,7 @@ pub struct GetMeResponse {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BillWithIssues {}
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GetFeedResponse {
-    pub bills: Vec<BillWithIssues>,
-}
-
+#[typeshare]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FeedBill {
     pub id: Uuid,
@@ -110,4 +104,10 @@ pub struct FeedBill {
     pub primary_issue_image_url: Option<String>,
     pub sponsor_image_url: Option<String>,
     pub sponsor_short_title: Option<String>,
+}
+
+#[typeshare]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetFeedResponse {
+    pub bills: Vec<FeedBill>,
 }

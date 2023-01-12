@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use app_service::api::auth;
+use app_service::api::{admin, auth};
 use app_service::api::{bills, health, issues, reps, sync, users, ApiContext};
 use app_service::config::Config;
 use app_service::telemetry::{get_subscriber, init_subscriber};
@@ -78,6 +78,7 @@ fn api_router() -> Router {
         .merge(auth::router())
         .merge(issues::router())
         .merge(users::router())
+        .merge(admin::router())
 }
 
 async fn fallback_404() -> impl IntoResponse {

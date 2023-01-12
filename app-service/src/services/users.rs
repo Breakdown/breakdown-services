@@ -1,5 +1,5 @@
 use crate::types::api::{FeedBill, GetFeedPagination, GetMeResponse, ResponseBody};
-use crate::types::db::{BreakdownBill, User};
+use crate::types::db::User;
 use crate::utils::api_error::ApiError;
 use crate::{api::ApiContext, services::auth::hash_password};
 use anyhow::anyhow;

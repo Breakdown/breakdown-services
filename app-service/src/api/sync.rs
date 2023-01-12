@@ -2,10 +2,15 @@
 #![allow(non_snake_case)]
 use super::ApiContext;
 use crate::{
-    services::sync::{sync_bills, sync_bills_and_issues, sync_cosponsors, sync_reps, sync_votes},
+    services::{
+        ai::get_bill_summary,
+        sync::{sync_bills, sync_bills_and_issues, sync_cosponsors, sync_reps, sync_votes},
+    },
     types::api::ResponseBody,
+    types::db::BreakdownBill,
     utils::api_error::ApiError,
 };
+
 use anyhow::anyhow;
 use axum::{routing::post, Extension, Json, Router};
 use axum_macros::debug_handler;
@@ -19,7 +24,8 @@ pub fn router() -> Router {
         .route("/bills", post(bills_sync))
         .route("/associate_bills_issues", post(associate_bills_and_issues))
         .route("/votes", post(votes_sync))
-        .route("/cosponsors", post(cosponsors_sync));
+        .route("/cosponsors", post(cosponsors_sync))
+        .route("/summaries", post(get_bill_summaries));
     let scripts_router = Router::new()
         .route("/create_issues", post(create_issues))
         .route("/seed_states", post(seed_states));
@@ -163,6 +169,26 @@ async fn seed_states(ctx: Extension<ApiContext>) -> Result<&'static str, ApiErro
         .map_err(|e| {
             return ApiError::Anyhow(anyhow!("Error upserting state"));
         });
+    }
+
+    Ok("Seeded States")
+}
+
+pub async fn get_bill_summaries(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError> {
+    let all_bills = sqlx::query_as!(
+        BreakdownBill,
+        r#"SELECT * FROM bills WHERE bill_type IS NOT NULL"#,
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+
+    let all_bills_filtered = all_bills
+        .iter()
+        .filter(|bill| bill.bill_code == Some(String::from("s5134")))
+        .collect::<Vec<&BreakdownBill>>();
+    for bill in all_bills_filtered.iter() {
+        let summary = get_bill_summary(&bill).await?;
+        // Get
     }
 
     Ok("Seeded States")

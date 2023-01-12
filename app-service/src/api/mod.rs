@@ -8,6 +8,7 @@ pub struct ApiContext {
     pub connection_pool: PgPool,
 }
 
+pub mod admin;
 pub mod auth;
 pub mod bills;
 pub mod health;

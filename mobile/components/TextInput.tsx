@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -24,10 +25,13 @@ export default ({
   style,
   ...otherProps
 }: Props) => {
+  const [focused, setFocused] = useState(false);
   return (
     <View style={[styles.container, style]}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         style={styles.input}
         value={value}
         onChangeText={(e) => onChangeText?.(e.toString())}

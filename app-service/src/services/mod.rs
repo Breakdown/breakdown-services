@@ -1,3 +1,5 @@
+pub mod admin;
+pub mod ai;
 pub mod auth;
 pub mod bills;
 pub mod issues;

@@ -266,7 +266,7 @@ pub async fn sync_bills_and_issues(connection_pool: &Pool<Postgres>) -> Result<(
         }
 
         // Primary Issue
-        if (bill_primary_subject.chars().count() == 0) {
+        if bill_primary_subject.chars().count() == 0 {
             continue;
         }
         let primary_issue = sqlx::query_as!(
