@@ -65,4 +65,7 @@ pub struct Config {
 
     #[envconfig(from = "TWILIO_PHONE_NUMBER", default = "+17816509756")]
     pub TWILIO_PHONE_NUMBER: String,
+
+    #[envconfig(from = "OPENAI_API_KEY", default = "12345")]
+    pub OPENAI_API_KEY: String,
 }

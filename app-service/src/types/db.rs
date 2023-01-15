@@ -161,3 +161,12 @@ pub struct RepresentativeVote {
     pub bill_id: Uuid,
     pub representative_id: Uuid,
 }
+
+#[typeshare]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct BillFullText {
+    pub id: Uuid,
+    pub bill_id: Option<Uuid>,
+    pub text: String,
+    pub initial_summary: Option<String>,
+}

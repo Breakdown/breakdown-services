@@ -3,11 +3,11 @@
 use super::ApiContext;
 use crate::{
     services::{
-        ai::get_bill_summary,
+        ai::{fetch_and_save_bill_full_text, fetch_and_save_davinci_bill_summary},
         sync::{sync_bills, sync_bills_and_issues, sync_cosponsors, sync_reps, sync_votes},
     },
     types::api::ResponseBody,
-    types::db::BreakdownBill,
+    types::db::{BillFullText, BreakdownBill},
     utils::api_error::ApiError,
 };
 
@@ -182,14 +182,35 @@ pub async fn get_bill_summaries(ctx: Extension<ApiContext>) -> Result<&'static s
     .fetch_all(&ctx.connection_pool)
     .await?;
 
+    // For testing purposes
     let all_bills_filtered = all_bills
         .iter()
         .filter(|bill| bill.bill_code == Some(String::from("s5134")))
         .collect::<Vec<&BreakdownBill>>();
-    for bill in all_bills_filtered.iter() {
-        let summary = get_bill_summary(&bill).await?;
-        // Get
+    for bill in all_bills.iter() {
+        match fetch_and_save_bill_full_text(&bill, &ctx.connection_pool).await {
+            Ok(_) => {}
+            Err(e) => {
+                log!(Level::Error, "Error fetching bill full text: {}", e);
+            }
+        }
     }
 
-    Ok("Seeded States")
+    // Send full text to OpenAI for summarization
+    let openai_client: openai_rs::client::Client =
+        openai_rs::openai::new(&ctx.config.OPENAI_API_KEY);
+    let all_bill_texts = sqlx::query_as!(BillFullText, r#"SELECT * FROM bill_full_texts"#,)
+        .fetch_all(&ctx.connection_pool)
+        .await?;
+
+    // TODO: Parallelize this
+    for bill_text in all_bill_texts.iter() {
+        fetch_and_save_davinci_bill_summary(
+            bill_text.bill_id.unwrap(),
+            &ctx.connection_pool,
+            &openai_client,
+        )
+        .await?;
+    }
+    Ok("Seeded Bill Summaries")
 }
