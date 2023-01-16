@@ -40,3 +40,4 @@ tokio-util = { version = "0.7.4", features = ["codec"] }
 scraper = "0.14.0"
 roxmltree = "0.17.0"
 openai-rs = "0.1.1"
+tokio-cron-scheduler = { version = "0.8.4", features = ["signal"] }

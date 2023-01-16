@@ -26,6 +26,16 @@ services:
       - "6378:6379"
     networks:
       - breakdown-dev
+  # rabbitmq:
+  #   image: rabbitmq:3-management-alpine
+  #   ports:
+  #       - 5672:5672
+  #       - 15672:15672
+  #   volumes:
+  #       - breakdown-rabbitmq-data:/var/lib/rabbitmq/
+  #       - breakdown-rabbitmq-data:/var/log/rabbitmq
+  #   networks:
+  #       - breakdown-dev
   # app-service:
   #   networks:
   #     - breakdown-dev
@@ -51,5 +61,6 @@ networks:
 volumes:
   breakdown-postgres-data: {}
   breakdown-redis-data: {}
+  breakdown-rabbitmq-data: {}
   bd-app-service-registry:
     driver: local

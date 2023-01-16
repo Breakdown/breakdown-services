@@ -140,6 +140,10 @@ pub struct User {
     pub phone_verification_code: Option<i32>,
     pub phone_verified: bool,
     pub email_verified: bool,
+    pub interests_selected: bool,
+    pub lat_lon: Option<Vec<String>>,
+    pub state_code: Option<String>,
+    pub district_code: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }
@@ -169,4 +173,6 @@ pub struct BillFullText {
     pub bill_id: Option<Uuid>,
     pub text: String,
     pub initial_summary: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
 }

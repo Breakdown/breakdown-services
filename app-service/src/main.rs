@@ -2,6 +2,7 @@
 use app_service::api::{admin, auth};
 use app_service::api::{bills, health, issues, reps, sync, users, ApiContext};
 use app_service::config::Config;
+use app_service::services::scheduling::schedule_bill_sync;
 use app_service::telemetry::{get_subscriber, init_subscriber};
 use app_service::utils::api_error::ApiError;
 use app_service::utils::auth::create_session_layer;
@@ -10,6 +11,7 @@ use axum::response::IntoResponse;
 use axum::Extension;
 use axum::Router;
 use envconfig::Envconfig;
+use log::{log, Level};
 use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::ConnectOptions;
@@ -61,6 +63,15 @@ async fn main() -> std::io::Result<()> {
         .layer(TraceLayer::new_for_http())
         .layer(session_layer);
 
+    // Schedule cron jobs
+    println!("Scheduling cron jobs - print");
+    log!(Level::Info, "Scheduling cron jobs");
+    match schedule_bill_sync().await {
+        Ok(_) => println!("Scheduled bill sync"),
+        Err(e) => println!("Could not schedule bill sync: {}", e),
+    };
+
+    // Start server
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
