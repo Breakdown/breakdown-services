@@ -4,11 +4,32 @@ use crate::{config::Config, utils::api_error::ApiError};
 use envconfig::Envconfig;
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
-    ConnectOptions,
+    ConnectOptions, Pool, Postgres,
 };
 use tokio_cron_scheduler::{Job, JobScheduler};
 
 use super::sync::sync_bills;
+
+pub struct JobConfiguration {
+    pub config: Arc<Config>,
+    pub connection_pool: Pool<Postgres>,
+}
+pub async fn get_job_configuration() -> Result<JobConfiguration, ApiError> {
+    let config = Arc::new(Config::init_from_env().unwrap());
+    let options = PgConnectOptions::from_str(&config.DATABASE_URL.as_str())
+        .unwrap()
+        .disable_statement_logging()
+        .clone();
+    let connection_pool = PgPoolOptions::new()
+        .max_connections(config.DB_MAX_CONNECTIONS.parse::<u32>().unwrap())
+        .connect_with(options)
+        .await
+        .expect("Could not connect to database");
+    Ok(JobConfiguration {
+        config,
+        connection_pool,
+    })
+}
 
 pub async fn schedule_bill_sync() -> Result<(), ApiError> {
     // Create the scheduler
@@ -24,17 +45,8 @@ pub async fn schedule_bill_sync() -> Result<(), ApiError> {
     // Scheduled daily at midnight
     let job = match Job::new_async("0 0 * * * *", |_uuid, _l| {
         Box::pin(async {
-            let config = Arc::new(Config::init_from_env().unwrap());
-            let options = PgConnectOptions::from_str(&config.DATABASE_URL.as_str())
-                .unwrap()
-                .disable_statement_logging()
-                .clone();
-            let connection_pool = PgPoolOptions::new()
-                .max_connections(config.DB_MAX_CONNECTIONS.parse::<u32>().unwrap())
-                .connect_with(options)
-                .await
-                .expect("Could not connect to database");
-            match sync_bills(&connection_pool, &config).await {
+            let job_config = get_job_configuration().await.unwrap();
+            match sync_bills(&job_config.connection_pool, &job_config.config).await {
                 Ok(_) => println!("Synced bills"),
                 Err(e) => println!("Could not sync bills: {}", e),
             };
