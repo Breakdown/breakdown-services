@@ -230,7 +230,7 @@ pub async fn sync_bills(
 
     let mut bill_id_map = HashMap::new();
 
-    // Chunk into 20 and wait 10 seconds between each chunk
+    // Chunk into 50 and wait 10 seconds between each chunk
     let mut fetch_futures = vec![];
     // Format and upsert bills to DB
     for (i, bill) in meta_bills.clone().iter().enumerate() {
@@ -244,7 +244,7 @@ pub async fn sync_bills(
             fetch_futures.push(queue_bill_updated_jobs(bill_info));
             bill_id_map.insert(bill.bill_id.as_ref().unwrap().to_string(), true);
         }
-        if i % 20 == 0 {
+        if i % 50 == 0 {
             println!("Executing queue futures");
             futures::future::join_all(fetch_futures).await;
             println!("Waiting 10 seconds");
