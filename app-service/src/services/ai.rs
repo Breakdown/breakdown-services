@@ -135,7 +135,7 @@ const OPENAI_SUMMARIZATION_PROMPT_INITIAL: &str =
     "Write a professional and succinct summary of the following bill.\n\nBill: ###\n";
 
 pub async fn fetch_and_save_davinci_bill_summary(
-    bill_id: Uuid,
+    bill_id: &Uuid,
     db_connection: &PgPool,
     client: &openai_rs::client::Client,
 ) -> Result<Option<String>, ApiError> {

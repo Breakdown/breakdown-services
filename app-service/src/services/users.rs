@@ -97,7 +97,7 @@ pub async fn create_user(db_connection: &PgPool, args: CreateUserArgs) -> Result
         .fetch_one(db_connection)
         .await
         .map_err(|e| {
-            log!(log::Level::Error, "Failed to create user: {}", e);
+            println!("Failed to create user: {}", e);
             ApiError::Anyhow(anyhow!("Could not create user"))
         })?;
         Ok(user)

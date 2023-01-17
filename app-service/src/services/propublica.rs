@@ -7,7 +7,7 @@ const PAGE_SIZE: u32 = 20;
 
 pub async fn single_propublica_bills_req(url: &str, api_key: &str) -> Vec<ProPublicaBill> {
     let reqwest_client = reqwest::Client::new();
-    println!("Fetching bills from {}", url);
+    // println!("Fetching bills from {}", url);
     let response = reqwest_client
         .get(url)
         .header("X-API-Key", api_key)
@@ -17,14 +17,14 @@ pub async fn single_propublica_bills_req(url: &str, api_key: &str) -> Vec<ProPub
         .json::<ProPublicaBillsResponse>()
         .await
         .expect("Failed to parse json");
-    println!("Fetched {} bills", response.results[0].bills.len());
+    // println!("Fetched {} bills", response.results[0].bills.len());
     let results = &response.results[0].bills;
     return results.to_vec();
 }
 
 pub async fn single_propublica_votes_req(url: &str, api_key: &str) -> Vec<ProPublicaVote> {
     let reqwest_client = reqwest::Client::new();
-    println!("Fetching votes from {}", url);
+    // println!("Fetching votes from {}", url);
     let response = reqwest_client
         .get(url)
         .header("X-API-Key", api_key)

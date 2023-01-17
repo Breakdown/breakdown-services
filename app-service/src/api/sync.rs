@@ -206,7 +206,7 @@ pub async fn get_bill_summaries(ctx: Extension<ApiContext>) -> Result<&'static s
     // TODO: Parallelize this
     for bill_text in all_bill_texts.iter() {
         fetch_and_save_davinci_bill_summary(
-            bill_text.bill_id.unwrap(),
+            &bill_text.bill_id.unwrap(),
             &ctx.connection_pool,
             &openai_client,
         )

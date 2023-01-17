@@ -11,7 +11,6 @@ use axum::response::IntoResponse;
 use axum::Extension;
 use axum::Router;
 use envconfig::Envconfig;
-use log::{log, Level};
 use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::ConnectOptions;
@@ -64,8 +63,7 @@ async fn main() -> std::io::Result<()> {
         .layer(session_layer);
 
     // Schedule cron jobs
-    println!("Scheduling cron jobs - print");
-    log!(Level::Info, "Scheduling cron jobs");
+    println!("Scheduling cron jobs");
     match schedule_bill_sync().await {
         Ok(_) => println!("Scheduled bill sync"),
         Err(e) => println!("Could not schedule bill sync: {}", e),

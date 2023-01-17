@@ -8,7 +8,7 @@ use sqlx::{
 };
 use tokio_cron_scheduler::{Job, JobScheduler};
 
-use super::sync::sync_bills;
+use super::sync::{sync_bills, sync_reps};
 
 pub struct JobConfiguration {
     pub config: Arc<Config>,
@@ -36,7 +36,7 @@ pub async fn schedule_bill_sync() -> Result<(), ApiError> {
     let mut scheduler = match JobScheduler::new().await {
         Ok(scheduler) => scheduler,
         Err(e) => {
-            println!("Could not create scheduler: {}", e);
+            println!("Could not create scheduler for bills sync: {}", e);
             return Err(ApiError::InternalError);
         }
     };
@@ -72,15 +72,72 @@ pub async fn schedule_bill_sync() -> Result<(), ApiError> {
 
     scheduler.set_shutdown_handler(Box::new(|| {
         Box::pin(async move {
-            println!("Shut down done");
+            println!("Bills sync shut down done");
         })
     }));
 
     // Start the scheduler
     match scheduler.start().await {
-        Ok(_) => println!("Started scheduler"),
+        Ok(_) => println!("Started bills sync scheduler"),
         Err(e) => {
-            println!("Could not start scheduler: {}", e);
+            println!("Could not start bills sync scheduler: {}", e);
+            return Err(ApiError::InternalError);
+        }
+    };
+
+    Ok(())
+}
+
+pub async fn schedule_rep_sync() -> Result<(), ApiError> {
+    // Create the scheduler
+    let mut scheduler = match JobScheduler::new().await {
+        Ok(scheduler) => scheduler,
+        Err(e) => {
+            println!("Could not create scheduler for reps sync: {}", e);
+            return Err(ApiError::InternalError);
+        }
+    };
+
+    // Define the job
+    // Scheduled weekly on Saturday at midnight
+    let job = match Job::new_async("0 0 0 * 6 *", |_uuid, _l| {
+        Box::pin(async {
+            let job_config = get_job_configuration().await.unwrap();
+            match sync_reps(&job_config.connection_pool, &job_config.config).await {
+                Ok(_) => println!("Synced reps"),
+                Err(e) => println!("Could not sync reps: {}", e),
+            };
+        })
+    }) {
+        Ok(job) => job,
+        Err(e) => {
+            println!("Could not create reps sync job: {}", e);
+            return Err(ApiError::InternalError);
+        }
+    };
+    // Add the job
+    match scheduler.add(job).await {
+        Ok(_) => println!("Added reps sync job to scheduler"),
+        Err(e) => {
+            println!("Could not add reps sync job to scheduler: {}", e);
+            return Err(ApiError::InternalError);
+        }
+    };
+
+    #[cfg(feature = "signal")]
+    scheduler.shutdown_on_ctrl_c();
+
+    scheduler.set_shutdown_handler(Box::new(|| {
+        Box::pin(async move {
+            println!("Reps sync shut down done");
+        })
+    }));
+
+    // Start the scheduler
+    match scheduler.start().await {
+        Ok(_) => println!("Started reps sync scheduler"),
+        Err(e) => {
+            println!("Could not start reps sync scheduler: {}", e);
             return Err(ApiError::InternalError);
         }
     };

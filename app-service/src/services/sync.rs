@@ -17,7 +17,14 @@ use itertools::Itertools;
 use log::{log, Level};
 use sqlx::{Pool, Postgres};
 use std::{collections::HashMap, sync::Arc};
+use tokio::time::{sleep, Duration};
 use uuid::Uuid;
+
+use super::{
+    ai::{fetch_and_save_bill_full_text, fetch_and_save_davinci_bill_summary},
+    bills::{BillAgeStatus, BillUpsertInfo},
+    scheduling::get_job_configuration,
+};
 
 pub async fn sync_reps(
     connection_pool: &Pool<Postgres>,
@@ -55,16 +62,102 @@ pub async fn sync_reps(
     let senate_results = &senate_response.results[0].members;
 
     // Save Representatives to DB
-    log::info!("Syncing Representatives");
+    println!("Syncing Representatives");
     for rep in house_results.iter() {
         let rep_ref = rep.clone();
         save_propub_rep(rep_ref, &connection_pool).await?;
     }
     // Save Senators to DB
-    log::info!("Syncing Senators");
+    println!("Syncing Senators");
     for rep in senate_results.iter() {
         let rep_ref = rep.clone();
         save_propub_rep(rep_ref, &connection_pool).await?;
+    }
+    Ok(())
+}
+
+pub async fn queue_bill_updated_jobs(info: BillUpsertInfo) -> Result<(), ApiError> {
+    match info.status {
+        BillAgeStatus::New => {
+            tokio::task::spawn(async move {
+                let job_configuration = match get_job_configuration().await {
+                    Ok(jc) => jc,
+                    Err(e) => {
+                        log!(Level::Error, "Error getting job configuration: {}", e);
+                        return;
+                    }
+                };
+
+                let issues_copy = sqlx::query_as!(BreakdownIssue, "SELECT * FROM issues",)
+                    .fetch_all(&job_configuration.connection_pool)
+                    .await
+                    .expect("Failed to fetch issues");
+                let info_copy = info.to_owned();
+                let connection_pool_copy = &job_configuration.connection_pool;
+
+                // Run sync bill issues
+                match sync_single_bill_issues(
+                    info_copy.bill.to_owned(),
+                    issues_copy.to_vec(),
+                    &connection_pool_copy,
+                )
+                .await
+                {
+                    Ok(_) => {}
+                    Err(e) => {
+                        log!(
+                            Level::Error,
+                            "Error syncing bill issues for bill {}: {}",
+                            &info_copy.bill.to_owned().id,
+                            e
+                        );
+                    }
+                };
+
+                // Run get bill text from XML
+                match fetch_and_save_bill_full_text(
+                    &info_copy.bill.to_owned(),
+                    &connection_pool_copy,
+                )
+                .await
+                {
+                    Ok(_) => {}
+                    Err(e) => {
+                        log!(
+                            Level::Error,
+                            "Error syncing full text for bill {}: {}",
+                            &info_copy.bill.to_owned().id,
+                            e
+                        );
+                    }
+                };
+                // Get OpenAI summary for bill
+                let openai_client: openai_rs::client::Client =
+                    openai_rs::openai::new(&job_configuration.config.OPENAI_API_KEY);
+                let bill_clone = &info.bill.clone();
+                match fetch_and_save_davinci_bill_summary(
+                    &bill_clone.id,
+                    &connection_pool_copy,
+                    &openai_client,
+                )
+                .await
+                {
+                    Ok(_) => {}
+                    Err(e) => {
+                        log!(
+                            Level::Error,
+                            "Error syncing summary for bill {}: {}",
+                            &bill_clone.id,
+                            e
+                        );
+                    }
+                };
+            });
+            ()
+        }
+        BillAgeStatus::Updated => {
+            // TODO: Figure out how often text changes, only trigger update if it has
+        }
     }
     Ok(())
 }
@@ -73,6 +166,7 @@ pub async fn sync_bills(
     connection_pool: &Pool<Postgres>,
     config: &Arc<Config>,
 ) -> Result<(), ApiError> {
+    println!("Syncing Bills");
     let introduced_bills = propublica_get_bills_paginated(
         &config.PROPUBLICA_BASE_URI,
         &config.PROPUBLICA_API_KEY,
@@ -136,6 +230,8 @@ pub async fn sync_bills(
 
     let mut bill_id_map = HashMap::new();
 
+    // Chunk into 20 and wait 10 seconds between each chunk
+    let mut fetch_futures = vec![];
     // Format and upsert bills to DB
     for (i, bill) in meta_bills.clone().iter().enumerate() {
         let bill_ref = bill.clone();
@@ -144,13 +240,21 @@ pub async fn sync_bills(
             println!("Bill duplicate {}", bill.bill_id.as_ref().unwrap());
             continue;
         } else {
-            save_propub_bill(bill_ref, &connection_pool).await?;
+            let bill_info = save_propub_bill(bill_ref, &connection_pool).await?;
+            fetch_futures.push(queue_bill_updated_jobs(bill_info));
             bill_id_map.insert(bill.bill_id.as_ref().unwrap().to_string(), true);
+        }
+        if i % 20 == 0 {
+            println!("Executing queue futures");
+            futures::future::join_all(fetch_futures).await;
+            println!("Waiting 10 seconds");
+            sleep(Duration::from_secs(10)).await;
+            fetch_futures = vec![];
         }
     }
     println!("Duplicates count: {}", meta_bills.len() - bill_id_map.len());
 
-    log!(Level::Info, "Synced All Bills");
+    println!("Synced All Bills");
     Ok(())
 }
 
@@ -202,8 +306,82 @@ pub async fn sync_votes(
     Ok(())
 }
 
+pub async fn sync_single_bill_issues(
+    bill: BreakdownBill,
+    issues: Vec<BreakdownIssue>,
+    connection_pool: &Pool<Postgres>,
+) -> Result<Option<Uuid>, ApiError> {
+    let bill_primary_subject = bill.primary_subject.unwrap_or("".to_string());
+    let bill_subjects = bill.subjects.unwrap_or(vec![]);
+    if (bill_primary_subject.chars().count() == 0) && (bill_subjects.len() == 0) {
+        return Ok(Some(bill.id));
+    }
+
+    // Issues
+    let mut associated_issue_ids: Vec<Uuid> = vec![];
+    for issue in issues {
+        let issue_subjects = issue.subjects.unwrap();
+        println!("issue subjects: {:?}", issue_subjects);
+        // TODO: Primary Issue ID
+        if issue_subjects
+            .iter()
+            .any(|subject| subject == &bill_primary_subject)
+        {
+            println!("associated issue: {:#?}", issue.name);
+            associated_issue_ids.push(issue.id);
+        }
+        for subject in bill_subjects.clone() {
+            if issue_subjects.contains(&subject) {
+                associated_issue_ids.push(issue.id);
+            }
+        }
+    }
+    let associated_issue_ids = associated_issue_ids
+        .into_iter()
+        .unique()
+        .collect::<Vec<Uuid>>();
+
+    for issue_id in associated_issue_ids.into_iter() {
+        println!("Associating bill {} with issue {}", bill.id, issue_id);
+        sqlx::query!(
+            r#"
+                INSERT INTO bills_issues (bill_id, issue_id) values ($1, $2) ON CONFLICT DO NOTHING
+                "#,
+            &bill.id,
+            &issue_id,
+        )
+        .execute(connection_pool)
+        .await?;
+    }
+
+    // Primary Issue
+    if bill_primary_subject.chars().count() == 0 {
+        return Ok(Some(bill.id));
+    }
+    let primary_issue = sqlx::query_as!(
+        BreakdownIssue,
+        r#"
+            SELECT * FROM issues WHERE $1 = ANY(subjects)
+            "#,
+        &bill_primary_subject
+    )
+    .fetch_optional(connection_pool)
+    .await?;
+    if primary_issue.is_some() {
+        sqlx::query!(
+            r#"
+                UPDATE bills SET primary_issue_id = $1 WHERE id = $2
+                "#,
+            &primary_issue.unwrap().id,
+            &bill.id
+        )
+        .execute(connection_pool)
+        .await?;
+    }
+    return Ok(Some(bill.id));
+}
+
 pub async fn sync_bills_and_issues(connection_pool: &Pool<Postgres>) -> Result<(), ApiError> {
-    let mut tx = connection_pool.begin().await?;
     let all_bills = sqlx::query_as!(
         BreakdownBill,
         r#"
@@ -222,77 +400,8 @@ pub async fn sync_bills_and_issues(connection_pool: &Pool<Postgres>) -> Result<(
     .await?;
 
     for bill in all_bills {
-        let bill_primary_subject = bill.primary_subject.unwrap_or("".to_string());
-        let bill_subjects = bill.subjects.unwrap_or(vec![]);
-        if (bill_primary_subject.chars().count() == 0) && (bill_subjects.len() == 0) {
-            continue;
-        }
-
-        // Issues
-        let mut associated_issue_ids: Vec<Uuid> = vec![];
-        for issue in all_issues.clone() {
-            let issue_subjects = issue.subjects.unwrap();
-            println!("issue subjects: {:?}", issue_subjects);
-            // TODO: Primary Issue ID
-            if issue_subjects
-                .iter()
-                .any(|subject| subject == &bill_primary_subject)
-            {
-                println!("associated issue: {:#?}", issue.name);
-                associated_issue_ids.push(issue.id);
-            }
-            for subject in bill_subjects.clone() {
-                if issue_subjects.contains(&subject) {
-                    associated_issue_ids.push(issue.id);
-                }
-            }
-        }
-        let associated_issue_ids = associated_issue_ids
-            .into_iter()
-            .unique()
-            .collect::<Vec<Uuid>>();
-
-        for issue_id in associated_issue_ids.into_iter() {
-            println!("Associating bill {} with issue {}", bill.id, issue_id);
-            sqlx::query!(
-                r#"
-                INSERT INTO bills_issues (bill_id, issue_id) values ($1, $2) ON CONFLICT DO NOTHING
-                "#,
-                &bill.id,
-                &issue_id,
-            )
-            .execute(&mut tx)
-            .await?;
-        }
-
-        // Primary Issue
-        if bill_primary_subject.chars().count() == 0 {
-            continue;
-        }
-        let primary_issue = sqlx::query_as!(
-            BreakdownIssue,
-            r#"
-            SELECT * FROM issues WHERE $1 = ANY(subjects)
-            "#,
-            &bill_primary_subject
-        )
-        .fetch_optional(connection_pool)
-        .await?;
-        if primary_issue.is_some() {
-            sqlx::query!(
-                r#"
-                UPDATE bills SET primary_issue_id = $1 WHERE id = $2
-                "#,
-                &primary_issue.unwrap().id,
-                &bill.id
-            )
-            .execute(connection_pool)
-            .await?;
-        } else {
-            continue;
-        }
+        sync_single_bill_issues(bill, all_issues.clone(), connection_pool).await?;
     }
-    tx.commit().await?;
     println!("Associated Bills and Issues");
 
     Ok(())

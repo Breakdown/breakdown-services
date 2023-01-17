@@ -86,10 +86,22 @@ pub async fn fetch_bill_by_id(
     Ok(bill)
 }
 
+#[derive(Debug, Clone)]
+pub enum BillAgeStatus {
+    New,
+    Updated,
+}
+
+#[derive(Debug, Clone)]
+pub struct BillUpsertInfo {
+    pub bill: BreakdownBill,
+    pub status: BillAgeStatus,
+}
 pub async fn save_propub_bill(
     bill: ProPublicaBill,
     db_connection: &PgPool,
-) -> Result<Uuid, ApiError> {
+) -> Result<BillUpsertInfo, ApiError> {
+    let mut new_or_used = BillAgeStatus::New;
     // TODO: Guard clause for no bill_id
     let existing_bill = sqlx::query!(
         r#"
@@ -132,7 +144,9 @@ pub async fn save_propub_bill(
     // Insert or update
     match existing_bill {
         None => {
-            let query_result = sqlx::query!(
+            new_or_used = BillAgeStatus::New;
+            let query_result = sqlx::query_as!(
+                BreakdownBill,
                 r#"INSERT INTO bills (
                 propublica_id,
                 bill_type,
@@ -195,7 +209,7 @@ pub async fn save_propub_bill(
                 $28,
                 $29,
                 $30
-            ) returning id"#,
+            ) returning *"#,
                 bill.bill_id,
                 bill.bill_type,
                 bill.bill_slug,
@@ -229,10 +243,15 @@ pub async fn save_propub_bill(
             )
             .fetch_one(db_connection)
             .await?;
-            Ok(query_result.id)
+            Ok(BillUpsertInfo {
+                bill: query_result,
+                status: new_or_used,
+            })
         }
         Some(existing_bill) => {
-            let query_result = sqlx::query!(
+            new_or_used = BillAgeStatus::Updated;
+            let query_result = sqlx::query_as!(
+                BreakdownBill,
                 r#"
                 UPDATE bills
                     SET bill_type = coalesce($2, bills.bill_type),
@@ -265,7 +284,7 @@ pub async fn save_propub_bill(
                         cosponsors_r = coalesce($29, bills.cosponsors_r),
                         sponsor_id = coalesce($30, bills.sponsor_id)
                     WHERE id = $1
-                    returning id
+                    returning *
                 "#,
                 existing_bill.id,
                 bill.bill_type,
@@ -300,7 +319,10 @@ pub async fn save_propub_bill(
             )
             .fetch_one(db_connection)
             .await?;
-            Ok(query_result.id)
+            Ok(BillUpsertInfo {
+                bill: query_result,
+                status: new_or_used,
+            })
         }
     }
 }
