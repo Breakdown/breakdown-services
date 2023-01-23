@@ -1,5 +1,5 @@
 use crate::types::api::{FeedBill, GetFeedPagination, GetMeResponse, ResponseBody};
-use crate::types::db::User;
+use crate::types::db::{BreakdownBill, User};
 use crate::utils::api_error::ApiError;
 use crate::{api::ApiContext, services::auth::hash_password};
 use anyhow::anyhow;
@@ -163,4 +163,14 @@ pub async fn patch_user(
     .await
     .unwrap();
     Ok(Json(ResponseBody { data: user }))
+}
+
+fn get_user_bills(
+    user_id: &Uuid,
+    db_connection: &PgPool,
+    limit: &i32,
+    offset: &Option<i32>,
+) -> Result<Vec<BreakdownBill>, ApiError> {
+    // Get all bills for user where their issues are included in the bill's issues
+    todo!()
 }

@@ -1,0 +1,43 @@
+[package]
+name = "app-service-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.65"
+axum = { version = "0.5", features = ["tower-log"] }
+envconfig = "0.10"
+hmac = "0.12.1"
+log = "0.4.17"
+reqwest = { version = "0.11", features = ["json", "multipart", "blocking"] }
+serde = { version = "1", features = ["derive",] }
+sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "any", "postgres", "uuid", "time", "chrono", "bigdecimal" ] }
+thiserror = "1.0.37"
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread", "rt"] }
+tower = "0.4"
+tower-http = { version = "0.3", features = ["add-extension", "trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
+tracing-bunyan-formatter = "0.3"
+tracing-log = "0.1"
+serde_json = "1.0.85"
+futures = "0.3.24"
+chrono = { version= "0.4.22", features = ["serde", ] }
+uuid = { version = "1.2.1", features = ["serde"] }
+axum-macros = "0.2.3"
+axum-sessions = "0.3.1"
+num-traits = "0.2.15"
+bigdecimal = { version = "0.3.0", features = ["serde"] }
+async-session = "3.0.0"
+async-redis-session = "0.2.2"
+argon2 = "0.4.1"
+rand = "0.8.5"
+itertools = "0.10.5"
+twilio-async = "0.5.0"
+typeshare = "1.0.0"
+cronjob = "0.4.17"
+tokio-util = { version = "0.7.4", features = ["codec"] }
+scraper = "0.14.0"
+roxmltree = "0.17.0"
+openai-rs = "0.1.1"
+tokio-cron-scheduler = { version = "0.8.4", features = ["signal"] }

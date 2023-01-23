@@ -1,2 +1,0 @@
-DROP TABLE IF EXISTS districts;
-DROP TABLE IF EXISTS states;
