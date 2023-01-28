@@ -6,12 +6,11 @@ use anyhow::anyhow;
 use axum::extract::Query;
 use axum::{Extension, Json};
 use axum_sessions::extractors::ReadableSession;
-use log::log;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-pub async fn get_feed(
+pub async fn get_user_bills(
     ctx: Extension<ApiContext>,
     pagination: Query<GetFeedPagination>,
 ) -> Result<Json<ResponseBody<Vec<FeedBill>>>, ApiError> {
