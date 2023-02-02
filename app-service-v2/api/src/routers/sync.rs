@@ -1,9 +1,11 @@
+#![allow(unused_variables)]
+#![allow(non_snake_case)]
 use super::ApiContext;
 use crate::{
-    services::sync::{
-        create_issues, get_bill_summaries, seed_states, sync_bills, sync_bills_and_issues,
-        sync_cosponsors, sync_reps, sync_votes,
-    },
+    // services::sync::{
+    //     create_issues, get_bill_summaries, seed_states, sync_bills, sync_bills_and_issues,
+    //     sync_cosponsors, sync_reps, sync_votes,
+    // },
     types::api::ResponseBody,
     utils::api_error::ApiError,
 };
@@ -11,19 +13,19 @@ use crate::{
 use axum::{routing::post, Extension, Json, Router};
 
 pub fn router() -> Router {
-    let syncs_router = Router::new()
-        .route("/reps", post(reps_sync))
-        .route("/bills", post(bills_sync))
-        .route("/associate_bills_issues", post(associate_bills_and_issues))
-        .route("/votes", post(votes_sync))
-        .route("/cosponsors", post(cosponsors_sync))
-        .route("/summaries", post(get_bill_summaries));
-    let scripts_router = Router::new()
-        .route("/create_issues", post(create_issues))
-        .route("/seed_states", post(seed_states));
+    // let syncs_router = Router::new()
+    //     .route("/reps", post(reps_sync))
+    //     .route("/bills", post(bills_sync))
+    //     .route("/associate_bills_issues", post(associate_bills_and_issues))
+    //     .route("/votes", post(votes_sync))
+    //     .route("/cosponsors", post(cosponsors_sync))
+    //     .route("/summaries", post(get_bill_summaries));
+    // let scripts_router = Router::new()
+    //     .route("/create_issues", post(create_issues))
+    //     .route("/seed_states", post(seed_states));
     Router::new()
-        .nest("/sync", syncs_router)
-        .nest("/scripts", scripts_router)
+    // .nest("/sync", syncs_router)
+    // .nest("/scripts", scripts_router)
 }
 
 pub async fn reps_sync(ctx: Extension<ApiContext>) -> Result<&'static str, ApiError> {

@@ -1,3 +1,5 @@
+#![allow(unused_variables)]
+#![allow(non_snake_case)]
 use crate::{
     api::ApiContext,
     config::Config,

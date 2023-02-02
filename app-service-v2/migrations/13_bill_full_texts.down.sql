@@ -1,0 +1,1 @@
+DROP TABLE bill_full_texts;

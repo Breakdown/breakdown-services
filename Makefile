@@ -4,7 +4,7 @@ MAKEFLAGS += -j2
 run-backend:
 	docker compose down
 	docker compose up -d
-	cd app-service; RUST_LOG=tower_http=trace cargo watch -x run
+	cd app-service-v2; RUST_LOG=tower_http=trace cargo watch -x run
 
 .PHONY: run-app
 run-app:
