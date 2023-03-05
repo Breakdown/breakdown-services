@@ -1,13 +1,20 @@
 #![allow(dead_code)]
-use app_service::api::{admin, auth};
-use app_service::api::{bills, health, issues, reps, sync, users, ApiContext};
+use app_service::admin::routes as admin_routes;
+use app_service::auth::routes as auth_routes;
+use app_service::bills::routes as bills_routes;
 use app_service::config::Config;
-use app_service::services::scheduling::schedule_bill_sync;
+use app_service::issues::routes as issues_routes;
+use app_service::jobs::service::schedule_bill_sync;
+use app_service::reps::routes as reps_routes;
+use app_service::sync::routes as sync_routes;
 use app_service::telemetry::{get_subscriber, init_subscriber};
+use app_service::types::api::ApiContext;
+use app_service::users::routes as users_routes;
 use app_service::utils::api_error::ApiError;
 use app_service::utils::auth::create_session_layer;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use axum::routing::get;
 use axum::Extension;
 use axum::Router;
 use envconfig::Envconfig;
@@ -79,15 +86,24 @@ async fn main() -> std::io::Result<()> {
     Ok(())
 }
 
+fn healthcheck_router() -> Router {
+    Router::new().route("/healthcheck", get(health_check))
+}
+
+// basic handler that responds with a static string
+async fn health_check() -> &'static str {
+    "healthy"
+}
+
 fn api_router() -> Router {
-    health::router()
-        .merge(sync::router())
-        .merge(bills::router())
-        .merge(reps::router())
-        .merge(auth::router())
-        .merge(issues::router())
-        .merge(users::router())
-        .merge(admin::router())
+    healthcheck_router()
+        .merge(sync_routes::router())
+        .merge(bills_routes::router())
+        .merge(reps_routes::router())
+        .merge(auth_routes::router())
+        .merge(issues_routes::router())
+        .merge(users_routes::router())
+        .merge(admin_routes::router())
 }
 
 async fn fallback_404() -> impl IntoResponse {

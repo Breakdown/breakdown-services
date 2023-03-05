@@ -22,13 +22,13 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(User::Password).string().not_null())
                     .col(
                         ColumnDef::new(User::CreatedAt)
-                            .date_time()
+                            .datetime()
                             .not_null()
                             .default(now()),
                     )
                     .col(
                         ColumnDef::new(User::UpdatedAt)
-                            .date_time()
+                            .datetime()
                             .not_null()
                             .default(now()),
                     )

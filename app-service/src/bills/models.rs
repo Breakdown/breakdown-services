@@ -1,72 +1,12 @@
-use std::sync::Arc;
-
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+use sqlx::FromRow;
 use typeshare::typeshare;
 use uuid::Uuid;
 
-use crate::config::Config;
-
-#[derive(Clone, Debug)]
-pub struct ApiContext {
-    pub config: Arc<Config>,
-    pub connection_pool: PgPool,
-}
-
-// Requests
-#[derive(Deserialize)]
-pub struct GetFeedPagination {
-    pub limit: Option<i32>,
-    pub offset: Option<i32>,
-}
-
-#[derive(Deserialize)]
-pub struct GetBillsPagination {
-    pub limit: Option<i32>,
-    pub offset: Option<i32>,
-}
-
-#[derive(Deserialize)]
-pub struct GetRepsPagination {
-    pub limit: Option<i32>,
-    pub offset: Option<i32>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ResponseBody<T> {
-    pub data: T,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RequestState {
-    pub user_id: String,
-}
-
-// Responses
-
 #[typeshare]
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GetMeResponse {
-    pub id: Uuid,
-    pub email: Option<String>,
-    pub password: Option<String>,
-    pub first_name: Option<String>,
-    pub last_name: Option<String>,
-    pub onboarded: bool,
-    pub address: Option<String>,
-    pub state_id: Option<Uuid>,
-    pub district_id: Option<Uuid>,
-    pub phone: Option<String>,
-    pub phone_verified: bool,
-    pub email_verified: bool,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: Option<DateTime<Utc>>,
-}
-
-#[typeshare]
-#[derive(Debug, Serialize, Deserialize)]
-pub struct FeedBill {
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct BreakdownBill {
     pub id: Uuid,
     pub primary_issue_id: Option<Uuid>,
     pub sponsor_id: Option<Uuid>,
@@ -109,16 +49,4 @@ pub struct FeedBill {
     pub importance: Option<i32>,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
-    pub sponsor_first_name: Option<String>,
-    pub sponsor_last_name: Option<String>,
-    pub primary_issue_name: Option<String>,
-    pub primary_issue_image_url: Option<String>,
-    pub sponsor_image_url: Option<String>,
-    pub sponsor_short_title: Option<String>,
-}
-
-#[typeshare]
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GetFeedResponse {
-    pub bills: Vec<FeedBill>,
 }
