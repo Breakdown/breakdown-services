@@ -1,5 +1,6 @@
 use super::models::User;
 use crate::auth::service::hash_password;
+use crate::issues::models::BreakdownIssue;
 use crate::types::api::{ApiContext, FeedBill, GetFeedPagination, GetMeResponse, ResponseBody};
 use crate::utils::api_error::ApiError;
 use anyhow::anyhow;
@@ -162,4 +163,24 @@ pub async fn patch_user(
     .await
     .unwrap();
     Ok(Json(ResponseBody { data: user }))
+}
+
+pub async fn get_user_issues(
+    ctx: Extension<ApiContext>,
+    session: ReadableSession,
+) -> Result<Json<ResponseBody<Vec<BreakdownIssue>>>, ApiError> {
+    let user_id = session.get::<Uuid>("user_id").unwrap();
+    let issues = sqlx::query_as!(
+        BreakdownIssue,
+        r#"
+            SELECT i.* FROM issues i 
+            INNER JOIN users_issues ui
+            ON i.id = ui.issue_id
+            WHERE ui.user_id = $1
+        "#,
+        user_id
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+    Ok(Json(ResponseBody { data: issues }))
 }
