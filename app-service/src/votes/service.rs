@@ -200,7 +200,7 @@ pub async fn get_user_bill_vote(
     ctx: Extension<ApiContext>,
     session: ReadableSession,
     Path(params): Path<GetUserVotesParams>,
-) -> Result<Json<ResponseBody<Vec<UserVote>>>, ApiError> {
+) -> Result<Json<ResponseBody<UserVote>>, ApiError> {
     let user_id = session.get::<Uuid>("user_id").unwrap();
     let votes = sqlx::query_as!(
         UserVote,
@@ -210,7 +210,7 @@ pub async fn get_user_bill_vote(
         user_id,
         &params.bill_id
     )
-    .fetch_all(&ctx.connection_pool)
+    .fetch_one(&ctx.connection_pool)
     .await?;
     Ok(Json(ResponseBody { data: votes }))
 }
@@ -219,16 +219,15 @@ pub async fn get_user_votes(
     ctx: Extension<ApiContext>,
     session: ReadableSession,
 ) -> Result<Json<ResponseBody<Vec<UserVote>>>, ApiError> {
-    // let user_id = session.get::<Uuid>("user_id").unwrap();
-    // let votes = sqlx::query_as!(
-    //     Vote,
-    //     r#"
-    //         SELECT * FROM votes WHERE user_id = $1
-    //     "#,
-    //     user_id
-    // )
-    // .fetch_all(&ctx.connection_pool)
-    // .await?;
-    // Ok(Json(ResponseBody { data: votes }))
-    todo!()
+    let user_id = session.get::<Uuid>("user_id").unwrap();
+    let votes = sqlx::query_as!(
+        UserVote,
+        r#"
+            SELECT * FROM users_votes WHERE user_id = $1
+        "#,
+        user_id,
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+    Ok(Json(ResponseBody { data: votes }))
 }
