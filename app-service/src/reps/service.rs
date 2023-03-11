@@ -148,6 +148,7 @@ pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Resu
                   phone,
                   fax,
                   state,
+                  district,
                   senate_class,
                   state_rank,
                   lis_id,
@@ -202,7 +203,8 @@ pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Resu
                   $43,
                   $44,
                   $45,
-                  $46
+                  $46,
+                  $47
               ) returning id"#,
                 rep.title,
                 rep.short_title,
@@ -242,6 +244,7 @@ pub async fn save_propub_rep(rep: ProPublicaRep, db_connection: &PgPool) -> Resu
                 rep.phone,
                 rep.fax,
                 rep.state,
+                rep.district,
                 rep.senate_class,
                 rep.state_rank,
                 rep.lis_id,
@@ -479,4 +482,31 @@ pub async fn get_rep_cosponsored_bills(
     })?;
 
     Ok(Json(ResponseBody { data: bills }))
+}
+
+pub async fn get_representatives_by_state_and_district(
+    state: &str,
+    district: &str,
+    db_connection: &PgPool,
+) -> Result<Vec<BreakdownRep>, ApiError> {
+    let representatives = sqlx::query_as!(
+        BreakdownRep,
+        r#"
+            SELECT * FROM representatives
+            WHERE state = $1 AND district = $2
+        "#,
+        state,
+        district
+    )
+    .fetch_all(db_connection)
+    .await
+    .map_err(|e| {
+        println!(
+            "Error getting representatives by state and district: {:?}",
+            e
+        );
+        return ApiError::NotFound;
+    })?;
+
+    Ok(representatives)
 }

@@ -3,7 +3,7 @@ ADD COLUMN initial_summary TEXT,
 ADD COLUMN created_at  TIMESTAMPTZ  NOT NULL  default now(),
 ADD COLUMN updated_at  TIMESTAMPTZ;
 
-SELECT trigger_updated_at('bill_full_texts');
+-- SELECT trigger_updated_at('bill_full_texts');
 
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS interests_selected BOOLEAN NOT NULL default false,

@@ -2,9 +2,12 @@ use super::models::User;
 use crate::auth::service::hash_password;
 use crate::bills::models::BreakdownBill;
 use crate::issues::models::BreakdownIssue;
+use crate::reps::models::BreakdownRep;
+use crate::reps::service::get_representatives_by_state_and_district;
 use crate::types::api::{
     ApiContext, FeedBill, GetBillsPagination, GetFeedPagination, GetMeResponse, ResponseBody,
 };
+
 use crate::utils::api_error::ApiError;
 use crate::utils::geocodio::{geocode_address, geocode_lat_lon};
 use anyhow::anyhow;
@@ -362,4 +365,105 @@ pub async fn get_user_following_bills(
     .fetch_all(&ctx.connection_pool)
     .await?;
     Ok(Json(ResponseBody { data: bills }))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetUserRepresentativesResponse {
+    local: Vec<BreakdownRep>,
+    following: Vec<BreakdownRep>,
+}
+pub async fn get_user_representatives(
+    ctx: Extension<ApiContext>,
+    session: ReadableSession,
+) -> Result<Json<ResponseBody<GetUserRepresentativesResponse>>, ApiError> {
+    let user_id = session.get::<Uuid>("user_id").unwrap();
+    let user = sqlx::query_as!(
+        User,
+        r#"
+            SELECT * FROM users WHERE id = $1
+        "#,
+        user_id
+    )
+    .fetch_one(&ctx.connection_pool)
+    .await?;
+
+    let mut response = GetUserRepresentativesResponse {
+        local: vec![],
+        following: vec![],
+    };
+    if !(user.state_code.is_none() || user.district_code.is_none()) {
+        let local_representatives = get_representatives_by_state_and_district(
+            &user.state_code.unwrap(),
+            &user.district_code.unwrap(),
+            &ctx.connection_pool,
+        )
+        .await
+        .map_err(|_| ApiError::Anyhow(anyhow!("Could not get representatives")));
+        response.local = local_representatives?;
+    }
+
+    let following_representatives = sqlx::query_as!(
+        BreakdownRep,
+        r#"
+            SELECT r.* FROM representatives r
+            INNER JOIN users_following_representatives ufr
+            ON r.id = ufr.representative_id
+            WHERE ufr.user_id = $1
+        "#,
+        user_id
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+    response.following = following_representatives;
+    Ok(Json(ResponseBody { data: response }))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PostUserFollowRepParams {
+    pub rep_id: Uuid,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PostUserFollowRepBody {
+    pub following: bool,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PostUserFollowRepResponse {
+    pub success: bool,
+}
+
+pub async fn post_user_follow_rep(
+    ctx: Extension<ApiContext>,
+    session: ReadableSession,
+    Path(params): Path<PostUserFollowRepParams>,
+    Json(body): Json<PostUserFollowRepBody>,
+) -> Result<Json<ResponseBody<PostUserFollowRepResponse>>, ApiError> {
+    let user_id = session.get::<Uuid>("user_id").unwrap();
+    let rep_id = params.rep_id;
+    let following = body.following;
+    match following {
+        true => {
+            sqlx::query!(
+                r#"
+                    INSERT INTO users_following_representatives (user_id, representative_id) VALUES ($1, $2)
+                "#,
+                user_id,
+                &rep_id
+            )
+            .execute(&ctx.connection_pool)
+            .await?;
+        }
+        false => {
+            sqlx::query!(
+                r#"
+                    DELETE FROM users_following_representatives WHERE user_id = $1 AND representative_id = $2
+                "#,
+                user_id,
+                &rep_id
+            )
+            .execute(&ctx.connection_pool)
+            .await?;
+        }
+    }
+    let response = PostUserFollowRepResponse { success: true };
+    Ok(Json(ResponseBody { data: response }))
 }
