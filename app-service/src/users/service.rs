@@ -4,7 +4,6 @@ use crate::issues::models::BreakdownIssue;
 use crate::types::api::{ApiContext, FeedBill, GetFeedPagination, GetMeResponse, ResponseBody};
 use crate::utils::api_error::ApiError;
 use crate::utils::geocodio::{geocode_address, geocode_lat_lon};
-use crate::votes::models::UserVote;
 use anyhow::anyhow;
 use axum::extract::{Path, Query};
 use axum::{Extension, Json};
@@ -256,5 +255,33 @@ pub async fn post_user_location(
     .unwrap();
 
     let response = PostUserLocationResponse { success: true };
+    Ok(Json(ResponseBody { data: response }))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PostUserSeenBillParams {
+    pub bill_id: Uuid,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PostUserSeenBillResponse {
+    pub success: bool,
+}
+pub async fn post_user_seen_bill(
+    ctx: Extension<ApiContext>,
+    session: ReadableSession,
+    Path(params): Path<PostUserSeenBillParams>,
+) -> Result<Json<ResponseBody<PostUserSeenBillResponse>>, ApiError> {
+    let user_id = session.get::<Uuid>("user_id").unwrap();
+    let bill_id = params.bill_id;
+    sqlx::query!(
+        r#"
+            INSERT INTO users_seen_bills (user_id, bill_id) VALUES ($1, $2)
+        "#,
+        user_id,
+        &bill_id
+    )
+    .execute(&ctx.connection_pool)
+    .await?;
+    let response = PostUserSeenBillResponse { success: true };
     Ok(Json(ResponseBody { data: response }))
 }

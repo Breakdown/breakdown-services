@@ -4,7 +4,7 @@ use crate::{
     utils::api_error::ApiError,
     votes::models::UserVote,
 };
-use axum::{body::Body, extract::Path, Extension, Json};
+use axum::{extract::Path, Extension, Json};
 use axum_sessions::extractors::ReadableSession;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;

@@ -102,8 +102,6 @@ pub async fn save_propub_bill(
     bill: ProPublicaBill,
     db_connection: &PgPool,
 ) -> Result<BillUpsertInfo, ApiError> {
-    let mut new_or_used = BillAgeStatus::New;
-    // TODO: Guard clause for no bill_id
     let existing_bill = sqlx::query!(
         r#"
             SELECT * FROM bills WHERE propublica_id = $1
@@ -145,7 +143,6 @@ pub async fn save_propub_bill(
     // Insert or update
     match existing_bill {
         None => {
-            new_or_used = BillAgeStatus::New;
             let query_result = sqlx::query_as!(
                 BreakdownBill,
                 r#"INSERT INTO bills (
@@ -246,11 +243,10 @@ pub async fn save_propub_bill(
             .await?;
             Ok(BillUpsertInfo {
                 bill: query_result,
-                status: new_or_used,
+                status: BillAgeStatus::New,
             })
         }
         Some(existing_bill) => {
-            new_or_used = BillAgeStatus::Updated;
             let query_result = sqlx::query_as!(
                 BreakdownBill,
                 r#"
@@ -322,7 +318,7 @@ pub async fn save_propub_bill(
             .await?;
             Ok(BillUpsertInfo {
                 bill: query_result,
-                status: new_or_used,
+                status: BillAgeStatus::Updated,
             })
         }
     }
