@@ -12,6 +12,7 @@ use app_service::types::api::ApiContext;
 use app_service::users::routes as users_routes;
 use app_service::utils::api_error::ApiError;
 use app_service::utils::auth::create_session_layer;
+use app_service::votes::routes as votes_routes;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::routing::get;
@@ -42,7 +43,7 @@ async fn main() -> std::io::Result<()> {
         dotenv::dotenv().ok();
     }
     // Get environment config
-    let mut config = Config::init_from_env().unwrap();
+    let config = Config::init_from_env().unwrap();
 
     let port = config.PORT.parse::<u16>().unwrap();
 
@@ -115,6 +116,7 @@ fn api_router() -> Router {
         .merge(issues_routes::router())
         .merge(users_routes::router())
         .merge(admin_routes::router())
+        .merge(votes_routes::router())
 }
 
 async fn fallback_404() -> impl IntoResponse {

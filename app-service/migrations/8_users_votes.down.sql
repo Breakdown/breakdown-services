@@ -1,1 +1,1 @@
-drop table "users_votes";
+drop table if exists users_votes;

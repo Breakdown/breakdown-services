@@ -4,8 +4,9 @@ use crate::issues::models::BreakdownIssue;
 use crate::types::api::{ApiContext, FeedBill, GetFeedPagination, GetMeResponse, ResponseBody};
 use crate::utils::api_error::ApiError;
 use crate::utils::geocodio::{geocode_address, geocode_lat_lon};
+use crate::votes::models::UserVote;
 use anyhow::anyhow;
-use axum::extract::Query;
+use axum::extract::{Path, Query};
 use axum::{Extension, Json};
 use axum_sessions::extractors::ReadableSession;
 use serde::{Deserialize, Serialize};
@@ -256,4 +257,46 @@ pub async fn post_user_location(
 
     let response = PostUserLocationResponse { success: true };
     Ok(Json(ResponseBody { data: response }))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetUserVotesParams {
+    bill_id: Uuid,
+}
+
+pub async fn get_user_bill_vote(
+    ctx: Extension<ApiContext>,
+    session: ReadableSession,
+    Path(params): Path<GetUserVotesParams>,
+) -> Result<Json<ResponseBody<Vec<UserVote>>>, ApiError> {
+    let user_id = session.get::<Uuid>("user_id").unwrap();
+    let votes = sqlx::query_as!(
+        UserVote,
+        r#"
+            SELECT * FROM users_votes WHERE user_id = $1 AND bill_id = $2
+        "#,
+        user_id,
+        &params.bill_id
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+    Ok(Json(ResponseBody { data: votes }))
+}
+
+pub async fn get_user_votes(
+    ctx: Extension<ApiContext>,
+    session: ReadableSession,
+) -> Result<Json<ResponseBody<Vec<UserVote>>>, ApiError> {
+    // let user_id = session.get::<Uuid>("user_id").unwrap();
+    // let votes = sqlx::query_as!(
+    //     Vote,
+    //     r#"
+    //         SELECT * FROM votes WHERE user_id = $1
+    //     "#,
+    //     user_id
+    // )
+    // .fetch_all(&ctx.connection_pool)
+    // .await?;
+    // Ok(Json(ResponseBody { data: votes }))
+    todo!()
 }
