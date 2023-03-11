@@ -1,5 +1,6 @@
 use super::models::User;
 use crate::auth::service::hash_password;
+use crate::bills::models::BreakdownBill;
 use crate::issues::models::BreakdownIssue;
 use crate::types::api::{ApiContext, FeedBill, GetFeedPagination, GetMeResponse, ResponseBody};
 use crate::utils::api_error::ApiError;
@@ -284,4 +285,73 @@ pub async fn post_user_seen_bill(
     .await?;
     let response = PostUserSeenBillResponse { success: true };
     Ok(Json(ResponseBody { data: response }))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PostUserFollowBillParams {
+    pub bill_id: Uuid,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PostUserFollowBillBody {
+    pub following: bool,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PostUserFollowBillResponse {
+    pub success: bool,
+}
+pub async fn post_user_follow_bill(
+    ctx: Extension<ApiContext>,
+    session: ReadableSession,
+    Path(params): Path<PostUserFollowBillParams>,
+    Json(body): Json<PostUserFollowBillBody>,
+) -> Result<Json<ResponseBody<PostUserFollowBillResponse>>, ApiError> {
+    let user_id = session.get::<Uuid>("user_id").unwrap();
+    let bill_id = params.bill_id;
+    let following = body.following;
+    match following {
+        true => {
+            sqlx::query!(
+                r#"
+                    INSERT INTO users_following_bills (user_id, bill_id) VALUES ($1, $2)
+                "#,
+                user_id,
+                &bill_id
+            )
+            .execute(&ctx.connection_pool)
+            .await?;
+        }
+        false => {
+            sqlx::query!(
+                r#"
+                    DELETE FROM users_following_bills WHERE user_id = $1 AND bill_id = $2
+                "#,
+                user_id,
+                &bill_id
+            )
+            .execute(&ctx.connection_pool)
+            .await?;
+        }
+    }
+    let response = PostUserFollowBillResponse { success: true };
+    Ok(Json(ResponseBody { data: response }))
+}
+
+pub async fn get_user_following_bills(
+    ctx: Extension<ApiContext>,
+    session: ReadableSession,
+) -> Result<Json<ResponseBody<Vec<BreakdownBill>>>, ApiError> {
+    let user_id = session.get::<Uuid>("user_id").unwrap();
+    let bills = sqlx::query_as!(
+        BreakdownBill,
+        r#"
+            SELECT b.* FROM bills b
+            INNER JOIN users_following_bills ufb
+            ON b.id = ufb.bill_id
+            WHERE ufb.user_id = $1
+        "#,
+        user_id
+    )
+    .fetch_all(&ctx.connection_pool)
+    .await?;
+    Ok(Json(ResponseBody { data: bills }))
 }

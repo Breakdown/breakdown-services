@@ -11,11 +11,12 @@ ADD COLUMN IF NOT EXISTS lat_lon TEXT[],
 ADD COLUMN IF NOT EXISTS state_code TEXT,
 ADD COLUMN IF NOT EXISTS district_code TEXT;
 
-CREATE TABLE users_saved_bills
+CREATE TABLE users_following_bills
 (
   user_id uuid REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   bill_id uuid REFERENCES bills (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT users_saved_bills_pkey PRIMARY KEY (user_id, bill_id)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT users_following_bills_pkey PRIMARY KEY (user_id, bill_id)
 );
 
-SELECT trigger_updated_at('users_saved_bills');
+SELECT trigger_updated_at('users_following_bills');
