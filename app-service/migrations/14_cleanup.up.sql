@@ -6,10 +6,10 @@ ADD COLUMN updated_at  TIMESTAMPTZ;
 SELECT trigger_updated_at('bill_full_texts');
 
 ALTER TABLE users
-ADD COLUMN interests_selected BOOLEAN NOT NULL default false,
-ADD COLUMN lat_lon TEXT[],
-ADD COLUMN state_code TEXT,
-ADD COLUMN district_code TEXT;
+ADD COLUMN IF NOT EXISTS interests_selected BOOLEAN NOT NULL default false,
+ADD COLUMN IF NOT EXISTS lat_lon TEXT[],
+ADD COLUMN IF NOT EXISTS state_code TEXT,
+ADD COLUMN IF NOT EXISTS district_code TEXT;
 
 CREATE TABLE users_saved_bills
 (

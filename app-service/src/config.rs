@@ -68,4 +68,7 @@ pub struct Config {
 
     #[envconfig(from = "OPENAI_API_KEY", default = "12345")]
     pub OPENAI_API_KEY: String,
+
+    #[envconfig(from = "GEOCODIO_API_KEY", default = "12345")]
+    pub GEOCODIO_API_KEY: String,
 }

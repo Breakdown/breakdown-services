@@ -267,45 +267,48 @@ pub async fn queue_bill_updated_jobs(info: BillUpsertInfo) -> Result<(), ApiErro
                         );
                     }
                 };
+                connection_pool_copy.close().await;
 
+                // Commenting out for now, will readd once in prod
+                // and max connections on DB are accurate
                 // Run get bill text from XML
-                match fetch_and_save_bill_full_text(
-                    &info_copy.bill.to_owned(),
-                    &connection_pool_copy,
-                )
-                .await
-                {
-                    Ok(_) => {}
-                    Err(e) => {
-                        log!(
-                            Level::Error,
-                            "Error syncing full text for bill {}: {}",
-                            &info_copy.bill.to_owned().id,
-                            e
-                        );
-                    }
-                };
-                // Get OpenAI summary for bill
-                let openai_client: openai_rs::client::Client =
-                    openai_rs::openai::new(&job_configuration.config.OPENAI_API_KEY);
-                let bill_clone = &info.bill.clone();
-                match fetch_and_save_davinci_bill_summary(
-                    &bill_clone.id,
-                    &connection_pool_copy,
-                    &openai_client,
-                )
-                .await
-                {
-                    Ok(_) => {}
-                    Err(e) => {
-                        log!(
-                            Level::Error,
-                            "Error syncing summary for bill {}: {}",
-                            &bill_clone.id,
-                            e
-                        );
-                    }
-                };
+                // match fetch_and_save_bill_full_text(
+                //     &info_copy.bill.to_owned(),
+                //     &connection_pool_copy,
+                // )
+                // .await
+                // {
+                //     Ok(_) => {}
+                //     Err(e) => {
+                //         log!(
+                //             Level::Error,
+                //             "Error syncing full text for bill {}: {}",
+                //             &info_copy.bill.to_owned().id,
+                //             e
+                //         );
+                //     }
+                // };
+                // // Get OpenAI summary for bill
+                // let openai_client: openai_rs::client::Client =
+                //     openai_rs::openai::new(&job_configuration.config.OPENAI_API_KEY);
+                // let bill_clone = &info.bill.clone();
+                // match fetch_and_save_davinci_bill_summary(
+                //     &bill_clone.id,
+                //     &connection_pool_copy,
+                //     &openai_client,
+                // )
+                // .await
+                // {
+                //     Ok(_) => {}
+                //     Err(e) => {
+                //         log!(
+                //             Level::Error,
+                //             "Error syncing summary for bill {}: {}",
+                //             &bill_clone.id,
+                //             e
+                //         );
+                //     }
+                // };
             });
             ()
         }
@@ -395,6 +398,7 @@ pub async fn sync_bills(
             continue;
         } else {
             let bill_info = save_propub_bill(bill_ref, &connection_pool).await?;
+
             fetch_futures.push(queue_bill_updated_jobs(bill_info));
             bill_id_map.insert(bill.bill_id.as_ref().unwrap().to_string(), true);
         }

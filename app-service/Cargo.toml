@@ -41,3 +41,5 @@ scraper = "0.14.0"
 roxmltree = "0.17.0"
 openai-rs = "0.1.1"
 tokio-cron-scheduler = { version = "0.8.4", features = ["signal"] }
+dotenv = "0.15.0"
+urlencoding = "2.1.2"

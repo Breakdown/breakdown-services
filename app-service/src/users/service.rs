@@ -3,6 +3,7 @@ use crate::auth::service::hash_password;
 use crate::issues::models::BreakdownIssue;
 use crate::types::api::{ApiContext, FeedBill, GetFeedPagination, GetMeResponse, ResponseBody};
 use crate::utils::api_error::ApiError;
+use crate::utils::geocodio::{geocode_address, geocode_lat_lon};
 use anyhow::anyhow;
 use axum::extract::Query;
 use axum::{Extension, Json};
@@ -183,4 +184,76 @@ pub async fn get_user_issues(
     .fetch_all(&ctx.connection_pool)
     .await?;
     Ok(Json(ResponseBody { data: issues }))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PostUserLocationArgs {
+    pub address: Option<String>,
+    pub lat: Option<f64>,
+    pub lon: Option<f64>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PostUserLocationResponse {
+    pub success: bool,
+}
+pub async fn post_user_location(
+    ctx: Extension<ApiContext>,
+    session: ReadableSession,
+    Json(args): Json<PostUserLocationArgs>,
+) -> Result<Json<ResponseBody<PostUserLocationResponse>>, ApiError> {
+    let user_id = session.get::<Uuid>("user_id").unwrap();
+    let geocodio_result = match args.address {
+        Some(address) => {
+            let geocoded_address = geocode_address(&address, &ctx.config.GEOCODIO_API_KEY)
+                .await
+                .map_err(|_| ApiError::Anyhow(anyhow!("Could not geocode address")));
+            match geocoded_address {
+                Ok(geocoded_address) => Some(geocoded_address),
+                Err(_) => None,
+            }
+        }
+        None => {
+            let geocoded_address = geocode_lat_lon(&args.lat.unwrap(), &args.lon.unwrap())
+                .await
+                .map_err(|_| ApiError::Anyhow(anyhow!("Could not geocode lat lon")));
+            match geocoded_address {
+                Ok(geocoded_address) => Some(geocoded_address),
+                Err(_) => None,
+            }
+        }
+    };
+
+    if geocodio_result.is_none() {
+        return Err(ApiError::Anyhow(anyhow!(
+            "Got no response for geocoding location"
+        )));
+    }
+    let state_code = &geocodio_result.as_ref().unwrap().state;
+    let district_code = &geocodio_result.as_ref().unwrap().district;
+    // Save state and district codes on user
+    sqlx::query!(
+        r#"
+        UPDATE users
+            SET state_code = coalesce($2, users.state_code),
+                district_code = coalesce($3, users.district_code),
+                address = coalesce($4, users.address),
+                lat_lon = coalesce($5, users.lat_lon)
+            WHERE id = $1
+        "#,
+        user_id,
+        state_code,
+        district_code.to_string(),
+        &geocodio_result.as_ref().unwrap().formatted_address,
+        &vec![
+            args.lat.unwrap_or(0.0).to_string(),
+            args.lon.unwrap_or(0.0).to_string()
+        ]
+    )
+    .execute(&ctx.connection_pool)
+    .await
+    .unwrap();
+
+    let response = PostUserLocationResponse { success: true };
+    Ok(Json(ResponseBody { data: response }))
 }

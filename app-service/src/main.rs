@@ -17,10 +17,12 @@ use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::Extension;
 use axum::Router;
+use dotenv;
 use envconfig::Envconfig;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::ConnectOptions;
+use std::env;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -31,8 +33,17 @@ async fn main() -> std::io::Result<()> {
     // Tracing - need to have RUST_LOG=tower_http=trace env var set
     let subscriber = get_subscriber("app-service".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
+    let environment = match env::var("ENVIRONMENT") {
+        Ok(val) => val,
+        Err(_) => "local".to_string(),
+    };
+    // If local, use a .env file
+    if environment == "local" {
+        dotenv::dotenv().ok();
+    }
+    // Get environment config
+    let mut config = Config::init_from_env().unwrap();
 
-    let config = Config::init_from_env().unwrap();
     let port = config.PORT.parse::<u16>().unwrap();
 
     let session_layer = create_session_layer()
