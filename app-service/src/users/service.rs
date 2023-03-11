@@ -2,7 +2,9 @@ use super::models::User;
 use crate::auth::service::hash_password;
 use crate::bills::models::BreakdownBill;
 use crate::issues::models::BreakdownIssue;
-use crate::types::api::{ApiContext, FeedBill, GetFeedPagination, GetMeResponse, ResponseBody};
+use crate::types::api::{
+    ApiContext, FeedBill, GetBillsPagination, GetFeedPagination, GetMeResponse, ResponseBody,
+};
 use crate::utils::api_error::ApiError;
 use crate::utils::geocodio::{geocode_address, geocode_lat_lon};
 use anyhow::anyhow;
@@ -339,6 +341,7 @@ pub async fn post_user_follow_bill(
 pub async fn get_user_following_bills(
     ctx: Extension<ApiContext>,
     session: ReadableSession,
+    pagination: Query<GetBillsPagination>,
 ) -> Result<Json<ResponseBody<Vec<BreakdownBill>>>, ApiError> {
     let user_id = session.get::<Uuid>("user_id").unwrap();
     let bills = sqlx::query_as!(
@@ -348,8 +351,13 @@ pub async fn get_user_following_bills(
             INNER JOIN users_following_bills ufb
             ON b.id = ufb.bill_id
             WHERE ufb.user_id = $1
+            ORDER BY ufb.created_at DESC
+            LIMIT COALESCE($2, 50)
+            OFFSET COALESCE($3, 0)
         "#,
-        user_id
+        user_id,
+        pagination.limit,
+        pagination.offset
     )
     .fetch_all(&ctx.connection_pool)
     .await?;
