@@ -233,7 +233,16 @@ pub async fn signin_sms(
     .await?;
     // Send SMS for verification
     let sms_body = "Your Breakdown verification code is: ".to_string() + &code.to_string();
-    send_sms_message(&ctx, &user.phone.unwrap(), &sms_body).await?;
+    match send_sms_message(&ctx, &user.phone.unwrap(), &sms_body).await {
+        Ok(_) => {}
+        Err(e) => {
+            println!("{}", e);
+            return Err(ApiError::Anyhow(anyhow!(
+                "Failed to send SMS message: {}",
+                e
+            )));
+        }
+    };
 
     Ok(Json(ResponseBody {
         data: code.to_string(),

@@ -10,7 +10,7 @@ import { useEffect } from "react";
 import { ColorSchemeName, Text, useColorScheme } from "react-native";
 import useAuth from "../hooks/useAuth";
 import Bill from "../screens/Bill";
-import Feed from "../screens/Feed";
+import Home from "../screens/Home";
 import NotFoundScreen from "../screens/NotFound";
 import SignIn from "../screens/unauth/SignIn";
 import SignUp from "../screens/unauth/SignUp";
@@ -41,7 +41,7 @@ function TabBarIcon(props) {
 const HomeStack = () => {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Feed" component={Feed} />
+      <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="Bill" component={Bill} />
       <Stack.Screen
         name="NotFound"
@@ -59,11 +59,11 @@ export const AuthenticatedStack = () => {
 
   return (
     <BottomTab.Navigator
-      initialRouteName="Feed"
+      initialRouteName="Home"
       screenOptions={{ tabBarActiveTintColor: "#d3d3d3" }}
     >
       <BottomTab.Screen
-        name="Home"
+        name="HomeStack"
         component={HomeStack}
         options={{
           tabBarShowLabel: false,

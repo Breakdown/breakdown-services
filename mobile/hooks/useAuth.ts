@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import * as SecureStore from "expo-secure-store";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getMe, QUERY_GET_ME } from "../data/queries";
 import { User } from "../types/api";
 
@@ -17,11 +17,20 @@ export default function useAuth({
 } = {}): UseAuthExport {
   const [user, setUser] = useState<User | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  useEffect(() => {
+    (async () => {
+      const sessionToken = await SecureStore.getItemAsync("session");
+      setSessionToken(sessionToken);
+    })();
+  }, [authenticated]);
+
   const { data, error, refetch } = useQuery([QUERY_GET_ME], {
     queryFn: getMe,
     refetchInterval: 1000 * 60, // 1 minute
     refetchOnWindowFocus: false,
     retry: false,
+    enabled: !!sessionToken,
   });
   const logout = async () => {
     await SecureStore.deleteItemAsync("session");
@@ -38,9 +47,11 @@ export default function useAuth({
     if (error) {
       setUser(null);
       setAuthenticated(false);
-      logout();
+      if (!allowUnauth) {
+        logout();
+      }
     }
-  }, [error]);
+  }, [error, allowUnauth]);
 
   return { user, authenticated, refetch };
 }

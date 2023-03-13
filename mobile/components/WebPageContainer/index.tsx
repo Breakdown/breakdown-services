@@ -1,7 +1,6 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { WebView } from "react-native-webview";
-import Exit from "./Exit";
 
 const WebPageContainer = ({ open, uri, onExitPress }) => {
   return (
