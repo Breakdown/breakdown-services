@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { BreakdownBill } from "../types/api";
 import { Dimensions } from "react-native";
 import {
@@ -13,6 +13,7 @@ import {
 } from "../styles";
 import { baseText, subtitleText } from "../styles/text";
 import { getBillSummary, getBillTitle } from "../utils/bills";
+import { ImageSize, getRepImage } from "../utils/reps";
 interface Props {
   bill: BreakdownBill;
 }
@@ -62,6 +63,13 @@ const BillCard = ({ bill }: Props) => {
     );
   }, [bill.cosponsors_d, bill.cosponsors_r]);
 
+  const imageUrl = useMemo(() => {
+    return getRepImage(bill.sponsor_propublica_id, ImageSize.Thumbnail);
+  }, [bill.sponsor_propublica_id]);
+
+  const title = getBillTitle(bill);
+  const summary = getBillSummary(bill);
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -72,15 +80,26 @@ const BillCard = ({ bill }: Props) => {
         locations={[0.0, midpoint, 1.0]}
       />
       <View style={styles.innerContainer}>
-        {/* TODO: Image */}
+        <View style={styles.repImageContainer}>
+          <Image
+            source={{
+              uri: imageUrl,
+            }}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+            }}
+          />
+        </View>
         {/* TODO: Likelihood to pass - this will probably require building a dataset manually */}
         <View style={styles.titleContainer}>
           <View style={styles.titleContainerBackground} />
-          <Text style={styles.billTitle} numberOfLines={2}>
-            {getBillTitle(bill)}
+          <Text style={styles.billTitle} numberOfLines={!!summary ? 2 : 4}>
+            {title}
           </Text>
           <Text style={styles.billSummary} numberOfLines={3}>
-            {getBillSummary(bill)}
+            {summary}
           </Text>
         </View>
       </View>
@@ -145,6 +164,19 @@ const styles = StyleSheet.create({
   },
   billSummary: {
     ...baseText,
+    lineHeight: 16,
+  },
+  repImageContainer: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    borderRadius: 24,
+    height: 52,
+    width: 52,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#d3d3d3",
   },
 });
 
