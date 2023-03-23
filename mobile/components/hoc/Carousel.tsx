@@ -18,9 +18,7 @@ const BreakdownCarousel = ({ renderItem, data }: CarouselProps) => {
       data={data}
       sliderWidth={width}
       itemWidth={width * 0.9}
-      renderItem={({ item }) => {
-        return <BillCard bill={item} />;
-      }}
+      renderItem={renderItem}
       onSnapToItem={(index) => {
         // TODO: Set bill seen
       }}

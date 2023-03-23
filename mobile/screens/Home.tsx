@@ -42,14 +42,13 @@ const styles = StyleSheet.create({
   },
   yourBillsContainer: {
     width: "100%",
-    height: "30%",
+    height: "100%",
     paddingHorizontal: 12,
   },
   yourBillsHeader: {
     marginVertical: 12,
   },
   listContainer: {
-    width: "100%",
     paddingVertical: 12,
   },
 });

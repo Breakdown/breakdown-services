@@ -31,7 +31,7 @@ const variants: { [key in TextVariant]: TextStyle } = {
 
 const styles = StyleSheet.create({
   text: {
-    fontFamily: "SF Pro Text",
+    // fontFamily: "SF Pro Text",
   },
   SECTION_TITLE: {
     ...variants.SECTION_TITLE,
