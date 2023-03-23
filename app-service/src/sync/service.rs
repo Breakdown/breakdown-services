@@ -187,11 +187,11 @@ pub async fn sync_reps(
     let reqwest_client = reqwest::Client::new();
     // Fetch reps from ProPublica
     let get_all_reps_url = format!(
-        "{}/117/{}/members.json",
+        "{}/118/{}/members.json",
         config.PROPUBLICA_BASE_URI, "house",
     );
     let get_all_senators_url = format!(
-        "{}/117/{}/members.json",
+        "{}/118/{}/members.json",
         config.PROPUBLICA_BASE_URI, "senate"
     );
     let house_response = reqwest_client

@@ -1,7 +1,14 @@
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableOpacityBase,
+  View,
+} from "react-native";
 import { BreakdownBill } from "../types/api";
 import { Dimensions } from "react-native";
 import {
@@ -70,8 +77,16 @@ const BillCard = ({ bill }: Props) => {
   const title = getBillTitle(bill);
   const summary = getBillSummary(bill);
 
+  const onPress = () => {
+    // @ts-ignore-next-line
+    navigate("Bill", { bill });
+  };
   return (
-    <View style={styles.container}>
+    <TouchableOpacity
+      style={styles.container}
+      activeOpacity={0.9}
+      onPress={onPress}
+    >
       <LinearGradient
         style={styles.gradientContainer}
         colors={gradientColors}
@@ -92,7 +107,7 @@ const BillCard = ({ bill }: Props) => {
             }}
           />
         </View>
-        {/* TODO: Likelihood to pass - this will probably require building a dataset manually */}
+        {/* TODO: Likelihood to pass - this will probably require building a dataset manually or hitting propublica heavily for votes */}
         <View style={styles.titleContainer}>
           <View style={styles.titleContainerBackground} />
           <Text style={styles.billTitle} numberOfLines={!!summary ? 2 : 4}>
@@ -103,7 +118,7 @@ const BillCard = ({ bill }: Props) => {
           </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

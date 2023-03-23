@@ -71,7 +71,7 @@ pub async fn get_text_for_bill(bill: &BreakdownBill) -> Result<Option<String>, A
         HouseEnum::Unknown => return Ok(None),
     };
     let bill_xml_url = format!(
-        "https://www.congress.gov/117/bills/{}/BILLS-117{}i{}.xml",
+        "https://www.congress.gov/118/bills/{}/BILLS-118{}i{}.xml",
         bill.bill_code.as_ref().unwrap(),
         bill.bill_code.as_ref().unwrap(),
         url_param

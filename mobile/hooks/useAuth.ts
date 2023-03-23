@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import * as SecureStore from "expo-secure-store";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getMe, QUERY_GET_ME } from "../data/queries";
 import { User } from "../types/api";
 
@@ -32,9 +32,10 @@ export default function useAuth({
     retry: false,
     enabled: !!sessionToken,
   });
-  const logout = async () => {
+
+  const logout = useCallback(async () => {
     await SecureStore.deleteItemAsync("session");
-  };
+  }, []);
 
   useEffect(() => {
     if (data?.data) {

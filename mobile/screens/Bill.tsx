@@ -3,14 +3,14 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import { getBillById, QUERY_GET_BILL } from "../data/queries";
 
 const Bill = ({ navigation, route }) => {
-  const { billId } = route.params;
+  const {
+    bill: { id },
+  } = route.params;
   const { data, error, isLoading } = useQuery({
-    queryKey: [QUERY_GET_BILL, billId],
-    queryFn: () => getBillById(billId),
+    queryKey: [QUERY_GET_BILL, id],
+    queryFn: () => getBillById(id),
   });
-  return <View style={styles.container}>
-    
-  </View>;
+  return <View style={styles.container}></View>;
 };
 
 const styles = StyleSheet.create({

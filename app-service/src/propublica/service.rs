@@ -62,7 +62,7 @@ pub async fn propublica_get_bills_paginated(
     bill_type: &str,
     total: u32,
 ) -> Vec<ProPublicaBill> {
-    let request_url = format!("{}/117/{}/bills/{}.json", base_url, house, bill_type);
+    let request_url = format!("{}/118/{}/bills/{}.json", base_url, house, bill_type);
     let mut offset = 0;
     let mut urls = Vec::new();
     // Construct URLs for all necessary fetches
