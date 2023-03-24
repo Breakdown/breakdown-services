@@ -1,24 +1,34 @@
 import { useQuery } from "@tanstack/react-query";
-import { FlatList, StyleSheet, View } from "react-native";
+import { Dimensions, FlatList, StyleSheet, View } from "react-native";
 import BillCard from "../components/BillCard";
 import Text, { TextVariant } from "../components/Text";
-import { getBills, QUERY_GET_BILLS } from "../data/queries";
+import {
+  getBills,
+  getYourReps,
+  QUERY_GET_BILLS,
+  QUERY_GET_YOUR_REPS,
+} from "../data/queries";
+import RepsCarousel from "../components/RepsCarousel";
 
 const Home = ({ navigation }) => {
   const yourBillsQueryResult = useQuery({
     queryKey: [QUERY_GET_BILLS],
     queryFn: getBills,
   });
+  const yourRepsQueryResult = useQuery({
+    queryKey: [QUERY_GET_YOUR_REPS],
+    queryFn: getYourReps,
+  });
 
   const yourBills = yourBillsQueryResult.data?.data?.data;
+  const yourReps = yourRepsQueryResult.data?.data?.data;
+
+  console.log(yourReps);
 
   return (
     <View style={styles.container}>
       <View style={styles.yourBillsContainer}>
-        <Text
-          variant={TextVariant.SECTION_TITLE}
-          style={styles.yourBillsHeader}
-        >
+        <Text variant={TextVariant.SECTION_TITLE} style={styles.sectionHeader}>
           Bills For You
         </Text>
         <FlatList
@@ -30,6 +40,10 @@ const Home = ({ navigation }) => {
           data={yourBills}
           showsHorizontalScrollIndicator={false}
         />
+        <Text variant={TextVariant.SECTION_TITLE} style={styles.sectionHeader}>
+          Your Reps
+        </Text>
+        <RepsCarousel reps={yourReps} />
       </View>
     </View>
   );
@@ -43,13 +57,14 @@ const styles = StyleSheet.create({
   yourBillsContainer: {
     width: "100%",
     height: "100%",
-    paddingHorizontal: 12,
   },
-  yourBillsHeader: {
+  sectionHeader: {
     marginVertical: 12,
+    paddingLeft: 8,
   },
   listContainer: {
     paddingVertical: 12,
+    maxHeight: Dimensions.get("window").height * 0.3 + 12,
   },
 });
 

@@ -28,3 +28,12 @@ export const getBillById = async (billId: string) => {
   });
   return response;
 };
+
+export const QUERY_GET_YOUR_REPS = "QUERY_GET_YOUR_REPS";
+export const getYourReps = async () => {
+  const response = await baseFetch({
+    url: "/users/representatives",
+    method: "GET",
+  });
+  return response;
+};

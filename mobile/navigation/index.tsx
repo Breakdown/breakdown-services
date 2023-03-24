@@ -16,6 +16,7 @@ import SignIn from "../screens/unauth/SignIn";
 import SignUp from "../screens/unauth/SignUp";
 import WelcomeScreen from "../screens/unauth/WelcomeScreen";
 import { BD_PURPLE } from "../styles";
+import LinkingConfiguration from "./LinkingConfiguration";
 
 const Stack = createStackNavigator();
 
@@ -55,8 +56,6 @@ const HomeStack = () => {
 const BottomTab = createBottomTabNavigator();
 
 export const AuthenticatedStack = () => {
-  const colorScheme = useColorScheme();
-
   return (
     <BottomTab.Navigator
       initialRouteName="Home"
@@ -81,11 +80,6 @@ export const AuthenticatedStack = () => {
 };
 
 const UnauthenticatedStack = () => {
-  const { authenticated } = useAuth({ allowUnauth: true });
-  useEffect(() => {
-    console.log("authenticated", authenticated);
-  }, [authenticated]);
-
   return (
     <Stack.Navigator
       screenOptions={{
