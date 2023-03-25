@@ -22,7 +22,7 @@ import {
   verifyCodeSMS,
 } from "../../data/mutations";
 import useAuth from "../../hooks/useAuth";
-import { titleText } from "../../styles";
+import { titleText } from "../../styles/text";
 
 export default function SignIn() {
   const navigation = useNavigation();
@@ -70,6 +70,7 @@ export default function SignIn() {
     // TODO: More validation - move to backend if errors are able to be parsed into messages
     if (phoneInput.current?.isValidNumber(phone)) {
       await signInSmsMutation.mutateAsync({ phoneNumber: formattedPhone });
+    } else {
     }
   };
 
@@ -98,6 +99,7 @@ export default function SignIn() {
           style={{ flex: 1, width: "100%" }}
           contentContainerStyle={styles.pageContainer}
           keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled"
         >
           <View style={styles.formContainer}>
             <Text style={styles.title}>Sign In with Email</Text>
@@ -113,6 +115,7 @@ export default function SignIn() {
               onChangeText={setPassword}
               textContentType={"password"}
               placeholder={"Password"}
+              secureTextEntry
             />
             <Button
               onPress={onSubmitEmailPass}

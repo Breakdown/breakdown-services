@@ -37,6 +37,9 @@ export default function useAuth({
     await SecureStore.deleteItemAsync("session");
   }, []);
 
+  // Obviously remove - this is for manually logging out
+  // Until the functionality is built into the app
+  // logout();
   useEffect(() => {
     if (data?.data) {
       setUser(data.data);

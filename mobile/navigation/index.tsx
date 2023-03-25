@@ -14,9 +14,10 @@ import Home from "../screens/Home";
 import NotFoundScreen from "../screens/NotFound";
 import SignIn from "../screens/unauth/SignIn";
 import SignUp from "../screens/unauth/SignUp";
-import WelcomeScreen from "../screens/unauth/WelcomeScreen";
+import Welcome from "../screens/unauth/Welcome";
 import { BD_PURPLE } from "../styles";
 import LinkingConfiguration from "./LinkingConfiguration";
+import Onboarding from "../screens/unauth/Onboarding";
 
 const Stack = createStackNavigator();
 
@@ -79,6 +80,24 @@ export const AuthenticatedStack = () => {
   );
 };
 
+const horizontalAnimation = {
+  gestureDirection: "horizontal",
+  cardStyleInterpolator: ({ current, layouts }) => {
+    return {
+      cardStyle: {
+        transform: [
+          {
+            translateX: current.progress.interpolate({
+              inputRange: [0, 1],
+              outputRange: [layouts.screen.width, 0],
+            }),
+          },
+        ],
+      },
+    };
+  },
+};
+
 const UnauthenticatedStack = () => {
   return (
     <Stack.Navigator
@@ -86,9 +105,14 @@ const UnauthenticatedStack = () => {
         headerShown: false,
       }}
     >
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="Welcome" component={Welcome} />
       <Stack.Screen name="SignIn" component={SignIn} />
       <Stack.Screen name="SignUp" component={SignUp} />
+      <Stack.Screen
+        name="Onboarding"
+        component={Onboarding}
+        options={horizontalAnimation}
+      />
     </Stack.Navigator>
   );
 };

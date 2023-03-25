@@ -14,13 +14,13 @@ import Divider from "../../components/Divider";
 import PhoneInput from "../../components/PhoneInput";
 import TextInput from "../../components/TextInput";
 import useAuth from "../../hooks/useAuth";
-import { titleText } from "../../styles";
 import BasePhoneInput from "react-native-phone-number-input";
 import {
   signUpEmailPassword,
   signUpSMS,
   verifyCodeSMS,
 } from "../../data/mutations";
+import { titleText } from "../../styles/text";
 
 export default function SignUp() {
   const { refetch } = useAuth({ allowUnauth: true });
@@ -99,6 +99,7 @@ export default function SignUp() {
           style={{ flex: 1, width: "100%" }}
           contentContainerStyle={styles.pageContainer}
           keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled"
         >
           <View style={styles.formContainer}>
             <Text style={styles.title}>Sign Up with Email</Text>
@@ -113,12 +114,14 @@ export default function SignUp() {
               onChangeText={setPassword}
               textContentType={"password"}
               placeholder={"Password"}
+              secureTextEntry
             />
             <TextInput
               value={verifyPassword}
               onChangeText={setVerifyPassword}
               textContentType={"newPassword"}
               placeholder={"Verify Password"}
+              secureTextEntry
             />
             <Button
               onPress={onSubmitEmailPass}

@@ -6,7 +6,7 @@ import {
   TextInputProps,
   View,
 } from "react-native";
-import { titleText } from "../styles";
+import { titleText } from "../styles/text";
 
 interface Props extends TextInputProps {
   error?: string;
@@ -36,6 +36,7 @@ export default ({
         value={value}
         onChangeText={(e) => onChangeText?.(e.toString())}
         placeholder={placeholder}
+        {...otherProps}
       />
       {error && <Text>{error}</Text>}
     </View>

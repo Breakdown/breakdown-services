@@ -9,24 +9,6 @@ export const BD_LIGHT_BLUE = "#7ABAFF";
 export const BD_LIGHT_PURPLE = "#8B8AD4";
 export const BD_LIGHT_GREEN = "#34C759";
 
-export const titleText = {
-  fontSize: 24,
-  fontWeight: "bold" as const,
-  color: "black",
-};
-
-export const buttonText = {
-  fontSize: 16,
-  fontWeight: "bold" as const,
-  color: "white",
-};
-
-export const buttonTextInverted = {
-  fontSize: 16,
-  fontWeight: "bold" as const,
-  color: BD_PURPLE,
-};
-
 export const buttonDefault = {
   alignItems: "center" as FlexAlignType,
   borderRadius: 8,

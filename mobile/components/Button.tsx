@@ -5,13 +5,8 @@ import {
   TouchableOpacity,
   TouchableOpacityProps,
 } from "react-native";
-import {
-  buttonDefault,
-  buttonText,
-  buttonBordered,
-  buttonTextInverted,
-  BD_PURPLE,
-} from "../styles";
+import { buttonDefault, buttonBordered, BD_PURPLE } from "../styles";
+import { buttonText, buttonTextInverted } from "../styles/text";
 
 export enum ButtonType {
   Default = "default",
