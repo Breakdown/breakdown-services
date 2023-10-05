@@ -1,5 +1,6 @@
 #![allow(unused_variables)]
 #![allow(non_snake_case)]
+use log::info;
 use super::models::BillFullText;
 use crate::{
     bills::{
@@ -387,6 +388,8 @@ pub async fn sync_bills(
 
     let mut bill_id_map = HashMap::new();
 
+    info!("Bills fetched");
+    info!("Bills length: {}", meta_bills.len());
     // Chunk into 20 and wait 10 seconds between each chunk
     let mut fetch_futures = vec![];
     // Format and upsert bills to DB

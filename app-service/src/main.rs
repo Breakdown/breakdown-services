@@ -7,7 +7,7 @@ use app_service::issues::routes as issues_routes;
 use app_service::jobs::service::schedule_bill_sync;
 use app_service::reps::routes as reps_routes;
 use app_service::sync::routes as sync_routes;
-use app_service::telemetry::{get_subscriber, init_subscriber};
+// use app_service::telemetry::{get_subscriber, init_subscriber};
 use app_service::types::api::ApiContext;
 use app_service::users::routes as users_routes;
 use app_service::utils::api_error::ApiError;
@@ -32,8 +32,9 @@ use tower_http::trace::TraceLayer;
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     // Tracing - need to have RUST_LOG=tower_http=trace env var set
-    let subscriber = get_subscriber("app-service".into(), "info".into(), std::io::stdout);
-    init_subscriber(subscriber);
+    // let subscriber = get_subscriber("app-service".into(), "info".into(), std::io::stdout);
+    // init_subscriber(subscriber);
+    env_logger::init();
     let environment = match env::var("ENVIRONMENT") {
         Ok(val) => val,
         Err(_) => "local".to_string(),
@@ -90,7 +91,7 @@ async fn main() -> std::io::Result<()> {
 
     // Start server
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("listening on {}", addr);
+    // tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
