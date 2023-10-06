@@ -4,6 +4,8 @@ import { useColorScheme } from "react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Navigation } from "./navigation";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import Toast from "react-native-toast-message";
 
 export default function App() {
   const colorScheme = useColorScheme();
@@ -11,12 +13,17 @@ export default function App() {
     defaultOptions: { queries: { retry: 2 } },
   });
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <Navigation colorScheme={colorScheme} />
-        <StatusBar />
-      </QueryClientProvider>
-    </SafeAreaProvider>
+    <>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <QueryClientProvider client={queryClient}>
+            <Navigation colorScheme={colorScheme} />
+            <StatusBar />
+          </QueryClientProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+      <Toast />
+    </>
   );
 }
 

@@ -10,7 +10,7 @@ export interface BaseFetchOptions {
 }
 
 // TODO: Prod vs Local
-const BASE_API_URI = `http://${Constants.manifest.debuggerHost
+const BASE_API_URI = `http://${Constants.expoGoConfig.debuggerHost
   .split(":")
   .shift()}:8080`;
 

@@ -19,13 +19,12 @@ interface Props {
   bill: BreakdownBill;
 }
 
-const DEM_GRADIENT = [BD_BLUE, BD_PURPLE, BD_RED];
-const REP_GRADIENT = [BD_RED, BD_PURPLE, BD_BLUE];
+export const DEM_GRADIENT = [BD_BLUE, BD_PURPLE, BD_RED];
+export const REP_GRADIENT = [BD_RED, BD_PURPLE, BD_BLUE];
 const getColorsForSponsorParty = (party: string) => {
   if (party === "R") {
     return REP_GRADIENT;
-  }
-  else {
+  } else {
     return DEM_GRADIENT;
   }
 };
