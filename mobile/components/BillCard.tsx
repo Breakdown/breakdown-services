@@ -1,17 +1,10 @@
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo } from "react";
-import {
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  TouchableOpacityBase,
-  View,
-} from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { BreakdownBill } from "../types/api";
 import { Dimensions } from "react-native";
-import { BD_BLUE, BD_LIGHT_BLUE, BD_PURPLE, BD_RED } from "../styles";
+import { BD_BLUE, BD_PURPLE, BD_RED } from "../styles";
 import { baseText, subtitleText } from "../styles/text";
 import { getBillSummary, getBillTitle } from "../utils/bills";
 import { ImageSize, getRepImage } from "../utils/reps";

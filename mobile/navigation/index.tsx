@@ -6,18 +6,18 @@ import {
   NavigationContainer,
 } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import { useEffect } from "react";
-import { ColorSchemeName, Text, useColorScheme } from "react-native";
+import { ColorSchemeName } from "react-native";
 import useAuth from "../hooks/useAuth";
 import Bill from "../screens/Bill";
 import Home from "../screens/Home";
+import Text from "../components/Text";
 import NotFoundScreen from "../screens/NotFound";
 import SignIn from "../screens/unauth/SignIn";
 import SignUp from "../screens/unauth/SignUp";
 import Welcome from "../screens/unauth/Welcome";
 import { BD_PURPLE } from "../styles";
-import LinkingConfiguration from "./LinkingConfiguration";
 import Onboarding from "../screens/unauth/Onboarding";
+import { TextVariant } from "../components/Text";
 
 const Stack = createStackNavigator();
 
@@ -40,10 +40,40 @@ function TabBarIcon(props) {
   return <Ionicons size={30} style={{ marginBottom: -3 }} {...props} />;
 }
 
+const getTimeOfDay = () => {
+  const hours = new Date().getHours();
+  if (hours < 12) {
+    return "Morning";
+  } else if (hours < 17) {
+    return "Afternoon";
+  } else {
+    return "Evening";
+  }
+};
+
 const HomeStack = () => {
+  const firstName = useAuth().user?.first_name;
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen
+        name="Home"
+        component={Home}
+        options={{
+          title: "Home",
+          headerLeft: (props) => {
+            return (
+              <Text variant={TextVariant.SUBHEADER}>Good {getTimeOfDay()}</Text>
+            );
+          },
+          headerLeftContainerStyle: {
+            paddingLeft: 8,
+          },
+          headerTintColor: "#fff",
+          headerTitleStyle: {
+            fontWeight: "bold",
+          },
+        }}
+      />
       <Stack.Screen name="Bill" component={Bill} />
       <Stack.Screen
         name="NotFound"
