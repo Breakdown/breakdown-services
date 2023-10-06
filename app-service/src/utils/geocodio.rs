@@ -73,9 +73,10 @@ pub async fn geocode_lat_lon(lat: &f64, lon: &f64) -> Result<GeocodeResult, ApiE
     let config = Config::init_from_env().unwrap();
     let reqwest_client = reqwest::Client::new();
     let url = format!(
-        "{}geocode?q={},{}&fields=cd&api_key={}",
+        "{}reverse?q={},{}&fields=cd&api_key={}",
         &GEOCODIO_BASE_API_URI, lat, lon, &config.GEOCODIO_API_KEY
     );
+    println!("{}", url);
     let response = reqwest_client
         .get(url)
         .send()
