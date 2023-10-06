@@ -4,18 +4,22 @@ import { KeyboardAvoidingView, StyleSheet, View } from "react-native";
 import Text, { TextVariant } from "./Text";
 import * as Location from "expo-location";
 import Button, { ButtonType } from "./Button";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { submitLocationAddress, submitLocationLatLon } from "../data/mutations";
 import useAuth from "../hooks/useAuth";
 import TextInput from "./TextInput";
 import Divider from "./Divider";
+import { QUERY_GET_YOUR_REPS, getYourReps } from "../data/queries";
 
 const LocationBottomSheet = () => {
-  const { refetch } = useAuth();
+  const { refetch, user } = useAuth();
   const snapPoints = useMemo(() => ["25%", "96%"], []);
   const sheetRef = useRef<BottomSheet>(null);
   const [location, setLocation] = useState(null);
-  console.log("location", location);
+  const userRepsQuery = useQuery({
+    queryKey: [QUERY_GET_YOUR_REPS, user?.id],
+    queryFn: getYourReps,
+  });
   const postLocationLatLonMutation = useMutation({
     mutationFn: submitLocationLatLon,
   });
@@ -34,6 +38,7 @@ const LocationBottomSheet = () => {
       lon: location.coords.longitude,
     });
     refetch();
+    userRepsQuery.refetch();
   };
   const [address, setAddress] = useState<string>(null);
   const onClickSubmitAddress = async () => {

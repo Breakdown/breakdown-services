@@ -1,11 +1,24 @@
-import { FlatList, FlatListProps, StyleSheet, View } from "react-native";
+import {
+  FlatList,
+  FlatListProps,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { BreakdownRep } from "../types/api";
 import Text, { TextVariant } from "./Text";
 import { BD_BLUE, BD_RED } from "../styles";
+import { useNavigation } from "@react-navigation/native";
 
 const RepCarouselItem = ({ rep }: { rep: BreakdownRep }) => {
+  const navigation = useNavigation();
   return (
-    <View style={styles.itemContainer}>
+    <TouchableOpacity
+      style={styles.itemContainer}
+      onPress={() => {
+        navigation.navigate("Representative", { representative: rep });
+      }}
+    >
       <View style={styles.repPfp}>
         <Text>
           {rep.first_name.charAt(0)}
@@ -24,7 +37,7 @@ const RepCarouselItem = ({ rep }: { rep: BreakdownRep }) => {
       >
         {rep.party} {rep.state}-{rep.district}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 };
 

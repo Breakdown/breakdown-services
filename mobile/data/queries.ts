@@ -69,3 +69,12 @@ export const getIssueById = async (issueId: string): Promise<BreakdownIssue> => 
   });
   return response.data.data;
 };
+
+export const QUERY_GET_REP = "QUERY_GET_REP";
+export const getRepById = async (repId: string): Promise<BreakdownRep> => {
+  const response = await baseFetch({
+    url: `/reps/${repId}`,
+    method: "GET",
+  });
+  return response.data.data;
+};
