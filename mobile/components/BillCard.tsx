@@ -55,7 +55,7 @@ const BillCard = ({ bill }: Props) => {
       bill.cosponsors_r,
       bill.sponsor_party
     );
-  }, [bill.cosponsors_d, bill.cosponsors_r]);
+  }, [bill.cosponsors_d, bill.cosponsors_r, bill.sponsor_party]);
 
   const imageUrl = useMemo(() => {
     return getRepImage(bill.sponsor_propublica_id, ImageSize.Thumbnail);
