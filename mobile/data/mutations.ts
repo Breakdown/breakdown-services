@@ -69,3 +69,20 @@ export const verifyCodeSMS = async ({
   });
   return response;
 };
+
+export const MUTATION_SUBMIT_ISSUES = "MUTATION_SUBMIT_ISSUES";
+export const submitIssuesInterests = async ({
+  issueIds,
+}: {
+  issueIds: string[];
+}) => {
+  const requests = issueIds.map((issueId) =>
+    baseFetch({
+      url: `/issues/${issueId}/follow`,
+      method: "POST",
+    })
+  );
+  const response = await Promise.all(requests);
+  
+  return response;
+}

@@ -1,3 +1,4 @@
+import { BreakdownIssue } from "../types/api";
 import { baseFetch } from "./fetch";
 
 export const QUERY_GET_ME = "QUERY_GET_ME";
@@ -36,4 +37,22 @@ export const getYourReps = async () => {
     method: "GET",
   });
   return response;
+};
+
+export const QUERY_GET_ALL_ISSUES = "QUERY_GET_ALL_ISSUES";
+export const getAllIssues = async (): Promise<BreakdownIssue[]> => {
+  const response = await baseFetch({
+    url: "/issues",
+    method: "GET",
+  });
+  return response.data.data;
+}
+
+export const QUERY_GET_YOUR_ISSUES = "QUERY_GET_YOUR_ISSUES";
+export const getYourIssues = async (): Promise<BreakdownIssue[]> => {
+  const response = await baseFetch({
+    url: "/users/issues",
+    method: "GET",
+  });
+  return response.data.data;
 };
