@@ -1,6 +1,5 @@
 #![allow(unused_variables)]
 #![allow(non_snake_case)]
-use log::info;
 use super::models::BillFullText;
 use crate::{
     bills::{
@@ -25,6 +24,7 @@ use crate::{
 use anyhow::anyhow;
 use axum::Extension;
 use itertools::Itertools;
+use log::info;
 use log::{log, Level};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
@@ -472,6 +472,7 @@ pub async fn sync_single_bill_issues(
     issues: Vec<BreakdownIssue>,
     connection_pool: &Pool<Postgres>,
 ) -> Result<Option<Uuid>, ApiError> {
+    println!("Syncing bill issues for bill {}", bill.id);
     let bill_primary_subject = bill.primary_subject.unwrap_or("".to_string());
     let bill_subjects = bill.subjects.unwrap_or(vec![]);
     if (bill_primary_subject.chars().count() == 0) && (bill_subjects.len() == 0) {
@@ -560,7 +561,9 @@ pub async fn sync_bills_and_issues(connection_pool: &Pool<Postgres>) -> Result<(
     .fetch_all(connection_pool)
     .await?;
 
+    info!("{}", all_bills.len());
     for bill in all_bills {
+        info!("Syncing bill {}", bill.id);
         sync_single_bill_issues(bill, all_issues.clone(), connection_pool).await?;
     }
     println!("Associated Bills and Issues");

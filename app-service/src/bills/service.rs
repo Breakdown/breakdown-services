@@ -8,8 +8,6 @@ use axum::{
     extract::{Path, Query},
     Extension, Json,
 };
-use axum_sessions::extractors::ReadableSession;
-use serde::Deserialize;
 use sqlx::{types::Uuid, PgPool};
 use std::collections::HashMap;
 
@@ -138,6 +136,8 @@ pub async fn save_propub_bill(
         .R
         .unwrap_or(0)
         .into();
+
+    println!("primary_subject: {:?}", &bill.primary_subject);
 
     let committees = &vec![bill.committees.unwrap_or("".to_string())];
     // Insert or update
@@ -320,71 +320,6 @@ pub async fn save_propub_bill(
                 bill: query_result,
                 status: BillAgeStatus::Updated,
             })
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct BillVoteRequestBody {
-    pub vote: bool,
-}
-
-pub async fn post_vote_on_bill(
-    ctx: Extension<ApiContext>,
-    Path(params): Path<HashMap<String, String>>,
-    Json(body): Json<BillVoteRequestBody>,
-    session: ReadableSession,
-) -> Result<Json<ResponseBody<String>>, ApiError> {
-    let bill_id = match Uuid::parse_str(&params.get("id").unwrap().to_string()) {
-        Ok(bill_id) => bill_id,
-        Err(_) => return Err(ApiError::NotFound),
-    };
-    let user_id = session.get::<Uuid>("user_id").unwrap();
-
-    let existing_relation = sqlx::query!(
-        r#"
-            SELECT * FROM users_votes WHERE bill_id = $1 AND user_id = $2
-        "#,
-        bill_id,
-        user_id
-    )
-    .fetch_optional(&ctx.connection_pool)
-    .await?;
-    match existing_relation {
-        Some(result) => {
-            if result.vote == body.vote {
-                return Ok(Json(ResponseBody {
-                    data: "Vote already exists".to_string(),
-                }));
-            }
-            sqlx::query!(
-                r#"
-                    UPDATE users_votes SET vote = $1 WHERE bill_id = $2 AND user_id = $3
-                "#,
-                body.vote,
-                bill_id,
-                user_id
-            )
-            .execute(&ctx.connection_pool)
-            .await?;
-            return Ok(Json(ResponseBody {
-                data: "Vote updated".to_string(),
-            }));
-        }
-        None => {
-            sqlx::query!(
-                r#"
-                    INSERT INTO users_votes (bill_id, user_id, vote) VALUES ($1, $2, $3)
-                "#,
-                bill_id,
-                user_id,
-                body.vote
-            )
-            .execute(&ctx.connection_pool)
-            .await?;
-            return Ok(Json(ResponseBody {
-                data: "Vote created".to_string(),
-            }));
         }
     }
 }
