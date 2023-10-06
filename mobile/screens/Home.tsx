@@ -1,5 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { Dimensions, FlatList, StyleSheet, View } from "react-native";
+import {
+  Dimensions,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import BillCard from "../components/BillCard";
 import Text, { TextVariant } from "../components/Text";
 import {
@@ -14,6 +20,8 @@ import RepsCarousel from "../components/RepsCarousel";
 import useAuth from "../hooks/useAuth";
 import IssuesOnboarding from "../components/IssuesOnboarding";
 import LocationBottomSheet from "../components/LocationBottomSheet";
+import YourIssues from "../components/YourIssues";
+import { useMemo } from "react";
 
 const Home = ({ navigation }) => {
   const { user } = useAuth();
@@ -21,51 +29,66 @@ const Home = ({ navigation }) => {
     queryKey: [QUERY_GET_BILLS, user?.id],
     queryFn: getBills,
   });
+
   const yourRepsQueryResult = useQuery({
     queryKey: [QUERY_GET_YOUR_REPS, user?.id],
     queryFn: getYourReps,
   });
+
+  console.log("your reps", yourRepsQueryResult);
   const yourIssuesQueryResult = useQuery({
     queryKey: [QUERY_GET_YOUR_ISSUES, user?.id],
     queryFn: getYourIssues,
   });
 
   const yourBills = yourBillsQueryResult.data?.data?.data;
-  const yourReps = yourRepsQueryResult.data?.data?.data;
+  const yourReps = useMemo(() => {
+    console.log("your reps", yourRepsQueryResult.data);
+    if (!yourRepsQueryResult.data) return [];
+    return [
+      ...yourRepsQueryResult.data?.local,
+      ...yourRepsQueryResult.data?.following,
+    ];
+  }, [yourRepsQueryResult.data]);
 
-  console.log("issues", yourIssuesQueryResult);
-
-  const shouldOnboardIssues = !yourIssuesQueryResult.data?.length;
+  const shouldOnboardIssues = !yourIssuesQueryResult?.data?.length;
 
   const shouldOnboardLocation = !user?.lat_lon && !user?.address;
 
-  console.log(shouldOnboardLocation);
-
   return (
-    <View style={styles.container}>
-      <View style={styles.yourBillsContainer}>
+    <>
+      <ScrollView style={styles.container}>
+        <View style={styles.yourBillsContainer}>
+          <Text
+            variant={TextVariant.SECTION_TITLE}
+            style={styles.sectionHeader}
+          >
+            Bills For You
+          </Text>
+          <FlatList
+            style={styles.listContainer}
+            horizontal
+            renderItem={({ item }) => {
+              return <BillCard bill={item} />;
+            }}
+            data={yourBills}
+            showsHorizontalScrollIndicator={false}
+          />
+        </View>
         <Text variant={TextVariant.SECTION_TITLE} style={styles.sectionHeader}>
-          Bills For You
-        </Text>
-        <FlatList
-          style={styles.listContainer}
-          horizontal
-          renderItem={({ item }) => {
-            return <BillCard bill={item} />;
-          }}
-          data={yourBills}
-          showsHorizontalScrollIndicator={false}
-        />
-        <Text variant={TextVariant.SECTION_TITLE} style={styles.sectionHeader}>
-          Your Reps
+          Your Representatives
         </Text>
         <RepsCarousel reps={yourReps} />
-        {shouldOnboardIssues ? <IssuesOnboarding /> : null}
-        {shouldOnboardLocation && !shouldOnboardIssues ? (
-          <LocationBottomSheet />
-        ) : null}
-      </View>
-    </View>
+        <Text variant={TextVariant.SECTION_TITLE} style={styles.sectionHeader}>
+          Your Issues
+        </Text>
+        <YourIssues />
+      </ScrollView>
+      {shouldOnboardIssues ? <IssuesOnboarding /> : null}
+      {shouldOnboardLocation && !shouldOnboardIssues ? (
+        <LocationBottomSheet />
+      ) : null}
+    </>
   );
 };
 
@@ -73,10 +96,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    height: "100%",
   },
   yourBillsContainer: {
     width: "100%",
-    height: "100%",
   },
   sectionHeader: {
     marginTop: 12,

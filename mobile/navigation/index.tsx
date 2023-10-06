@@ -18,6 +18,7 @@ import Welcome from "../screens/unauth/Welcome";
 import { BD_PURPLE } from "../styles";
 import Onboarding from "../screens/unauth/Onboarding";
 import { TextVariant } from "../components/Text";
+import Issue from "../screens/Issue";
 
 const Stack = createStackNavigator();
 
@@ -75,6 +76,7 @@ const HomeStack = () => {
         }}
       />
       <Stack.Screen name="Bill" component={Bill} />
+      <Stack.Screen name="Issue" component={Issue} />
       <Stack.Screen
         name="NotFound"
         component={NotFoundScreen}

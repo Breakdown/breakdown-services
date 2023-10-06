@@ -73,7 +73,13 @@ pub async fn signin(
     .await
     .map_err(|_| return ApiError::NotFound)?;
 
-    verify_password(body.password, user.password.unwrap()).await?;
+    match verify_password(body.password, user.password.unwrap()).await {
+        Ok(_) => {}
+        Err(e) => {
+            println!("{}", e);
+            return Err(e);
+        }
+    };
 
     session
         .insert("user_id", user.id.to_string())
