@@ -86,3 +86,31 @@ export const submitIssuesInterests = async ({
   
   return response;
 }
+
+export const submitLocationLatLon = async ({
+  lat,
+  lon,
+}: {
+  lat: number;
+  lon: number;
+}) => {
+  const response = await baseFetch({
+    url: "/users/location",
+    method: "POST",
+    body: { lat, lon },
+  });
+  return response;
+}
+
+export const submitLocationAddress = async ({
+  address
+}: {
+  address: string;
+}) => {
+  const response = await baseFetch({
+    url: "/users/location",
+    method: "POST",
+    body: { address },
+  });
+  return response;
+}
