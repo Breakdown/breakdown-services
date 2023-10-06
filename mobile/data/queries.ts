@@ -1,4 +1,4 @@
-import { BreakdownIssue } from "../types/api";
+import { BreakdownIssue, BreakdownRep } from "../types/api";
 import { baseFetch } from "./fetch";
 
 export const QUERY_GET_ME = "QUERY_GET_ME";
@@ -30,13 +30,17 @@ export const getBillById = async (billId: string) => {
   return response;
 };
 
+interface GetYourRepsResponse {
+  following: BreakdownRep[];
+  local: BreakdownRep[];
+}
 export const QUERY_GET_YOUR_REPS = "QUERY_GET_YOUR_REPS";
-export const getYourReps = async () => {
+export const getYourReps = async (): Promise<GetYourRepsResponse> => {
   const response = await baseFetch({
     url: "/users/representatives",
     method: "GET",
   });
-  return response;
+  return response.data.data;
 };
 
 export const QUERY_GET_ALL_ISSUES = "QUERY_GET_ALL_ISSUES";
@@ -52,6 +56,15 @@ export const QUERY_GET_YOUR_ISSUES = "QUERY_GET_YOUR_ISSUES";
 export const getYourIssues = async (): Promise<BreakdownIssue[]> => {
   const response = await baseFetch({
     url: "/users/issues",
+    method: "GET",
+  });
+  return response.data.data;
+};
+
+export const QUERY_GET_ISSUE = "QUERY_GET_ISSUE";
+export const getIssueById = async (issueId: string): Promise<BreakdownIssue> => {
+  const response = await baseFetch({
+    url: `/issues/${issueId}`,
     method: "GET",
   });
   return response.data.data;

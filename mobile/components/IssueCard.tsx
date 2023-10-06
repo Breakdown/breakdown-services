@@ -8,9 +8,11 @@ import { useEffect, useState } from "react";
 const IssueCard = ({
   issue,
   onChangeChecked,
+  onPress,
 }: {
   issue: BreakdownIssue;
-  onChangeChecked: (checked: boolean) => void;
+  onChangeChecked?: (checked: boolean) => void;
+  onPress?: (issue: BreakdownIssue) => void;
 }) => {
   const [checked, setChecked] = useState(false);
 
@@ -21,7 +23,7 @@ const IssueCard = ({
     <TouchableOpacity
       style={styles.cardContainer}
       activeOpacity={0.5}
-      onPress={() => setChecked(!checked)}
+      onPress={onPress ? () => onPress(issue) : () => setChecked(!checked)}
     >
       <LinearGradient
         style={styles.gradientContainer}
