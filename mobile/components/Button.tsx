@@ -29,7 +29,11 @@ const Button = ({
   ...otherProps
 }: Props) => {
   return (
-    <TouchableOpacity style={styles[type]} onPress={onPress} {...otherProps}>
+    <TouchableOpacity
+      style={[styles[type], otherProps.style]}
+      onPress={onPress}
+      {...otherProps}
+    >
       {loading ? (
         <ActivityIndicator
           size="small"

@@ -33,17 +33,6 @@ const IssuesOnboarding = () => {
 
   const snapPoints = useMemo(() => ["25%", "50%", "96%"], []);
 
-  // callbacks
-  const handleSheetChange = useCallback((index) => {
-    console.log("handleSheetChange", index);
-  }, []);
-  const handleSnapPress = useCallback((index) => {
-    sheetRef.current?.snapToIndex(index);
-  }, []);
-  const handleClosePress = useCallback(() => {
-    sheetRef.current?.close();
-  }, []);
-
   const [selectedIssues, setSelectedIssues] = useState<BreakdownIssue[]>([]);
   // render
   const renderItem = useCallback(
@@ -81,12 +70,10 @@ const IssuesOnboarding = () => {
     },
   });
 
-  console.log("length", selectedIssues.length);
   return (
     <BottomSheet
       ref={sheetRef}
       snapPoints={snapPoints}
-      onChange={handleSheetChange}
       style={styles.sheetContainer}
     >
       <View>

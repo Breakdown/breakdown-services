@@ -13,6 +13,7 @@ import {
 import RepsCarousel from "../components/RepsCarousel";
 import useAuth from "../hooks/useAuth";
 import IssuesOnboarding from "../components/IssuesOnboarding";
+import LocationBottomSheet from "../components/LocationBottomSheet";
 
 const Home = ({ navigation }) => {
   const { user } = useAuth();
@@ -36,6 +37,10 @@ const Home = ({ navigation }) => {
 
   const shouldOnboardIssues = !yourIssuesQueryResult.data?.length;
 
+  const shouldOnboardLocation = !user?.lat_lon && !user?.address;
+
+  console.log(shouldOnboardLocation);
+
   return (
     <View style={styles.container}>
       <View style={styles.yourBillsContainer}>
@@ -56,6 +61,9 @@ const Home = ({ navigation }) => {
         </Text>
         <RepsCarousel reps={yourReps} />
         {shouldOnboardIssues ? <IssuesOnboarding /> : null}
+        {shouldOnboardLocation && !shouldOnboardIssues ? (
+          <LocationBottomSheet />
+        ) : null}
       </View>
     </View>
   );

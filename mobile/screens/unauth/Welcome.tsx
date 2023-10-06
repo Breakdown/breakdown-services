@@ -1,10 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
-import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Button, { ButtonType } from "../../components/Button";
 import Divider from "../../components/Divider";
-import { signInEmailPassword } from "../../data/mutations";
 import { titleText } from "../../styles/text";
 
 export default function WelcomeScreen() {
