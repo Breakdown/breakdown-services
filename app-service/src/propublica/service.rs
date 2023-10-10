@@ -83,6 +83,8 @@ pub async fn propublica_get_bills_paginated(
         .into_iter()
         .flatten()
         .collect::<Vec<ProPublicaBill>>();
+    log::info!("Fetched {} bills", flattened_results.len());
+    log::info!("{:?}", flattened_results);
     return flattened_results;
 }
 

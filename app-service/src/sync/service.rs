@@ -330,7 +330,7 @@ pub async fn sync_bills(
         &config.PROPUBLICA_API_KEY,
         "both",
         "introduced",
-        600,
+        50,
     )
     .await;
     let updated_bills = propublica_get_bills_paginated(
@@ -338,7 +338,7 @@ pub async fn sync_bills(
         &config.PROPUBLICA_API_KEY,
         "both",
         "updated",
-        600,
+        50,
     )
     .await;
     let active_bills = propublica_get_bills_paginated(
@@ -346,7 +346,7 @@ pub async fn sync_bills(
         &config.PROPUBLICA_API_KEY,
         "both",
         "active",
-        200,
+        50,
     )
     .await;
     let enacted_bills = propublica_get_bills_paginated(
@@ -354,7 +354,7 @@ pub async fn sync_bills(
         &config.PROPUBLICA_API_KEY,
         "both",
         "enacted",
-        200,
+        50,
     )
     .await;
     let passed_bills = propublica_get_bills_paginated(
@@ -362,7 +362,7 @@ pub async fn sync_bills(
         &config.PROPUBLICA_API_KEY,
         "both",
         "passed",
-        100,
+        50,
     )
     .await;
     let vetoed_bills = propublica_get_bills_paginated(
