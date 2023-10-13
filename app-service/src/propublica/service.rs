@@ -1,5 +1,8 @@
+use crate::propublica::models::SingleSubject;
+
 use super::models::{
-    ProPublicaBill, ProPublicaBillsResponse, ProPublicaVote, ProPublicaVotesResponse,
+    ProPublicaBill, ProPublicaBillSubjectsResponse, ProPublicaBillsResponse, ProPublicaVote,
+    ProPublicaVotesResponse,
 };
 use futures::future::join_all;
 
@@ -116,6 +119,38 @@ pub async fn propublica_get_votes_paginated(
         .flatten()
         .collect::<Vec<ProPublicaVote>>();
     return flattened_results;
+}
+
+pub async fn get_bill_subjects(base_url: &str, bill_id: &str, api_key: &str) -> Vec<SingleSubject> {
+    // https://api.propublica.org/congress/v1
+    let request_url = format!("{}/118/bills/{}/subjects.json", base_url, bill_id);
+    let reqwest_client = reqwest::Client::new();
+    let response = reqwest_client
+        .get(request_url)
+        .header("X-API-Key", api_key)
+        .send()
+        .await;
+    let results = match response {
+        Ok(response) => {
+            let response = response.json::<ProPublicaBillSubjectsResponse>().await;
+            let subjects = match response {
+                Ok(response) => {
+                    let subjects = response.results[0].subjects.to_vec();
+                    subjects
+                }
+                Err(e) => {
+                    println!("Failed to parse json: {}", e);
+                    let result: Vec<SingleSubject> = vec![];
+                    result
+                }
+            };
+            return subjects;
+        }
+        Err(_) => {
+            vec![]
+        }
+    };
+    return results;
 }
 
 pub async fn single_propublica_cosponsored_bills_req(

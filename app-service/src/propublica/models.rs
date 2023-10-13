@@ -141,6 +141,20 @@ pub struct ProPublicaBillsResponse {
     pub results: Vec<ProPublicaBillsResult>,
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct SingleSubject {
+    name: String,
+    url_name: String,
+}
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProPublicaSingleBillSubjectsReponse {
+    pub subjects: Vec<SingleSubject>,
+}
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProPublicaBillSubjectsResponse {
+    pub results: Vec<ProPublicaSingleBillSubjectsReponse>,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaVotesResult {
     pub votes: Vec<ProPublicaVote>,

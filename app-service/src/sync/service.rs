@@ -12,8 +12,8 @@ use crate::{
     propublica::{
         models::{ProPublicaBill, ProPublicaRepsResponse, ProPublicaVote},
         service::{
-            propublica_get_bills_paginated, propublica_get_cosponsored_bills_paginated,
-            propublica_get_votes_paginated,
+            get_bill_subjects, propublica_get_bills_paginated,
+            propublica_get_cosponsored_bills_paginated, propublica_get_votes_paginated,
         },
     },
     reps::{models::BreakdownRep, service::save_propub_rep},
@@ -243,7 +243,7 @@ pub async fn queue_bill_updated_jobs(info: BillUpsertInfo) -> Result<(), ApiErro
                     }
                 };
 
-                let issues_copy = sqlx::query_as!(BreakdownIssue, "SELECT * FROM issues",)
+                let issues_copy = sqlx::query_as!(BreakdownIssue, "SELECT * FROM issues")
                     .fetch_all(&job_configuration.connection_pool)
                     .await
                     .expect("Failed to fetch issues");
@@ -388,8 +388,8 @@ pub async fn sync_bills(
 
     let mut bill_id_map = HashMap::new();
 
-    info!("Bills fetched");
-    info!("Bills length: {}", meta_bills.len());
+    log::info!("Bills fetched");
+    log::info!("Bills length: {}", meta_bills.len());
     // Chunk into 20 and wait 10 seconds between each chunk
     let mut fetch_futures = vec![];
     // Format and upsert bills to DB
@@ -397,9 +397,16 @@ pub async fn sync_bills(
         let bill_ref = bill.clone();
         println!("Saving bill {} of {}", i, meta_bills.len());
         if bill_id_map.contains_key(&bill.bill_id.as_ref().unwrap().to_string()) {
-            println!("Bill duplicate {}", bill.bill_id.as_ref().unwrap());
+            // println!("Bill duplicate {}", bill.bill_id.as_ref().unwrap());
             continue;
         } else {
+            println!("New bill {}", bill.bill_id.as_ref().unwrap());
+            let bill_subjects = get_bill_subjects(
+                &config.PROPUBLICA_BASE_URI,
+                &bill.bill_id.as_ref().unwrap(),
+                &config.PROPUBLICA_API_KEY,
+            )
+            .await;
             let bill_info = save_propub_bill(bill_ref, &connection_pool).await?;
 
             fetch_futures.push(queue_bill_updated_jobs(bill_info));
