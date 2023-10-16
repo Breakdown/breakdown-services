@@ -80,3 +80,14 @@ pub struct RepresentativeVote {
     pub bill_id: Uuid,
     pub representative_id: Uuid,
 }
+
+#[typeshare]
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+pub struct BreakdownRepStats {
+    pub missed_votes_pct: Option<BigDecimal>,
+    pub votes_with_party_pct: Option<BigDecimal>,
+    pub votes_against_party_pct: Option<BigDecimal>,
+    pub total_votes: Option<i32>,
+    pub missed_votes: Option<i32>,
+    pub total_present: Option<i32>,
+}
