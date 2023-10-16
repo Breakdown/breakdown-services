@@ -85,6 +85,18 @@ pub async fn follow_issue(
             )
             .execute(&ctx.connection_pool)
             .await?;
+            // Set initial_issues_selected_at if not present on user already
+            let now = chrono::Utc::now();
+            sqlx::query!(
+                r#"
+                  UPDATE users SET initial_issues_selected_at = $1 WHERE id = $2 AND initial_issues_selected_at IS NULL
+                "#,
+                now,
+                user_id
+            )
+            .execute(&ctx.connection_pool)
+            .await?;
+
             Ok(Json(ResponseBody {
                 data: "ok".to_string(),
             }))
