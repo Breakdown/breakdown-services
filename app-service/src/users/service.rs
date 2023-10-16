@@ -72,8 +72,9 @@ pub async fn get_me(
         password: user.password,
         first_name: user.first_name,
         last_name: user.last_name,
-        onboarded: user.onboarded,
         address: user.address,
+        location_submitted_at: user.location_submitted_at,
+        initial_issues_selected_at: user.initial_issues_selected_at,
         state_id: user.state_id,
         district_id: user.district_id,
         phone: user.phone,
@@ -135,7 +136,6 @@ pub struct PatchUserArgs {
     pub phone: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub onboarded: Option<bool>,
     pub address: Option<String>,
 }
 pub async fn patch_user(
@@ -153,8 +153,7 @@ pub async fn patch_user(
                 phone = coalesce($4, users.phone),
                 first_name = coalesce($5, users.first_name),
                 last_name = coalesce($6, users.last_name),
-                onboarded = coalesce($7, users.onboarded),
-                address = coalesce($8, users.address)
+                address = coalesce($7, users.address)
             WHERE id = $1 RETURNING *
         "#,
         user_id,
@@ -163,7 +162,6 @@ pub async fn patch_user(
         args.phone,
         args.first_name,
         args.last_name,
-        args.onboarded,
         args.address
     )
     .fetch_one(&ctx.connection_pool)
@@ -244,7 +242,8 @@ pub async fn post_user_location(
             SET state_code = coalesce($2, users.state_code),
                 district_code = coalesce($3, users.district_code),
                 address = coalesce($4, users.address),
-                lat_lon = coalesce($5, users.lat_lon)
+                lat_lon = coalesce($5, users.lat_lon),
+                location_submitted_at = coalesce($6, users.location_submitted_at)
             WHERE id = $1
         "#,
         user_id,
@@ -254,7 +253,8 @@ pub async fn post_user_location(
         &vec![
             args.lat.unwrap_or(0.0).to_string(),
             args.lon.unwrap_or(0.0).to_string()
-        ]
+        ],
+        &chrono::Utc::now()
     )
     .execute(&ctx.connection_pool)
     .await

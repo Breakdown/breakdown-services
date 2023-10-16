@@ -129,6 +129,15 @@ export interface RepresentativeVote {
 	representative_id: string;
 }
 
+export interface BreakdownRepStats {
+	missed_votes_pct?: number;
+	votes_with_party_pct?: number;
+	votes_against_party_pct?: number;
+	total_votes?: number;
+	missed_votes?: number;
+	total_present?: number;
+}
+
 export interface BillFullText {
 	id: string;
 	bill_id?: string;
@@ -144,10 +153,11 @@ export interface GetMeResponse {
 	password?: string;
 	first_name?: string;
 	last_name?: string;
-	onboarded: boolean;
 	address?: string;
 	state_id?: string;
 	district_id?: string;
+	location_submitted_at?: string;
+	initial_issues_selected_at?: string;
 	phone?: string;
 	phone_verified: boolean;
 	email_verified: boolean;
@@ -217,7 +227,6 @@ export interface User {
 	first_name?: string;
 	last_name?: string;
 	role: string;
-	onboarded: boolean;
 	address?: string;
 	state_id?: string;
 	district_id?: string;
@@ -225,7 +234,8 @@ export interface User {
 	phone_verification_code?: number;
 	phone_verified: boolean;
 	email_verified: boolean;
-	interests_selected: boolean;
+	location_submitted_at?: string;
+	initial_issues_selected_at?: string;
 	lat_lon?: string[];
 	state_code?: string;
 	district_code?: string;
