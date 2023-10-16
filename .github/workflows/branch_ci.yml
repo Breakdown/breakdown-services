@@ -2,12 +2,6 @@ name: Branch CI
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches-ignore:
-    - master
-    - sandbox
-    - production
     paths:
     - "app-service/**"
 
