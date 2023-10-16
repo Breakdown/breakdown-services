@@ -16,7 +16,7 @@ use sqlx::{
 };
 use std::collections::HashMap;
 
-use super::models::{BreakdownRep, RepresentativeVote};
+use super::models::{BreakdownRep, BreakdownRepStats, RepresentativeVote};
 
 pub async fn get_rep_by_id(
     ctx: Extension<ApiContext>,
@@ -38,6 +38,24 @@ pub async fn get_rep_by_id(
     .ok_or(ApiError::NotFound)?;
 
     Ok(Json(ResponseBody { data: rep }))
+}
+
+pub async fn get_rep_stats(
+    ctx: Extension<ApiContext>,
+    Path(params): Path<HashMap<String, String>>,
+) -> Result<Json<ResponseBody<BreakdownRepStats>>, ApiError> {
+    let rep_id = match Uuid::parse_str(&params.get("id").unwrap().to_string()) {
+        Ok(rep_id) => rep_id,
+        Err(_) => return Err(ApiError::NotFound),
+    };
+    let rep_stats: BreakdownRepStats = sqlx::query_as!(
+        BreakdownRepStats,
+        r#"
+            SELECT votes_with_party_pct, missed_votes_pct, votes_against_party_pct, total_votes, missed_votes, total_present FROM representatives WHERE id = $1
+        "#,
+        rep_id
+    ).fetch_optional(&ctx.connection_pool).await?.ok_or(ApiError::NotFound)?;
+    Ok(Json(ResponseBody { data: rep_stats }))
 }
 
 pub async fn get_reps(
