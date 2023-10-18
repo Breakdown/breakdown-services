@@ -121,25 +121,31 @@ pub async fn propublica_get_votes_paginated(
     return flattened_results;
 }
 
-pub async fn get_bill_subjects(base_url: &str, bill_id: &str, api_key: &str) -> Vec<SingleSubject> {
+pub async fn get_bill_subjects(
+    base_url: &str,
+    bill_slug: &str,
+    api_key: &str,
+) -> Vec<SingleSubject> {
     // https://api.propublica.org/congress/v1
-    let request_url = format!("{}/118/bills/{}/subjects.json", base_url, bill_id);
+    let request_url = format!("{}/118/bills/{}/subjects.json", base_url, bill_slug);
     let reqwest_client = reqwest::Client::new();
     let response = reqwest_client
         .get(request_url)
         .header("X-API-Key", api_key)
         .send()
         .await;
+
     let results = match response {
         Ok(response) => {
-            let response = response.json::<ProPublicaBillSubjectsResponse>().await;
-            let subjects = match response {
-                Ok(response) => {
-                    let subjects = response.results[0].subjects.to_vec();
+            let parsed_response = response.json::<ProPublicaBillSubjectsResponse>().await;
+            println!("Response: {:?}", parsed_response);
+            let subjects = match parsed_response {
+                Ok(parsed_response) => {
+                    let subjects = parsed_response.results[0].subjects.to_vec();
                     subjects
                 }
                 Err(e) => {
-                    println!("Failed to parse json: {}", e);
+                    println!("Failed to parse json in subjects: {}", e);
                     let result: Vec<SingleSubject> = vec![];
                     result
                 }

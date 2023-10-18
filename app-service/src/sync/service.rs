@@ -388,8 +388,8 @@ pub async fn sync_bills(
 
     let mut bill_id_map = HashMap::new();
 
-    log::info!("Bills fetched");
-    log::info!("Bills length: {}", meta_bills.len());
+    println!("Bills fetched");
+    println!("Bills length: {}", meta_bills.len());
     // Chunk into 20 and wait 10 seconds between each chunk
     let mut fetch_futures = vec![];
     // Format and upsert bills to DB
@@ -400,13 +400,14 @@ pub async fn sync_bills(
             // println!("Bill duplicate {}", bill.bill_id.as_ref().unwrap());
             continue;
         } else {
-            println!("New bill {}", bill.bill_id.as_ref().unwrap());
+            // println!("Bill not duplicate {}", bill.bill_id.as_ref().unwrap());
             let bill_subjects = get_bill_subjects(
                 &config.PROPUBLICA_BASE_URI,
-                &bill.bill_id.as_ref().unwrap(),
+                &bill.bill_slug.as_ref().unwrap(),
                 &config.PROPUBLICA_API_KEY,
             )
             .await;
+            println!("Subjects length: {}", bill_subjects.len());
             let bill_info = save_propub_bill(bill_ref, &connection_pool).await?;
 
             fetch_futures.push(queue_bill_updated_jobs(bill_info));
