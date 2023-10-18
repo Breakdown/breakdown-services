@@ -35,7 +35,6 @@ const Home = ({ navigation }) => {
     queryFn: getYourReps,
   });
 
-  console.log("your reps", yourRepsQueryResult);
   const yourIssuesQueryResult = useQuery({
     queryKey: [QUERY_GET_YOUR_ISSUES, user?.id],
     queryFn: getYourIssues,
@@ -43,7 +42,6 @@ const Home = ({ navigation }) => {
 
   const yourBills = yourBillsQueryResult.data?.data?.data;
   const yourReps = useMemo(() => {
-    console.log("your reps", yourRepsQueryResult.data);
     if (!yourRepsQueryResult.data) return [];
     return [
       ...yourRepsQueryResult.data?.local,

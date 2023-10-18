@@ -16,7 +16,6 @@ export default function useAuth({
   allowUnauth?: boolean;
 } = {}): UseAuthExport {
   const [user, setUser] = useState<User | null>(null);
-  console.log('me', user)
   const [authenticated, setAuthenticated] = useState(false);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   useEffect(() => {

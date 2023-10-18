@@ -38,9 +38,7 @@ export const baseFetch = async ({
     // TODO: Remove from async storage when a user is logged out
     if (response.headers["set-cookie"]?.[0]) {
       const cookie = response.headers["set-cookie"]?.[0];
-      console.log("cookie", cookie);
       await SecureStore.setItemAsync("session", cookie);
-      console.log("set cookie");
     }
     return response;
   } catch (err) {

@@ -68,7 +68,7 @@ const LocationBottomSheet = () => {
       <Button
         type={ButtonType.Default}
         onPress={onClickAllowLocation}
-        title={"Allow Location"}
+        title={"Use Current Location"}
       />
       <Divider label={"OR"} />
       {/* TODO: Fix this up - still kinda messy */}

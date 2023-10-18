@@ -46,7 +46,6 @@ interface RepsCarouselProps extends Partial<FlatListProps<BreakdownRep>> {
 }
 
 const RepsCarousel = ({ reps, style, ...props }: RepsCarouselProps) => {
-  console.log("carousel", reps);
   return (
     <FlatList
       {...props}
