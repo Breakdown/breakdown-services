@@ -231,92 +231,84 @@ pub async fn sync_reps(
     Ok(())
 }
 
-pub async fn queue_bill_updated_jobs(info: BillUpsertInfo) -> Result<(), ApiError> {
-    match info.status {
-        BillAgeStatus::New => {
-            tokio::task::spawn(async move {
-                let job_configuration = match get_job_configuration().await {
-                    Ok(jc) => jc,
-                    Err(e) => {
-                        log!(Level::Error, "Error getting job configuration: {}", e);
-                        return;
-                    }
-                };
+pub async fn queue_new_bill_jobs(info: BillUpsertInfo) -> Result<(), ApiError> {
+    tokio::task::spawn(async move {
+        let job_configuration = match get_job_configuration().await {
+            Ok(jc) => jc,
+            Err(e) => {
+                log!(Level::Error, "Error getting job configuration: {}", e);
+                return;
+            }
+        };
 
-                let issues_copy = sqlx::query_as!(BreakdownIssue, "SELECT * FROM issues")
-                    .fetch_all(&job_configuration.connection_pool)
-                    .await
-                    .expect("Failed to fetch issues");
-                let info_copy = info.to_owned();
-                let connection_pool_copy = &job_configuration.connection_pool;
+        let issues_copy = sqlx::query_as!(BreakdownIssue, "SELECT * FROM issues")
+            .fetch_all(&job_configuration.connection_pool)
+            .await
+            .expect("Failed to fetch issues");
+        let info_copy = info.to_owned();
+        let connection_pool_copy = &job_configuration.connection_pool;
 
-                // Run sync bill issues
-                match sync_single_bill_issues(
-                    info_copy.bill.to_owned(),
-                    issues_copy.to_vec(),
-                    &connection_pool_copy,
-                )
-                .await
-                {
-                    Ok(_) => {}
-                    Err(e) => {
-                        log!(
-                            Level::Error,
-                            "Error syncing bill issues for bill {}: {}",
-                            &info_copy.bill.to_owned().id,
-                            e
-                        );
-                    }
-                };
-                connection_pool_copy.close().await;
+        // Run sync bill issues
+        match sync_single_bill_issues(
+            info_copy.bill.to_owned(),
+            issues_copy.to_vec(),
+            &connection_pool_copy,
+        )
+        .await
+        {
+            Ok(_) => {}
+            Err(e) => {
+                log!(
+                    Level::Error,
+                    "Error syncing bill issues for bill {}: {}",
+                    &info_copy.bill.to_owned().id,
+                    e
+                );
+            }
+        };
+        connection_pool_copy.close().await;
 
-                // Commenting out for now, will readd once in prod
-                // and max connections on DB are accurate
-                // Run get bill text from XML
-                // match fetch_and_save_bill_full_text(
-                //     &info_copy.bill.to_owned(),
-                //     &connection_pool_copy,
-                // )
-                // .await
-                // {
-                //     Ok(_) => {}
-                //     Err(e) => {
-                //         log!(
-                //             Level::Error,
-                //             "Error syncing full text for bill {}: {}",
-                //             &info_copy.bill.to_owned().id,
-                //             e
-                //         );
-                //     }
-                // };
-                // // Get OpenAI summary for bill
-                // let openai_client: openai_rs::client::Client =
-                //     openai_rs::openai::new(&job_configuration.config.OPENAI_API_KEY);
-                // let bill_clone = &info.bill.clone();
-                // match fetch_and_save_davinci_bill_summary(
-                //     &bill_clone.id,
-                //     &connection_pool_copy,
-                //     &openai_client,
-                // )
-                // .await
-                // {
-                //     Ok(_) => {}
-                //     Err(e) => {
-                //         log!(
-                //             Level::Error,
-                //             "Error syncing summary for bill {}: {}",
-                //             &bill_clone.id,
-                //             e
-                //         );
-                //     }
-                // };
-            });
-            ()
-        }
-        BillAgeStatus::Updated => {
-            // TODO: Figure out how often text changes, only trigger update if it has
-        }
-    }
+        // Commenting out for now, will readd once in prod
+        // and max connections on DB are accurate
+        // Run get bill text from XML
+        // match fetch_and_save_bill_full_text(
+        //     &info_copy.bill.to_owned(),
+        //     &connection_pool_copy,
+        // )
+        // .await
+        // {
+        //     Ok(_) => {}
+        //     Err(e) => {
+        //         log!(
+        //             Level::Error,
+        //             "Error syncing full text for bill {}: {}",
+        //             &info_copy.bill.to_owned().id,
+        //             e
+        //         );
+        //     }
+        // };
+        // // Get OpenAI summary for bill
+        // let openai_client: openai_rs::client::Client =
+        //     openai_rs::openai::new(&job_configuration.config.OPENAI_API_KEY);
+        // let bill_clone = &info.bill.clone();
+        // match fetch_and_save_davinci_bill_summary(
+        //     &bill_clone.id,
+        //     &connection_pool_copy,
+        //     &openai_client,
+        // )
+        // .await
+        // {
+        //     Ok(_) => {}
+        //     Err(e) => {
+        //         log!(
+        //             Level::Error,
+        //             "Error syncing summary for bill {}: {}",
+        //             &bill_clone.id,
+        //             e
+        //         );
+        //     }
+        // };
+    });
     Ok(())
 }
 
@@ -388,8 +380,8 @@ pub async fn sync_bills(
 
     let mut bill_id_map = HashMap::new();
 
-    log::info!("Bills fetched");
-    log::info!("Bills length: {}", meta_bills.len());
+    println!("Bills fetched");
+    println!("Bills length: {}", meta_bills.len());
     // Chunk into 20 and wait 10 seconds between each chunk
     let mut fetch_futures = vec![];
     // Format and upsert bills to DB
@@ -400,16 +392,21 @@ pub async fn sync_bills(
             // println!("Bill duplicate {}", bill.bill_id.as_ref().unwrap());
             continue;
         } else {
-            println!("New bill {}", bill.bill_id.as_ref().unwrap());
-            let bill_subjects = get_bill_subjects(
-                &config.PROPUBLICA_BASE_URI,
-                &bill.bill_id.as_ref().unwrap(),
-                &config.PROPUBLICA_API_KEY,
-            )
-            .await;
-            let bill_info = save_propub_bill(bill_ref, &connection_pool).await?;
+            // println!("Bill not duplicate {}", bill.bill_id.as_ref().unwrap());
 
-            fetch_futures.push(queue_bill_updated_jobs(bill_info));
+            let bill_info = save_propub_bill(bill_ref, &connection_pool).await?;
+            if bill_info.status == BillAgeStatus::New {
+                println!("Bill is new, queueing jobs");
+                let bill_subjects = get_bill_subjects(
+                    &config.PROPUBLICA_BASE_URI,
+                    &bill.bill_slug.as_ref().unwrap(),
+                    &config.PROPUBLICA_API_KEY,
+                )
+                .await;
+                println!("Subjects length: {}", bill_subjects.len());
+                fetch_futures.push(queue_new_bill_jobs(bill_info));
+            }
+
             bill_id_map.insert(bill.bill_id.as_ref().unwrap().to_string(), true);
         }
         if i % 20 == 0 {
