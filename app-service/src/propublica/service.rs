@@ -138,7 +138,6 @@ pub async fn get_bill_subjects(
     let results = match response {
         Ok(response) => {
             let parsed_response = response.json::<ProPublicaBillSubjectsResponse>().await;
-            println!("Response: {:?}", parsed_response);
             let subjects = match parsed_response {
                 Ok(parsed_response) => {
                     let subjects = parsed_response.results[0].subjects.to_vec();
