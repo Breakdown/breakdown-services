@@ -85,7 +85,7 @@ pub async fn fetch_bill_by_id(
     Ok(bill)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BillAgeStatus {
     New,
     Updated,
