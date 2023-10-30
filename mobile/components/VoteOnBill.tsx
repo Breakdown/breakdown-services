@@ -89,7 +89,12 @@ const VoteOnBill = ({ id }: { id: string }) => {
           }}
           type={ButtonType.Default}
           title={"No"}
-          style={styles.button}
+          style={[
+            styles.button,
+            existingVoteOnBill.data?.vote === false
+              ? { backgroundColor: "green" }
+              : {},
+          ]}
         />
       </View>
     </View>
