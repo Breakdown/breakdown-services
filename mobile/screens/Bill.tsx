@@ -1,22 +1,32 @@
 import { useQuery } from "@tanstack/react-query";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { getBillById, QUERY_GET_BILL } from "../data/queries";
+import Text, { TextVariant } from "../components/Text";
+import PageContainer from "../components/hoc/PageContainer";
 
 const Bill = ({ navigation, route }) => {
   const {
     bill: { id },
   } = route.params;
+
   const { data, error, isLoading } = useQuery({
     queryKey: [QUERY_GET_BILL, id],
     queryFn: () => getBillById(id),
   });
-  return <View style={styles.container}></View>;
+
+  return (
+    <PageContainer>
+      <View style={styles.container}>
+        <Text variant={TextVariant.SECTION_TITLE}>{data?.title}</Text>
+      </View>
+    </PageContainer>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
   },
 });
 

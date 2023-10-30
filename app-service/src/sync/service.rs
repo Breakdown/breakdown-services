@@ -81,8 +81,7 @@ pub async fn create_issues(ctx: Extension<ApiContext>) -> Result<&'static str, A
                 .allSubjectsFiltered
                 .iter()
                 .find(|subject| subject.url_name == *subject_slug)
-                .unwrap_or(&default_slugified)
-                .clone();
+                .unwrap_or(&default_slugified);
             if subject_named.name.chars().count() > 0 {
                 subjects_named.push(subject_named.name.to_string());
             } else {

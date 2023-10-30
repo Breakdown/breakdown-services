@@ -1,4 +1,4 @@
-import { BreakdownIssue, BreakdownRep } from "../types/api";
+import { BreakdownBill, BreakdownIssue, BreakdownRep } from "../types/api";
 import { baseFetch } from "./fetch";
 
 export const QUERY_GET_ME = "QUERY_GET_ME";
@@ -22,12 +22,12 @@ export const getBills = async () => {
 };
 
 export const QUERY_GET_BILL = "QUERY_GET_BILL";
-export const getBillById = async (billId: string) => {
+export const getBillById = async (billId: string): Promise<BreakdownBill> => {
   const response = await baseFetch({
     url: `/bills/${billId}`,
     method: "GET",
   });
-  return response;
+  return response.data?.data;
 };
 
 interface GetYourRepsResponse {
