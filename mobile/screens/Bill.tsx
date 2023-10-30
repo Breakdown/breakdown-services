@@ -3,6 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { getBillById, QUERY_GET_BILL } from "../data/queries";
 import Text, { TextVariant } from "../components/Text";
 import PageContainer from "../components/hoc/PageContainer";
+import VoteOnBill from "../components/VoteOnBill";
 
 const Bill = ({ navigation, route }) => {
   const {
@@ -18,6 +19,7 @@ const Bill = ({ navigation, route }) => {
     <PageContainer>
       <View style={styles.container}>
         <Text variant={TextVariant.SECTION_TITLE}>{data?.title}</Text>
+        <VoteOnBill id={id} />
       </View>
     </PageContainer>
   );
@@ -26,6 +28,7 @@ const Bill = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: "100%",
     backgroundColor: "#FFFFFF",
   },
 });

@@ -114,3 +114,18 @@ export const submitLocationAddress = async ({
   });
   return response;
 }
+
+export const voteOnBillMutation = async ({
+  billId,
+  vote
+}: {
+  billId: string;
+  vote: boolean;
+}) => {
+  const response = await baseFetch({
+    url: `/votes/${billId}`,
+    method: "POST",
+    body: { vote },
+  });
+  return response;
+}

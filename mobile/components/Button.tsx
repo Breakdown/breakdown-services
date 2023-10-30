@@ -26,11 +26,12 @@ const Button = ({
   onPress,
   loading,
   type = ButtonType.Default,
+  style,
   ...otherProps
 }: Props) => {
   return (
     <TouchableOpacity
-      style={[styles[type], otherProps.style]}
+      style={[styles[type], style]}
       onPress={onPress}
       {...otherProps}
     >

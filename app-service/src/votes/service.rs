@@ -8,6 +8,7 @@ use axum::{extract::Path, Extension, Json};
 use axum_sessions::extractors::ReadableSession;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use typeshare::typeshare;
 use uuid::Uuid;
 
 pub async fn save_propub_vote(
@@ -196,13 +197,18 @@ pub struct GetUserVotesParams {
     bill_id: Uuid,
 }
 
+#[typeshare]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetUserBillVoteReponse {
+    vote: bool,
+}
 pub async fn get_user_bill_vote(
     ctx: Extension<ApiContext>,
     session: ReadableSession,
     Path(params): Path<GetUserVotesParams>,
-) -> Result<Json<ResponseBody<UserVote>>, ApiError> {
+) -> Result<Json<ResponseBody<GetUserBillVoteReponse>>, ApiError> {
     let user_id = session.get::<Uuid>("user_id").unwrap();
-    let votes = sqlx::query_as!(
+    let vote = sqlx::query_as!(
         UserVote,
         r#"
             SELECT * FROM users_votes WHERE user_id = $1 AND bill_id = $2
@@ -210,9 +216,17 @@ pub async fn get_user_bill_vote(
         user_id,
         &params.bill_id
     )
-    .fetch_one(&ctx.connection_pool)
-    .await?;
-    Ok(Json(ResponseBody { data: votes }))
+    .fetch_optional(&ctx.connection_pool)
+    .await
+    .unwrap_or(None);
+
+    let returned_body: GetUserBillVoteReponse = match vote {
+        Some(vote) => GetUserBillVoteReponse { vote: vote.vote },
+        None => GetUserBillVoteReponse { vote: false },
+    };
+    Ok(Json(ResponseBody {
+        data: returned_body,
+    }))
 }
 
 pub async fn get_user_votes(

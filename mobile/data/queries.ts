@@ -1,4 +1,4 @@
-import { BreakdownBill, BreakdownIssue, BreakdownRep } from "../types/api";
+import { BreakdownBill, BreakdownIssue, BreakdownRep, UserVote } from "../types/api";
 import { baseFetch } from "./fetch";
 
 export const QUERY_GET_ME = "QUERY_GET_ME";
@@ -30,6 +30,15 @@ export const getBillById = async (billId: string): Promise<BreakdownBill> => {
   return response.data?.data;
 };
 
+export const QUERY_GET_BILL_SPONSOR = "QUERY_GET_BILL_SPONSOR";
+export const getBillSponsorById = async (billId: string): Promise<BreakdownBill> => {
+  const response = await baseFetch({
+    url: `/bills/${billId}/sponsor`,
+    method: "GET",
+  });
+  return response.data?.data;
+};
+
 interface GetYourRepsResponse {
   following: BreakdownRep[];
   local: BreakdownRep[];
@@ -40,7 +49,7 @@ export const getYourReps = async (): Promise<GetYourRepsResponse> => {
     url: "/users/representatives",
     method: "GET",
   });
-  return response.data.data;
+  return response?.data?.data;
 };
 
 export const QUERY_GET_ALL_ISSUES = "QUERY_GET_ALL_ISSUES";
@@ -49,7 +58,7 @@ export const getAllIssues = async (): Promise<BreakdownIssue[]> => {
     url: "/issues",
     method: "GET",
   });
-  return response.data.data;
+  return response?.data?.data;
 }
 
 export const QUERY_GET_YOUR_ISSUES = "QUERY_GET_YOUR_ISSUES";
@@ -58,7 +67,7 @@ export const getYourIssues = async (): Promise<BreakdownIssue[]> => {
     url: "/users/issues",
     method: "GET",
   });
-  return response.data.data;
+  return response?.data?.data;
 };
 
 export const QUERY_GET_ISSUE = "QUERY_GET_ISSUE";
@@ -67,7 +76,7 @@ export const getIssueById = async (issueId: string): Promise<BreakdownIssue> => 
     url: `/issues/${issueId}`,
     method: "GET",
   });
-  return response.data.data;
+  return response?.data?.data;
 };
 
 export const QUERY_GET_REP = "QUERY_GET_REP";
@@ -76,5 +85,18 @@ export const getRepById = async (repId: string): Promise<BreakdownRep> => {
     url: `/reps/${repId}`,
     method: "GET",
   });
-  return response.data.data;
+  return response?.data?.data;
 };
+
+export const QUERY_GET_USER_VOTE_ON_BILL = "QUERY_GET_USER_VOTE_ON_BILL";
+export const getUserVoteOnBill = async ({
+  billId,
+}: {
+  billId: string;
+}): Promise<{ vote: boolean }> => {
+  const response = await baseFetch({
+    url: `/votes/${billId}`,
+    method: "GET",
+  });
+  return response?.data?.data;
+}
