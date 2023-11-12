@@ -6,7 +6,8 @@ import {
   QUERY_GET_BILL,
   QUERY_GET_ISSUE,
 } from "../data/queries";
-import Text from "../components/Text";
+import Text, { TextVariant } from "../components/Text";
+import PageContainer from "../components/hoc/PageContainer";
 
 const Issue = ({ navigation, route }) => {
   const {
@@ -16,10 +17,13 @@ const Issue = ({ navigation, route }) => {
     queryKey: [QUERY_GET_ISSUE, id],
     queryFn: () => getIssueById(id),
   });
+
   return (
-    <View style={styles.container}>
-      <Text>{data?.name}</Text>
-    </View>
+    <PageContainer>
+      <View style={styles.container}>
+        <Text variant={TextVariant.HEADER_LIGHT}>{data?.name}</Text>
+      </View>
+    </PageContainer>
   );
 };
 

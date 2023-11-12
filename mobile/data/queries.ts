@@ -39,6 +39,15 @@ export const getBillSponsorById = async (billId: string): Promise<BreakdownBill>
   return response.data?.data;
 };
 
+export const QUERY_GET_BILL_ISSUES = "QUERY_GET_BILL_ISSUES";
+export const getBillIssuesById = async (billId: string): Promise<BreakdownIssue[]> => {
+  const response = await baseFetch({
+    url: `/bills/${billId}/issues`,
+    method: "GET",
+  });
+  return response.data?.data;
+};
+
 interface GetYourRepsResponse {
   following: BreakdownRep[];
   local: BreakdownRep[];
