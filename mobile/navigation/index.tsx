@@ -15,11 +15,13 @@ import NotFoundScreen from "../screens/NotFound";
 import SignIn from "../screens/unauth/SignIn";
 import SignUp from "../screens/unauth/SignUp";
 import Welcome from "../screens/unauth/Welcome";
+import Account from "../screens/Account";
 import { BD_PURPLE } from "../styles";
 import Onboarding from "../screens/unauth/Onboarding";
 import { TextVariant } from "../components/Text";
 import Issue from "../screens/Issue";
 import Representative from "../screens/Representative";
+import AccountIcon from "../components/AccountIcon";
 
 const Stack = createStackNavigator();
 
@@ -45,11 +47,11 @@ function TabBarIcon(props) {
 const getTimeOfDay = () => {
   const hours = new Date().getHours();
   if (hours < 12) {
-    return "Morning";
+    return "morning";
   } else if (hours < 17) {
-    return "Afternoon";
+    return "afternoon";
   } else {
-    return "Evening";
+    return "evening";
   }
 };
 
@@ -64,8 +66,13 @@ const HomeStack = () => {
           title: "Home",
           headerLeft: (props) => {
             return (
-              <Text variant={TextVariant.SUBHEADER}>Good {getTimeOfDay()}</Text>
+              <Text variant={TextVariant.SUBHEADER}>
+                Good {getTimeOfDay()} {firstName || ""}
+              </Text>
             );
+          },
+          headerRight: (props) => {
+            return <AccountIcon />;
           },
           headerLeftContainerStyle: {
             paddingLeft: 8,
@@ -84,6 +91,7 @@ const HomeStack = () => {
         component={NotFoundScreen}
         options={{ title: "Oops!" }}
       />
+      <Stack.Screen name={"Account"} component={Account} />
     </Stack.Navigator>
   );
 };
@@ -135,6 +143,7 @@ const horizontalAnimation = {
 const UnauthenticatedStack = () => {
   return (
     <Stack.Navigator
+      initialRouteName="Welcome"
       screenOptions={{
         headerShown: false,
       }}
