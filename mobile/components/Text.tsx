@@ -15,6 +15,7 @@ export enum TextVariant {
   TITLE = "TITLE",
   DETAIL = "DETAIL",
   TINY_TITLE = "TINY_TITLE",
+  BODY = "BODY",
 }
 interface BreakdownTextProps extends TextProps {
   variant?: TextVariant;
@@ -69,6 +70,10 @@ const variants: { [key in TextVariant]: TextStyle } = {
   TINY_TITLE: {
     fontWeight: "500",
     fontSize: 12,
+  },
+  BODY: {
+    fontWeight: "500",
+    fontSize: 16,
   },
 };
 
