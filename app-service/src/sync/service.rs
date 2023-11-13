@@ -161,21 +161,15 @@ pub async fn get_bill_summaries(ctx: Extension<ApiContext>) -> Result<&'static s
         }
     }
 
-    // Send full text to OpenAI for summarization
-    let openai_client: openai_rs::client::Client =
-        openai_rs::openai::new(&ctx.config.OPENAI_API_KEY);
+    // Send full text to Cohere for summarization
     let all_bill_texts = sqlx::query_as!(BillFullText, r#"SELECT * FROM bill_full_texts"#,)
         .fetch_all(&ctx.connection_pool)
         .await?;
 
     // TODO: Parallelize this
     for bill_text in all_bill_texts.iter() {
-        fetch_and_save_davinci_bill_summary(
-            &bill_text.bill_id.unwrap(),
-            &ctx.connection_pool,
-            &openai_client,
-        )
-        .await?;
+        fetch_and_save_davinci_bill_summary(&bill_text.bill_id.unwrap(), &ctx.connection_pool)
+            .await?;
     }
     Ok("Seeded Bill Summaries")
 }
@@ -288,7 +282,7 @@ pub async fn queue_new_bill_jobs(info: BillUpsertInfo) -> Result<(), ApiError> {
         // };
         // // Get OpenAI summary for bill
         // let openai_client: openai_rs::client::Client =
-        //     openai_rs::openai::new(&job_configuration.config.OPENAI_API_KEY);
+        //     openai_rs::openai::new(&job_configuration.config.COHERE_API_KEY);
         // let bill_clone = &info.bill.clone();
         // match fetch_and_save_davinci_bill_summary(
         //     &bill_clone.id,
