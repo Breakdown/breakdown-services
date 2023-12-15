@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "sqlx-ts": "^0.9.3"
+  }
+}

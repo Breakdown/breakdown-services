@@ -26,6 +26,34 @@ services:
       - "6378:6379"
     networks:
       - breakdown-dev
+  app-service:
+    build:
+      context: ./app-service
+      dockerfile: Dockerfile.local
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./app-service:/usr/src/app
+    networks:
+      - breakdown-dev
+    links:
+      - db
+    environment:
+      CARGO_INCREMENTAL: 1
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PROPUBLICA_API_KEY: ${PROPUBLICA_API_KEY}
+      DATABASE_URL: ${DATABASE_URL}
+      HMAC_KEY: ${HMAC_KEY}
+      DB_MAX_CONNECTIONS: ${DB_MAX_CONNECTIONS}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      TWILIO_ACCOUNT_ID: ${TWILIO_ACCOUNT_ID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEOCODIO_API_KEY: ${GEOCODIO_API_KEY}
+    command: bash -c "bash ./wait-for-it.sh postgres:5432 -q -- RUST_LOG=tower_http=trace cargo watch -x run"
   # rabbitmq:
   #   image: rabbitmq:3-management-alpine
   #   ports:

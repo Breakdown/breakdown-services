@@ -12,3 +12,7 @@ run-app:
 
 .PHONY: run
 run: run-backend run-app
+
+.PHONY: migrate
+run:
+	cd app-service; sqlx migrate --source=../migrations run --database-url=postgres://postgres:postgres@localhost:5438
