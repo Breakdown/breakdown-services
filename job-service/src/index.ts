@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import server from "./server.js";
 import { Environment, getEnv } from "./utils/env.js";
 
+
 if (getEnv() === Environment.Local) {
   dotenv.config();
 }

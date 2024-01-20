@@ -1,10 +1,10 @@
 FROM node:20
 
 WORKDIR /app
-COPY . .
+COPY services/job-service ./services/job-service
+COPY services/shared ./services/shared
 
 RUN yarn
-RUN yarn run generate
 
 EXPOSE 8080
 

@@ -1,12 +1,16 @@
 #![allow(non_snake_case)]
 use serde::{Deserialize, Serialize};
+use typeshare::typeshare;
 
 // Bills
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CosponsorsByParty {
     pub D: Option<u16>,
     pub R: Option<u16>,
 }
+
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProPublicaBill {
     pub bill_id: Option<String>,
@@ -45,6 +49,7 @@ pub struct ProPublicaBill {
 }
 
 // Reps
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProPublicaRep {
     pub id: String,
@@ -95,6 +100,7 @@ pub struct ProPublicaRep {
     pub votes_against_party_pct: Option<f64>,
 }
 
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProPublicaVoteBill {
     pub bill_id: Option<String>,
@@ -105,6 +111,7 @@ pub struct ProPublicaVoteBill {
     pub latest_action: Option<String>,
 }
 
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProPublicaVote {
     pub member_id: Option<String>,
@@ -121,45 +128,54 @@ pub struct ProPublicaVote {
     pub position: Option<String>,
 }
 
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaRepsResult {
     pub members: Vec<ProPublicaRep>,
 }
 
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaRepsResponse {
     pub results: Vec<ProPublicaRepsResult>,
 }
 
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaBillsResult {
     pub bills: Vec<ProPublicaBill>,
 }
 
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaBillsResponse {
     pub results: Vec<ProPublicaBillsResult>,
 }
 
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SingleSubject {
     name: String,
     url_name: String,
 }
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaSingleBillSubjectsReponse {
     pub subjects: Vec<SingleSubject>,
 }
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaBillSubjectsResponse {
     pub results: Vec<ProPublicaSingleBillSubjectsReponse>,
 }
 
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaVotesResult {
     pub votes: Vec<ProPublicaVote>,
 }
 
+#[typeshare]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProPublicaVotesResponse {
     pub results: Vec<ProPublicaVotesResult>,

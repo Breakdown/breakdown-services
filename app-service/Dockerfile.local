@@ -15,7 +15,7 @@
 # # Copy the files to the Docker image
 # COPY ./ ./
 
-FROM rust:alpine3.16
+FROM rust:alpine3.18
 
 # RUN cargo install diesel_cli --no-default-features --features postgres
 
@@ -26,6 +26,8 @@ RUN cargo install cargo-watch --locked
 WORKDIR /usr/src/app
 
 EXPOSE 8080
+
+COPY . .
 
 VOLUME ["/usr/local/cargo"]
 
