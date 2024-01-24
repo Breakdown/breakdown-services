@@ -1,16 +1,12 @@
-# Using official rust base image
-FROM rust:alpine3.16
+FROM node:20
 
-# Set the application directory
 WORKDIR /app
+COPY shared ./shared
+COPY app-service ./app-service
 
-# Install musl-tools to make many crates compile successfully
-RUN apk add --no-cache musl-dev
-
-# Install cargo-watch
-RUN cargo install cargo-watch
+RUN yarn
+RUN yarn run generate
 
 EXPOSE 8080
 
-# Copy the files to the Docker image
-COPY ./ ./
+CMD ["yarn", "dev"]

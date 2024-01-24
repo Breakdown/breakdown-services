@@ -3,8 +3,7 @@ MAKEFLAGS += -j2
 .PHONY: run-backend
 run-backend:
 	docker compose down
-	docker compose up -d
-	cd app-service; RUST_LOG=tower_http=trace cargo watch -x run
+	docker compose up
 
 .PHONY: run-app
 run-app:
