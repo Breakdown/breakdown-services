@@ -1,0 +1,43 @@
+generator client {
+  provider      = "prisma-client-js"
+  engineType    = "binary"
+  binaryTargets = ["native", "darwin-arm64", "linux-arm64-openssl-1.1.x", "debian-openssl-1.1.x", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String?   @unique
+  phone             String?
+  password          String?
+  receivePromotions Boolean   @map("receive_promotions")
+  onboardedLocation Boolean   @default(false) @map("onboarded_location")
+  onboardedIssues   Boolean   @default(false) @map("onboarded_issues")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime? @updatedAt @map("updated_at")
+  emailVerified     Boolean   @default(false) @map("email_verified")
+
+  locationData UserLocationData?
+
+  @@index([id, email, phone])
+  @@map("users")
+}
+
+model UserLocationData {
+  id        String  @id @default(uuid())
+  userId    String  @unique @map("user_id")
+  address   String?
+  latitude  Float?
+  longitude Float?
+  state     String?
+  district  String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, state, district])
+  @@map("user_location_data")
+}

@@ -1,5 +1,5 @@
 import cookieParser from "cookie-parser";
-import express, { Request, Response, NextFunction } from "express";
+import express, { Request, Response } from "express";
 import helmet from "helmet";
 import http from "http";
 import router from "./router.js";

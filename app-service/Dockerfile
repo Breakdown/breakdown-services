@@ -1,10 +1,8 @@
 FROM node:20 AS builder
 WORKDIR /app
-COPY ./build_protos.sh /opt/build_protos.sh
 COPY app-service .
 RUN yarn install
 RUN yarn run generate
-RUN /opt/build_protos.sh
 RUN yarn build
 
 FROM node:20-alpine AS final

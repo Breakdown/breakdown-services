@@ -11,7 +11,7 @@ import {
 } from "./errors/index.js";
 import { Redis } from "ioredis";
 import morgan from "morgan";
-import { isProduction, isSandbox } from "./env.js";
+
 
 // Base server headers
 export const headers = (req: Request, res: Response, next: NextFunction) => {
@@ -19,16 +19,7 @@ export const headers = (req: Request, res: Response, next: NextFunction) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept, Credentials, Set-Cookie, Cookie, Cookies, Cross-Origin, Access-Control-Allow-Credentials, Authorization, Access-Control-Allow-Origin"
   );
-  const allowedOrigins = isProduction()
-    ? ["https://app.judie.io"]
-    : isSandbox()
-    ? ["https://app.sandbox.judie.io"]
-    : ["http://localhost:3000", "http://web:3000"];
-
-  const origin = String(req.headers.origin);
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
+  res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Credentials", "true");
   res.header(
     "Access-Control-Allow-Methods",
@@ -51,7 +42,6 @@ export const handleValidationErrors = (
   }
   next();
 };
-
 
 // Error wrapping Higher order function
 // This is used to pass our custom errors into the error handler middleware below
@@ -118,23 +108,16 @@ export const sessionLayer = () =>
   session({
     unset: "destroy",
     rolling: true,
-    name: "judie_sid",
+    name: "breakdown_sid",
     store: sessionStore,
     secret: process.env.SESSION_SECRET || "secret",
     resave: false,
     saveUninitialized: false,
-    proxy: isProduction() || isSandbox(),
     cookie: {
-      secure: isProduction() || isSandbox(), // if true only transmit cookie over https
+      secure: false, // isProduction() || isSandbox(), // if true only transmit cookie over https
       httpOnly: false, // if true prevent client side JS from reading the cookie
       maxAge: 1000 * 60 * 60 * 24 * 30, // session max age in milliseconds - 30d - expire after 30d inactivity
       path: "/",
-      domain: isProduction()
-        ? "judie.io"
-        : isSandbox()
-        ? "sandbox.judie.io"
-        : undefined,
-      ...(isProduction() || isSandbox() ? { sameSite: "strict" } : {}),
     },
   });
 
@@ -151,4 +134,4 @@ export const morganLogger = () =>
     immediate: false,
   });
 
-export type JudieSession = Session & Partial<SessionData>;
+export type BreakdownSession = Session & Partial<SessionData>;

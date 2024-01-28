@@ -32,11 +32,9 @@ services:
     privileged: true
     volumes:
       - ./app-service/src:/app/src
-      - ./shared/src:/app/shared/src
-    working_dir: /app
     build:
-      context: ./
-      dockerfile: ./app-service/Dockerfile.local
+      context: ./app-service
+      dockerfile: ./Dockerfile.local
     command: yarn dev
     ports:
       - 8080:8080
@@ -46,6 +44,9 @@ services:
       PORT: 8080
       REDIS_HOST: redis
       DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/postgres}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+      TWILIO_ACCOUNT_ID: ${TWILIO_ACCOUNT_ID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
 
 networks:
   breakdown-dev:
