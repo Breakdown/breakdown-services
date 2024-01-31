@@ -21,7 +21,7 @@ class BillsService {
         sponsor: true,
       },
     });
-    return dbResponse.sponsor;
+    return dbResponse?.sponsor;
   }
 }
 
