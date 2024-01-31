@@ -52,6 +52,38 @@ class BillsService {
     });
     return;
   }
+
+  async followBill(billId: string, userId: string): Promise<void> {
+    await dbClient.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        followingBills: {
+          connect: {
+            id: billId,
+          },
+        },
+      },
+    });
+    return;
+  }
+
+  async unfollowBill(billId: string, userId: string): Promise<void> {
+    await dbClient.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        followingBills: {
+          disconnect: {
+            id: billId,
+          },
+        },
+      },
+    });
+    return;
+  }
 }
 
 export default BillsService;
