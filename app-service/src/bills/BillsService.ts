@@ -1,9 +1,10 @@
+import { Bill, Representative } from "@prisma/client";
 import dbClient from "../utils/prisma.js";
 
 class BillsService {
   constructor() {}
 
-  async getBillById(id: string) {
+  async getBillById(id: string): Promise<Bill | null> {
     const dbResponse = await dbClient.bill.findUnique({
       where: {
         id,
@@ -12,7 +13,7 @@ class BillsService {
     return dbResponse;
   }
 
-  async getBillSponsor(id: string) {
+  async getBillSponsor(id: string): Promise<Representative | null | undefined> {
     const dbResponse = await dbClient.bill.findUnique({
       where: {
         id,
@@ -22,6 +23,18 @@ class BillsService {
       },
     });
     return dbResponse?.sponsor;
+  }
+
+  async getBillCosponsors(id: string): Promise<Representative[] | undefined> {
+    const dbResponse = await dbClient.bill.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        cosponsors: true,
+      },
+    });
+    return dbResponse?.cosponsors;
   }
 }
 

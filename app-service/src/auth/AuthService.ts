@@ -7,6 +7,7 @@ import UnauthorizedError from "../utils/errors/UnauthorizedError.js";
 import SmsService, { MessageType } from "../sms/SmsService.js";
 import { redis } from "../utils/redis.js";
 import InternalError from "../utils/errors/InternalError.js";
+import { User } from "@prisma/client";
 
 interface RedisPhoneVerificationResponse {
   phone: string;
@@ -27,7 +28,7 @@ class AuthService {
     email: string;
     password: string;
     receivePromotions: boolean;
-  }) {
+  }): Promise<User> {
     email = email.trim().toLowerCase();
 
     // Verify email and password requirements
@@ -61,7 +62,13 @@ class AuthService {
     return newUser;
   }
 
-  async emailSignin({ email, password }: { email: string; password: string }) {
+  async emailSignin({
+    email,
+    password,
+  }: {
+    email: string;
+    password: string;
+  }): Promise<User> {
     email = email.trim().toLowerCase();
 
     // Find user
@@ -85,7 +92,13 @@ class AuthService {
     return user;
   }
 
-  async smsSignup({ phone, deviceId }: { phone: string; deviceId: string }) {
+  async smsSignup({
+    phone,
+    deviceId,
+  }: {
+    phone: string;
+    deviceId: string;
+  }): Promise<boolean> {
     // Verify phone # is real
     if (!validator.isMobilePhone(phone)) {
       throw new BadRequestError("Invalid phone number");
@@ -110,7 +123,13 @@ class AuthService {
     });
   }
 
-  async smsSignin({ phone, deviceId }: { phone: string; deviceId: string }) {
+  async smsSignin({
+    phone,
+    deviceId,
+  }: {
+    phone: string;
+    deviceId: string;
+  }): Promise<boolean> {
     // Find user
     const user = await dbClient.user.findFirst({
       where: {
@@ -138,7 +157,7 @@ class AuthService {
   }: {
     code: number;
     deviceId: string;
-  }) {
+  }): Promise<boolean> {
     // Get code from redis for this deviceId
     const response = await redis.get(deviceId);
     if (!response) {
@@ -157,7 +176,7 @@ class AuthService {
         },
       });
       this.session.userId = newUser.id;
-      return;
+      return true;
     } else {
       throw new InternalError("Invalid code, please try again");
     }
@@ -169,7 +188,7 @@ class AuthService {
   }: {
     code: number;
     deviceId: string;
-  }) {
+  }): Promise<boolean> {
     // Get code from redis for this deviceId
     const response = await redis.get(deviceId);
     if (!response) {
@@ -187,7 +206,7 @@ class AuthService {
         },
       });
       this.session.userId = user?.id;
-      return;
+      return true;
     } else {
       throw new InternalError("Invalid code, please try again");
     }
