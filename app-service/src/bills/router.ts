@@ -12,8 +12,8 @@ const router = Router();
 router.get(
   "/:id",
   [param("id").exists()],
-  errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
+  // errorPassthrough(handleValidationErrors),
+  // errorPassthrough(requireAuth),
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
     const bill = await billsService.getBillById(req.params.id);

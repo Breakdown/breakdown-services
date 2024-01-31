@@ -1,9 +1,8 @@
 import bcrypt from "bcryptjs";
-import isEmail from "validator/lib/isEmail.js";
+import validator from "validator";
 import BadRequestError from "../utils/errors/BadRequestError.js";
 import dbClient from "../utils/prisma.js";
 import { BreakdownSession } from "../utils/express.js";
-import { isMobilePhone } from "validator";
 import UnauthorizedError from "../utils/errors/UnauthorizedError.js";
 import SmsService, { MessageType } from "../sms/SmsService.js";
 import { redis } from "../utils/redis.js";
@@ -32,7 +31,7 @@ class AuthService {
     email = email.trim().toLowerCase();
 
     // Verify email and password requirements
-    if (!isEmail.default(email)) {
+    if (!validator.isEmail(email)) {
       throw new BadRequestError("Invalid email");
     }
 
@@ -88,12 +87,12 @@ class AuthService {
 
   async smsSignup({ phone, deviceId }: { phone: string; deviceId: string }) {
     // Verify phone # is real
-    if (!isMobilePhone(phone)) {
+    if (!validator.isMobilePhone(phone)) {
       throw new BadRequestError("Invalid phone number");
     }
 
     // Check if user exists
-    const existingUser = await dbClient.user.findUnique({
+    const existingUser = await dbClient.user.findFirst({
       where: {
         phone,
       },
@@ -113,7 +112,7 @@ class AuthService {
 
   async smsSignin({ phone, deviceId }: { phone: string; deviceId: string }) {
     // Find user
-    const user = await dbClient.user.findUnique({
+    const user = await dbClient.user.findFirst({
       where: {
         phone,
       },
@@ -153,8 +152,8 @@ class AuthService {
       // Signup user
       const newUser = await dbClient.user.create({
         data: {
+          receivePromotions: false,
           phone: redisData.phone,
-          phoneVerified: true,
         },
       });
       this.session.userId = newUser.id;
@@ -182,12 +181,12 @@ class AuthService {
     }
     if (code === redisData.code) {
       // Signin user
-      const user = await dbClient.user.findUnique({
+      const user = await dbClient.user.findFirst({
         where: {
           phone: redisData.phone,
         },
       });
-      this.session.userId = user.id;
+      this.session.userId = user?.id;
       return;
     } else {
       throw new InternalError("Invalid code, please try again");
