@@ -11,3 +11,8 @@ run-app:
 
 .PHONY: run
 run: run-backend run-app
+
+.PHONY: rebuild
+rebuild:
+	docker compose down
+	docker compose up --build
