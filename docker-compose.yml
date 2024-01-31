@@ -26,34 +26,27 @@ services:
       - "6378:6379"
     networks:
       - breakdown-dev
-  # rabbitmq:
-  #   image: rabbitmq:3-management-alpine
-  #   ports:
-  #       - 5672:5672
-  #       - 15672:15672
-  #   volumes:
-  #       - breakdown-rabbitmq-data:/var/lib/rabbitmq/
-  #       - breakdown-rabbitmq-data:/var/log/rabbitmq
-  #   networks:
-  #       - breakdown-dev
-  # app-service:
-  #   networks:
-  #     - breakdown-dev
-  #   privileged: true
-  #   volumes:
-  #     - ./app-service:/app
-  #   build:
-  #     context: .
-  #     dockerfile: ./app-service/Dockerfile.local
-  #   ports:
-  #     - 8080:8080
-  #   environment:
-  #     HMAC_KEY: ${HMAC_KEY}
-  #     DATABASE_URL: ${DATABASE_URL}
-  #     PROPUBLICA_API_KEY: ${PROPUBLICA_API_KEY}
-  #   command: sh -c "cargo watch -x run"
-  #   depends_on:
-  #     - postgres
+  app-service:
+    networks:
+      - breakdown-dev
+    privileged: true
+    volumes:
+      - ./app-service/src:/app/src
+    build:
+      context: ./app-service
+      dockerfile: ./Dockerfile.local
+    command: yarn dev
+    ports:
+      - 8080:8080
+    restart: on-failure
+    environment:
+      NODE_ENV: local
+      PORT: 8080
+      REDIS_HOST: redis
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/postgres}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+      TWILIO_ACCOUNT_ID: ${TWILIO_ACCOUNT_ID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
 
 networks:
   breakdown-dev:
@@ -61,6 +54,3 @@ networks:
 volumes:
   breakdown-postgres-data: {}
   breakdown-redis-data: {}
-  breakdown-rabbitmq-data: {}
-  bd-app-service-registry:
-    driver: local

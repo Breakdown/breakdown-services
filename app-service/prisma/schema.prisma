@@ -1,0 +1,171 @@
+generator client {
+  provider      = "prisma-client-js"
+  engineType    = "binary"
+  binaryTargets = ["native", "darwin-arm64", "linux-arm64-openssl-1.1.x", "debian-openssl-1.1.x", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String?   @unique
+  phone             String?
+  password          String?
+  receivePromotions Boolean   @map("receive_promotions")
+  onboardedLocation Boolean   @default(false) @map("onboarded_location")
+  onboardedIssues   Boolean   @default(false) @map("onboarded_issues")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime? @updatedAt @map("updated_at")
+  emailVerified     Boolean   @default(false) @map("email_verified")
+
+  locationData UserLocationData?
+
+  @@index([id, email, phone])
+  @@map("users")
+}
+
+model UserLocationData {
+  id        String  @id @default(uuid())
+  userId    String  @unique @map("user_id")
+  address   String?
+  latitude  Float?
+  longitude Float?
+  state     String?
+  district  String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, state, district])
+  @@map("user_location_data")
+}
+
+model Bill {
+  id                    String    @id @default(uuid())
+  primaryIssueId        String?   @map("primary_issue_id")
+  sponsorId             String?   @map("sponsor_id")
+  propublicaId          String    @map("propublica_id")
+  bill_code             String    @map("bill_code")
+  bill_uri              String    @map("bill_uri")
+  bill_type             String    @map("bill_type")
+  title                 String    @map("title")
+  shortTitle            String?   @map("short_title")
+  sponsorPropublicaId   String?   @map("sponsor_propublica_id")
+  sponsorState          String?   @map("sponsor_state")
+  sponsorParty          String?   @map("sponsor_party")
+  gpoPdfUri             String?   @map("gpo_pdf_uri")
+  congressdotgovUrl     String?   @map("congressdotgov_url")
+  govtrackUrl           String?   @map("govtrack_url")
+  introducedDate        String?   @map("introduced_date")
+  lastVote              String?   @map("last_vote")
+  housePassage          String?   @map("house_passage")
+  senatePassage         String?   @map("senate_passage")
+  enacted               String?
+  vetoed                String?
+  primarySubject        String?   @map("primary_subject")
+  summary               String?
+  summaryShort          String?   @map("summary_short")
+  latestMajorActionDate String?   @map("latest_major_action_date")
+  latestMajorAction     String?   @map("latest_major_action")
+  legislativeDay        String?   @map("legislative_date")
+  active                Boolean?
+  committees            String[]
+  committeCodes         String[]  @map("committee_codes")
+  subcommitteCodes      String[]  @map("subcommittee_codes")
+  cosponsorsD           Int?      @map("cosponsors_d")
+  cosponsorsR           Int?      @map("cosponsors_r")
+  subjects              String[]
+  edited                Boolean?
+  aiSummary             String?   @map("ai_summary")
+  humanSummary          String?   @map("human_summary")
+  aiShortSummary        String?   @map("ai_short_summary")
+  humanShortSummary     String?   @map("human_short_summary")
+  aiTitle               String?   @map("ai_title")
+  humanTitle            String?   @map("human_title")
+  aiShortTitle          String?   @map("ai_short_title")
+  humanShortTitle       String?   @map("human_short_title")
+  importance            Int?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime? @updatedAt @map("updated_at")
+
+  primaryIssue Issue?           @relation(fields: [primaryIssueId], references: [id])
+  sponsor      Representative?  @relation(fields: [sponsorId], references: [id], "Sponsor")
+  cosponsors   Representative[] @relation("Cosponsor")
+
+  @@map("bills")
+}
+
+model Issue {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  slug        String    @unique
+  subjects    String[]
+  imageUrl    String?   @map("image_url")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime? @updatedAt @map("updated_at")
+
+  billsWherePrimaryIssue Bill[]
+
+  @@map("issues")
+}
+
+model Representative {
+  id                   String    @id @default(uuid())
+  title                String?
+  shortTitle           String?   @map("short_title")
+  apiUri               String?   @map("api_uri")
+  firstName            String?   @map("first_name")
+  middleName           String?   @map("middle_name")
+  lastName             String?   @map("last_name")
+  suffix               String?
+  dateOfBirth          String?   @map("date_of_birth")
+  gender               String?
+  party                String?
+  twitter              String?
+  facebook             String?
+  youtube              String?
+  govtrackId           String?   @map("govtrack_id")
+  cspanId              String?   @map("cspan_id")
+  votesmartId          String?   @map("votesmart_id")
+  icpsrId              String?   @map("icpsr_id")
+  crpId                String?   @map("crp_id")
+  googleEntityId       String?   @map("google_entity_id")
+  fecCandidateId       String?   @map("fec_candidate_id")
+  url                  String?
+  rssUrl               String?   @map("rss_url")
+  contactForm          String?   @map("contact_form")
+  inOffice             Boolean?  @map("in_office")
+  cookPvi              String?   @map("cook_pvi")
+  dwNominate           Float?    @map("dw_nominate")
+  seniority            String?
+  nextElection         String?   @map("next_election")
+  totalVotes           Int?      @map("total_votes")
+  missedVotes          Int?      @map("missed_votes")
+  totalPresent         Int?      @map("total_present")
+  lastUpdated          String?   @map("last_updated")
+  ocdId                String?   @map("ocd_id")
+  office               String?
+  phone                String?
+  fax                  String?
+  state                String?
+  district             String?
+  senateClass          String?   @map("senate_class")
+  stateRank            String?   @map("state_rank")
+  lisId                String?   @map("lis_id")
+  missedVotesPct       Float?    @map("missed_votes_pct")
+  votesWithPartyPct    Float?    @map("votes_with_party_pct")
+  votesAgainstPartyPct Float?    @map("votes_against_party_pct")
+  propublicaId         String    @map("propublica_id")
+  house                String
+  imageUrl             String?   @map("image_url")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime? @updatedAt @map("updated_at")
+
+  sponsored_bills   Bill[] @relation("Sponsor")
+  cosponsored_bills Bill[] @relation("Cosponsor")
+
+  @@map("representatives")
+}
