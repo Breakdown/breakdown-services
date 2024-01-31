@@ -31,7 +31,7 @@ class SmsService {
     phone: string;
     deviceId: string;
     type: MessageType;
-  }) {
+  }): Promise<boolean> {
     // Create and set verification code in Redis
     const randomCode = Math.floor(100000 + Math.random() * 900000);
     await redis.set(
