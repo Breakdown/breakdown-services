@@ -41,23 +41,23 @@ router.get(
   })
 );
 
-router.post(
-  "/:id/seen",
-  [param("id").exists()],
-  errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
-  errorPassthrough(async (req: Request, res: Response) => {
-    const billsService = new BillsService();
-    await billsService.billSeenByUser(
-      req.params.id,
-      req.session.userId as string
-    );
-    res.status(201).send({
-      data: {
-        success: true,
-      },
-    });
-  })
-);
+// router.post(
+//   "/:id/seen",
+//   [param("id").exists()],
+//   errorPassthrough(handleValidationErrors),
+//   errorPassthrough(requireAuth),
+//   errorPassthrough(async (req: Request, res: Response) => {
+//     const billsService = new BillsService();
+//     await billsService.billSeenByUser(
+//       req.params.id,
+//       req.session.userId as string
+//     );
+//     res.status(201).send({
+//       data: {
+//         success: true,
+//       },
+//     });
+//   })
+// );
 
 export default router;
