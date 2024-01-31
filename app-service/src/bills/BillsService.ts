@@ -36,6 +36,21 @@ class BillsService {
     });
     return dbResponse?.cosponsors;
   }
+
+  async billSeenByUser(billId: string, userId: string): Promise<void> {
+    await dbClient.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        seenBills: {
+          connect: {
+            id: billId,
+          },
+        },
+      },
+    });
+  }
 }
 
 export default BillsService;
