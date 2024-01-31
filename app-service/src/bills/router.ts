@@ -60,7 +60,6 @@ router.post(
   })
 );
 
-// POST following
 router.post(
   "/:id/follow",
   [param("id").exists(), body("following").isBoolean()],
@@ -88,4 +87,20 @@ router.post(
   })
 );
 
+router.get(
+  "/following",
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(requireAuth),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const billsService = new BillsService();
+    const bills = await billsService.getFollowingBills(
+      req.session.userId as string
+    );
+    res.status(201).send({
+      data: {
+        bills,
+      },
+    });
+  })
+);
 export default router;

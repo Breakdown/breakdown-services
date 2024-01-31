@@ -84,6 +84,18 @@ class BillsService {
     });
     return;
   }
+
+  async getFollowingBills(userId: string): Promise<Bill[] | undefined> {
+    const dbResponse = await dbClient.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        followingBills: true,
+      },
+    });
+    return dbResponse?.followingBills;
+  }
 }
 
 export default BillsService;
