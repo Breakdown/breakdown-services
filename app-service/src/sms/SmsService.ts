@@ -1,4 +1,4 @@
-import { Twilio } from "twilio";
+import twilio from "twilio";
 import InternalError from "../utils/errors/InternalError.js";
 import { redis } from "../utils/redis.js";
 
@@ -7,7 +7,7 @@ export enum MessageType {
   Signin,
 }
 class SmsService {
-  twilioClient?: Twilio;
+  twilioClient?: twilio.Twilio;
   constructor() {
     if (
       !process.env.TWILIO_ACCOUNT_ID ||
@@ -16,7 +16,7 @@ class SmsService {
     ) {
       throw new InternalError("Missing Twilio environment variables");
     }
-    const newTwilioClient = new Twilio(
+    const newTwilioClient = twilio(
       process.env.TWILIO_ACCOUNT_ID,
       process.env.TWILIO_AUTH_TOKEN
     );
