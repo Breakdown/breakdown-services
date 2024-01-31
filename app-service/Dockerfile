@@ -12,6 +12,7 @@ COPY --from=builder ./app/prisma ./prisma
 COPY app-service/package.json .
 COPY app-service/yarn.lock .
 RUN yarn install --production
+RUN yarn global add prisma
 RUN yarn run generate
 
 EXPOSE 8080

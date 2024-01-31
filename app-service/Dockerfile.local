@@ -4,6 +4,7 @@ WORKDIR /app
 COPY . .
 
 RUN yarn
+RUN yarn global add prisma
 RUN yarn run generate
 
 EXPOSE 8080

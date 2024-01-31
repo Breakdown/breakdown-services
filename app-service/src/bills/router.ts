@@ -25,4 +25,20 @@ router.get(
   })
 );
 
+router.get(
+  "/:id/sponsor",
+  [param("id").exists()],
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(requireAuth),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const billsService = new BillsService();
+    const sponsor = await billsService.getBillSponsor(req.params.id);
+    res.status(201).send({
+      data: {
+        sponsor,
+      },
+    });
+  })
+);
+
 export default router;

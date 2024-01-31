@@ -11,6 +11,18 @@ class BillsService {
     });
     return dbResponse;
   }
+
+  async getBillSponsor(id: string) {
+    const dbResponse = await dbClient.bill.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        sponsor: true,
+      },
+    });
+    return dbResponse.sponsor;
+  }
 }
 
 export default BillsService;
