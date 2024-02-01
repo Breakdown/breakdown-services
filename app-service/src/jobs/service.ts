@@ -259,7 +259,7 @@ class JobService {
         return true;
       }
     });
-    // TODO: Get sponsor DB ID for introduced bills
+    // Get sponsor DB ID for introduced bills
     const introducedBillPropubIdToSponsorDbIdMap: { [key: string]: string } =
       {};
     for (const bill of allIntroducedBills) {
@@ -272,9 +272,8 @@ class JobService {
         introducedBillPropubIdToSponsorDbIdMap[bill.bill_id] = sponsor.id;
       }
     }
-    // TODO: Get primary issue for bill
-
-    // TODO: Trigger cosponsors sync job for this bill
+    // TODO: Trigger subjects sync job for all bills
+    // TODO: Trigger cosponsors sync job for all bills
     // TODO: Trigger votes sync job for this bill if it has been voted on (and set lastVotesSync on bill job data)
   }
 

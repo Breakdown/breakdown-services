@@ -126,6 +126,7 @@ model BillJobData {
   lastFullTextSync DateTime? @map("last_full_text_sync")
   lastSummarySync  DateTime? @map("last_summary_sync")
   lastVotesSync    DateTime? @map("last_votes_sync")
+  lastSubjectsSync DateTime? @map("last_subjects_sync")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime? @updatedAt @map("updated_at")
