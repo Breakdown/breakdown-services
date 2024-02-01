@@ -73,7 +73,6 @@ model Bill {
   summaryShort          String?   @map("summary_short")
   latestMajorActionDate String?   @map("latest_major_action_date")
   latestMajorAction     String?   @map("latest_major_action")
-  legislativeDay        String?   @map("legislative_date")
   active                Boolean?
   committees            String[]
   committeCodes         String[]  @map("committee_codes")

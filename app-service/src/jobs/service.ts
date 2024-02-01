@@ -178,6 +178,41 @@ class JobService {
   transformPropublicaBillToDbBill(bill: ProPublicaBill): Bill {
     return {
       propublicaId: bill.bill_id,
+      billCode: bill.bill_slug,
+      billUri: bill.bill_uri,
+      billType: bill.bill_type,
+      title: bill.title,
+      shortTitle: bill.short_title,
+      sponsorPropublicaId: bill.sponsor_id,
+      sponsorState: bill.sponsor_state,
+      sponsorParty: bill.sponsor_party,
+      gpoPdfUri: bill.gpo_pdf_uri,
+      congressdotgovUrl: bill.congressdotgov_url,
+      govtrackUrl: bill.govtrack_url,
+      introducedDate: bill.introduced_date
+        ? new Date(bill.introduced_date)
+        : undefined,
+      lastVote: bill.last_vote ? new Date(bill.last_vote) : undefined,
+      housePassage: bill.house_passage
+        ? new Date(bill.house_passage)
+        : undefined,
+      senatePassage: bill.senate_passage
+        ? new Date(bill.senate_passage)
+        : undefined,
+      enacted: bill.enacted ? new Date(bill.enacted) : undefined,
+      vetoed: bill.vetoed ? new Date(bill.vetoed) : undefined,
+      primarySubject: bill.primary_subject,
+      summary: bill.summary,
+      summaryShort: bill.summary_short,
+      latestMajorActionDate: bill.latest_major_action_date
+        ? new Date(bill.latest_major_action_date)
+        : undefined,
+      latestMajorAction: bill.latest_major_action,
+      committees: bill.committees,
+      committeeCodes: bill.committee_codes,
+      cosponsorsD: bill.cosponsors_by_party?.D,
+      cosponsorsR: bill.cosponsors_by_party?.R,
+      active: bill.active,
     } as Bill;
   }
 
@@ -275,6 +310,18 @@ class JobService {
     // TODO: Trigger subjects sync job for all bills
     // TODO: Trigger cosponsors sync job for all bills
     // TODO: Trigger votes sync job for this bill if it has been voted on (and set lastVotesSync on bill job data)
+    // Upsert all bills matching on propublica ID
+    await dbClient.$transaction(
+      allBillsDeduped.map((bill) =>
+        dbClient.bill.upsert({
+          where: {
+            propublicaId: bill.bill_id,
+          },
+          update: this.transformPropublicaBillToDbBill(bill),
+          create: this.transformPropublicaBillToDbBill(bill),
+        })
+      )
+    );
   }
 
   async createWorkers() {
