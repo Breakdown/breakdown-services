@@ -50,7 +50,7 @@ model Bill {
   id                    String    @id @default(uuid())
   primaryIssueId        String?   @map("primary_issue_id")
   sponsorId             String?   @map("sponsor_id")
-  propublicaId          String    @map("propublica_id")
+  propublicaId          String    @unique @map("propublica_id")
   billCode              String    @map("bill_code")
   billUri               String    @map("bill_uri")
   billType              String    @map("bill_type")
@@ -125,6 +125,7 @@ model BillJobData {
   billId           String    @unique @map("bill_id")
   lastFullTextSync DateTime? @map("last_full_text_sync")
   lastSummarySync  DateTime? @map("last_summary_sync")
+  lastVotesSync    DateTime? @map("last_votes_sync")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime? @updatedAt @map("updated_at")
@@ -161,7 +162,7 @@ model Representative {
   middleName           String?   @map("middle_name")
   lastName             String?   @map("last_name")
   suffix               String?
-  dateOfBirth          String?   @map("date_of_birth")
+  dateOfBirth          DateTime? @map("date_of_birth")
   gender               String?
   party                String?
   twitter              String?
@@ -181,11 +182,11 @@ model Representative {
   cookPvi              String?   @map("cook_pvi")
   dwNominate           Float?    @map("dw_nominate")
   seniority            String?
-  nextElection         String?   @map("next_election")
+  nextElection         DateTime? @map("next_election")
   totalVotes           Int?      @map("total_votes")
   missedVotes          Int?      @map("missed_votes")
   totalPresent         Int?      @map("total_present")
-  lastUpdated          String?   @map("last_updated")
+  lastUpdated          DateTime? @map("last_updated")
   ocdId                String?   @map("ocd_id")
   office               String?
   phone                String?
@@ -198,7 +199,7 @@ model Representative {
   missedVotesPct       Float?    @map("missed_votes_pct")
   votesWithPartyPct    Float?    @map("votes_with_party_pct")
   votesAgainstPartyPct Float?    @map("votes_against_party_pct")
-  propublicaId         String    @map("propublica_id")
+  propublicaId         String    @unique @map("propublica_id")
   house                String
   imageUrl             String?   @map("image_url")
   createdAt            DateTime  @default(now()) @map("created_at")
