@@ -17,7 +17,7 @@ router.get(
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const rep = await representativesService.getRepById(req.params.id);
-    res.status(201).send({
+    res.status(200).send({
       data: {
         representative: rep,
       },
@@ -35,7 +35,7 @@ router.get(
     const response = await representativesService.getRepStatsById(
       req.params.id
     );
-    res.status(201).send({
+    res.status(200).send({
       data: {
         stats: response,
       },
@@ -53,7 +53,7 @@ router.get(
     const response = await representativesService.getRepVotesById(
       req.params.id
     );
-    res.status(201).send({
+    res.status(200).send({
       data: {
         votes: response,
       },
@@ -71,7 +71,7 @@ router.get(
     const response = await representativesService.getSponsoredBillsById(
       req.params.id
     );
-    res.status(201).send({
+    res.status(200).send({
       data: {
         bills: response,
       },
@@ -89,7 +89,7 @@ router.get(
     const response = await representativesService.getCosponsoredBillsById(
       req.params.id
     );
-    res.status(201).send({
+    res.status(200).send({
       data: {
         bills: response,
       },
@@ -117,7 +117,11 @@ router.post(
       );
     }
 
-    res.status(201).send();
+    res.status(201).send({
+      data: {
+        success: true,
+      },
+    });
   })
 );
 
@@ -129,7 +133,7 @@ router.get(
     const reps = await representativesService.getFollowingReps(
       req.session.userId as string
     );
-    res.status(201).send({
+    res.status(200).send({
       data: {
         representatives: reps,
       },
@@ -145,7 +149,7 @@ router.get(
     const reps = await representativesService.getLocalReps(
       req.session.userId as string
     );
-    res.status(201).send({
+    res.status(200).send({
       data: {
         representatives: reps,
       },
@@ -164,7 +168,7 @@ router.get(
       req.params.id,
       req.params.billId
     );
-    res.status(201).send({
+    res.status(200).send({
       data: {
         vote,
       },

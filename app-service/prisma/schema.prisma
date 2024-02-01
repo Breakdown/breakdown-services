@@ -94,12 +94,13 @@ model Bill {
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime? @updatedAt @map("updated_at")
 
-  primaryIssue        Issue?               @relation(fields: [primaryIssueId], references: [id])
+  primaryIssue        Issue?               @relation(fields: [primaryIssueId], references: [id], "BillsPrimaryIssue")
   sponsor             Representative?      @relation(fields: [sponsorId], references: [id], "Sponsor")
   cosponsors          Representative[]     @relation("Cosponsor")
   seenBy              User[]               @relation("SeenBills")
   followers           User[]               @relation("FollowingBills")
   representativeVotes RepresentativeVote[]
+  issues              Issue[]              @relation("BillsIssues")
 
   @@index([primaryIssueId, sponsorId, id, housePassage, senatePassage, importance])
   @@map("bills")
@@ -115,8 +116,9 @@ model Issue {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime? @updatedAt @map("updated_at")
 
-  billsWherePrimaryIssue Bill[]
+  billsWherePrimaryIssue Bill[] @relation("BillsPrimaryIssue")
   followers              User[] @relation("FollowingIssues")
+  bills                  Bill[] @relation("BillsIssues")
 
   @@index([id, name, slug])
   @@map("issues")

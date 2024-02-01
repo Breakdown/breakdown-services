@@ -17,7 +17,7 @@ router.get(
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
     const bill = await billsService.getBillById(req.params.id);
-    res.status(201).send({
+    res.status(200).send({
       data: {
         bill,
       },
@@ -33,7 +33,7 @@ router.get(
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
     const sponsor = await billsService.getBillSponsor(req.params.id);
-    res.status(201).send({
+    res.status(200).send({
       data: {
         sponsor,
       },
@@ -96,7 +96,7 @@ router.get(
     const bills = await billsService.getFollowingBills(
       req.session.userId as string
     );
-    res.status(201).send({
+    res.status(200).send({
       data: {
         bills,
       },
