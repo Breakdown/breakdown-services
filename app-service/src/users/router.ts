@@ -15,7 +15,7 @@ router.get(
   errorPassthrough(async (req: Request, res: Response) => {
     const usersService = new UsersService(req.session.userId as string);
     const me = await usersService.getMe();
-    res.status(201).send({
+    res.status(200).send({
       data: {
         user: me,
       },
