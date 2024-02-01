@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2024-02-01T00:24:50.043Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.0.2 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="kHzOFQh_-b5flYctyULn" version="23.0.2" type="device">
+<mxfile host="Electron" modified="2024-02-01T00:26:16.946Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.0.2 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="l5LCUVIYq0_3GGmzkbO_" version="23.0.2" type="device">
   <diagram name="Page-1" id="CMcYUQxEqxqcsN2FO_Cb">
     <mxGraphModel dx="1876" dy="1843" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -255,7 +255,7 @@
         <mxCell id="fDpLNiLZyt8nHEmE5w9d-75" value="/reps/:id" style="text;strokeColor=#B09500;fillColor=#e3c800;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontColor=#000000;" parent="fDpLNiLZyt8nHEmE5w9d-73" vertex="1">
           <mxGeometry y="60" width="140" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="fDpLNiLZyt8nHEmE5w9d-76" value="/reps/:id/bills/:billId/vote" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="fDpLNiLZyt8nHEmE5w9d-73" vertex="1">
+        <mxCell id="fDpLNiLZyt8nHEmE5w9d-76" value="/reps/:id/bills/:billId/vote" style="text;strokeColor=#B09500;fillColor=#e3c800;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontColor=#000000;" parent="fDpLNiLZyt8nHEmE5w9d-73" vertex="1">
           <mxGeometry y="90" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="fDpLNiLZyt8nHEmE5w9d-77" value="/reps/:id/stats" style="text;strokeColor=#B09500;fillColor=#e3c800;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontColor=#000000;" parent="fDpLNiLZyt8nHEmE5w9d-73" vertex="1">

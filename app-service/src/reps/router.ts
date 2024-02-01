@@ -153,4 +153,23 @@ router.get(
   })
 );
 
+router.get(
+  "/:id/bills/:billId/vote",
+  [param("id").exists(), param("billId").exists()],
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(requireAuth),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    const vote = await representativesService.getRepVoteOnBill(
+      req.params.id,
+      req.params.billId
+    );
+    res.status(201).send({
+      data: {
+        vote,
+      },
+    });
+  })
+);
+
 export default router;

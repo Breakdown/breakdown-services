@@ -150,6 +150,19 @@ class RepresentativesService {
     }
     return await this.getRepsByDistrictAndState(district, state);
   }
+
+  async getRepVoteOnBill(
+    repId: string,
+    billId: string
+  ): Promise<RepresentativeVote | null> {
+    const dbResponse = await dbClient.representativeVote.findFirst({
+      where: {
+        representativeId: repId,
+        billId,
+      },
+    });
+    return dbResponse;
+  }
 }
 
 export default RepresentativesService;
