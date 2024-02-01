@@ -101,9 +101,37 @@ model Bill {
   followers           User[]               @relation("FollowingBills")
   representativeVotes RepresentativeVote[]
   issues              Issue[]              @relation("BillsIssues")
+  jobData             BillJobData?
+  fullText            BillFullText?
 
   @@index([primaryIssueId, sponsorId, id, housePassage, senatePassage, importance])
   @@map("bills")
+}
+
+model BillFullText {
+  id        String    @id @default(uuid())
+  billId    String    @unique @map("bill_id")
+  fullText  String    @map("full_text")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  bill Bill @relation(fields: [billId], references: [id])
+
+  @@map("bill_full_text")
+}
+
+model BillJobData {
+  id               String    @id @default(uuid())
+  billId           String    @unique @map("bill_id")
+  lastFullTextSync DateTime? @map("last_full_text_sync")
+  lastSummarySync  DateTime? @map("last_summary_sync")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  bill Bill @relation(fields: [billId], references: [id])
+
+  @@map("bill_job_data")
 }
 
 model Issue {
