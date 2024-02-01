@@ -51,9 +51,9 @@ model Bill {
   primaryIssueId        String?   @map("primary_issue_id")
   sponsorId             String?   @map("sponsor_id")
   propublicaId          String    @map("propublica_id")
-  bill_code             String    @map("bill_code")
-  bill_uri              String    @map("bill_uri")
-  bill_type             String    @map("bill_type")
+  billCode              String    @map("bill_code")
+  billUri               String    @map("bill_uri")
+  billType              String    @map("bill_type")
   title                 String    @map("title")
   shortTitle            String?   @map("short_title")
   sponsorPropublicaId   String?   @map("sponsor_propublica_id")
@@ -101,6 +101,7 @@ model Bill {
   followers           User[]               @relation("FollowingBills")
   representativeVotes RepresentativeVote[]
 
+  @@index([primaryIssueId, sponsorId, id, housePassage, senatePassage, importance])
   @@map("bills")
 }
 
@@ -117,6 +118,7 @@ model Issue {
   billsWherePrimaryIssue Bill[]
   followers              User[] @relation("FollowingIssues")
 
+  @@index([id, name, slug])
   @@map("issues")
 }
 
@@ -177,6 +179,7 @@ model Representative {
   votes            RepresentativeVote[]
   followers        User[]               @relation("FollowingReps")
 
+  @@index([id, propublicaId, state, district, house])
   @@map("representatives")
 }
 
@@ -191,5 +194,6 @@ model RepresentativeVote {
   representative Representative @relation(fields: [representativeId], references: [id])
   bill           Bill           @relation(fields: [billId], references: [id])
 
+  @@index([representativeId, billId])
   @@map("representative_votes")
 }
