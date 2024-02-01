@@ -24,6 +24,7 @@ model User {
   locationData   UserLocationData?
   seenBills      Bill[]            @relation("SeenBills")
   followingBills Bill[]            @relation("FollowingBills")
+  followingReps  Representative[]  @relation("FollowingReps")
 
   @@index([id, email, phone])
   @@map("users")
@@ -172,6 +173,7 @@ model Representative {
   sponsoredBills   Bill[]               @relation("Sponsor")
   cosponsoredBills Bill[]               @relation("Cosponsor")
   votes            RepresentativeVote[]
+  followers        User[]               @relation("FollowingReps")
 
   @@map("representatives")
 }

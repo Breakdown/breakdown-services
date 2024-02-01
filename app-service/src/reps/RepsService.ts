@@ -69,6 +69,36 @@ class RepresentativesService {
     });
     return dbResponse;
   }
+
+  async followRep(repId: string, userId: string): Promise<void> {
+    await dbClient.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        followingReps: {
+          connect: {
+            id: repId,
+          },
+        },
+      },
+    });
+  }
+
+  async unfollowRep(repId: string, userId: string): Promise<void> {
+    await dbClient.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        followingReps: {
+          disconnect: {
+            id: repId,
+          },
+        },
+      },
+    });
+  }
 }
 
 export default RepresentativesService;

@@ -97,4 +97,28 @@ router.get(
   })
 );
 
+router.post(
+  "/:id/following",
+  [param("id").exists(), body("following").isBoolean()],
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(requireAuth),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    if (req.body.following) {
+      await representativesService.followRep(
+        req.params.id,
+        req.session.userId as string
+      );
+    }
+    if (req.body.following === false) {
+      await representativesService.unfollowRep(
+        req.params.id,
+        req.session.userId as string
+      );
+    }
+
+    res.status(201).send();
+  })
+);
+
 export default router;
