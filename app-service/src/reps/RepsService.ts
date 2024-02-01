@@ -99,6 +99,18 @@ class RepresentativesService {
       },
     });
   }
+
+  async getFollowingReps(userId: string): Promise<Representative[] | null> {
+    const dbResponse = await dbClient.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        followingReps: true,
+      },
+    });
+    return dbResponse?.followingReps || null;
+  }
 }
 
 export default RepresentativesService;
