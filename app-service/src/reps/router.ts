@@ -25,4 +25,22 @@ router.get(
   })
 );
 
+router.get(
+  "/:id/stats",
+  [param("id").exists()],
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(requireAuth),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    const response = await representativesService.getRepStatsById(
+      req.params.id
+    );
+    res.status(201).send({
+      data: {
+        stats: response,
+      },
+    });
+  })
+);
+
 export default router;

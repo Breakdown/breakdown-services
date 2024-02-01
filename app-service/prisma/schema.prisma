@@ -168,8 +168,8 @@ model Representative {
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime? @updatedAt @map("updated_at")
 
-  sponsored_bills   Bill[] @relation("Sponsor")
-  cosponsored_bills Bill[] @relation("Cosponsor")
+  sponsoredBills   Bill[] @relation("Sponsor")
+  cosponsoredBills Bill[] @relation("Cosponsor")
 
   @@map("representatives")
 }
