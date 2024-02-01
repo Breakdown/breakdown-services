@@ -71,8 +71,11 @@ class JobService {
   }
 
   async startJobRunners() {
-    // Start job runners
     // Schedule repsSync and billsSync
+    await this.queueRepsSyncScheduled();
+    await this.queueBillsSyncScheduled();
+    // Schedule billFullText runs
+    await this.queueBillFullTextsScheduled();
   }
 }
 
