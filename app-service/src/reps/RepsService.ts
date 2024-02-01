@@ -47,6 +47,28 @@ class RepresentativesService {
     });
     return dbResponse;
   }
+
+  async getSponsoredBillsById(id: string): Promise<Bill[] | null> {
+    const dbResponse = await dbClient.bill.findMany({
+      where: {
+        sponsorId: id,
+      },
+    });
+    return dbResponse;
+  }
+
+  async getCosponsoredBillsById(id: string): Promise<Bill[] | null> {
+    const dbResponse = await dbClient.bill.findMany({
+      where: {
+        cosponsors: {
+          some: {
+            id,
+          },
+        },
+      },
+    });
+    return dbResponse;
+  }
 }
 
 export default RepresentativesService;

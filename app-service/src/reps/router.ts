@@ -61,4 +61,40 @@ router.get(
   })
 );
 
+router.get(
+  "/:id/bills/sponsored",
+  [param("id").exists()],
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(requireAuth),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    const response = await representativesService.getSponsoredBillsById(
+      req.params.id
+    );
+    res.status(201).send({
+      data: {
+        bills: response,
+      },
+    });
+  })
+);
+
+router.get(
+  "/:id/bills/cosponsored",
+  [param("id").exists()],
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(requireAuth),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    const response = await representativesService.getCosponsoredBillsById(
+      req.params.id
+    );
+    res.status(201).send({
+      data: {
+        bills: response,
+      },
+    });
+  })
+);
+
 export default router;
