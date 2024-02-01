@@ -1,5 +1,6 @@
 import { Bill, Representative, RepresentativeVote } from "@prisma/client";
 import dbClient from "../utils/prisma.js";
+import BadRequestError from "../utils/errors/BadRequestError.js";
 
 interface RepresentativeStats {
   votesWithPartyPercentage: number;
@@ -110,6 +111,44 @@ class RepresentativesService {
       },
     });
     return dbResponse?.followingReps || null;
+  }
+
+  async getRepsByDistrictAndState(
+    district: string,
+    state: string
+  ): Promise<Representative[] | null> {
+    // Congressmen
+    const congressman = await dbClient.representative.findMany({
+      where: {
+        district,
+        state,
+      },
+    });
+    // Senators
+    const senators = await dbClient.representative.findMany({
+      where: {
+        state,
+        house: "senate",
+      },
+    });
+    return congressman.concat(senators);
+  }
+
+  async getLocalReps(userId: string): Promise<Representative[] | null> {
+    const dbResponse = await dbClient.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        locationData: true,
+      },
+    });
+    const state = dbResponse?.locationData?.state;
+    const district = dbResponse?.locationData?.district;
+    if (!state || !district) {
+      throw new BadRequestError("User does not have location data");
+    }
+    return await this.getRepsByDistrictAndState(district, state);
   }
 }
 

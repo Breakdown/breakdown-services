@@ -137,4 +137,20 @@ router.get(
   })
 );
 
+router.get(
+  "/local",
+  errorPassthrough(requireAuth),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    const reps = await representativesService.getLocalReps(
+      req.session.userId as string
+    );
+    res.status(201).send({
+      data: {
+        representatives: reps,
+      },
+    });
+  })
+);
+
 export default router;
