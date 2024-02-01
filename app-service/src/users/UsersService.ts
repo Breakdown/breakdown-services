@@ -18,6 +18,9 @@ class UsersService {
       where: {
         id: this.userId,
       },
+      include: {
+        locationData: true,
+      },
     });
     return dbResponse;
   }
