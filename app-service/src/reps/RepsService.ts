@@ -1,4 +1,4 @@
-import { Bill, Representative } from "@prisma/client";
+import { Bill, Representative, RepresentativeVote } from "@prisma/client";
 import dbClient from "../utils/prisma.js";
 
 interface RepresentativeStats {
@@ -37,6 +37,15 @@ class RepresentativesService {
       billsSponsored: dbResponse?.sponsoredBills.length || 0,
       billsCosponsored: dbResponse?.cosponsoredBills.length || 0,
     };
+  }
+
+  async getRepVotesById(id: string): Promise<RepresentativeVote[] | null> {
+    const dbResponse = await dbClient.representativeVote.findMany({
+      where: {
+        representativeId: id,
+      },
+    });
+    return dbResponse;
   }
 }
 

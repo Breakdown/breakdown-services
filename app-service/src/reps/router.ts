@@ -43,4 +43,22 @@ router.get(
   })
 );
 
+router.get(
+  "/:id/votes",
+  [param("id").exists()],
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(requireAuth),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    const response = await representativesService.getRepVotesById(
+      req.params.id
+    );
+    res.status(201).send({
+      data: {
+        votes: response,
+      },
+    });
+  })
+);
+
 export default router;
