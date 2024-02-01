@@ -4,7 +4,7 @@ import BadRequestError from "../utils/errors/BadRequestError.js";
 import dbClient from "../utils/prisma.js";
 import { BreakdownSession } from "../utils/express.js";
 import UnauthorizedError from "../utils/errors/UnauthorizedError.js";
-import SmsService, { MessageType } from "../sms/SmsService.js";
+import SmsService, { MessageType } from "../sms/service.js";
 import { redis } from "../utils/redis.js";
 import InternalError from "../utils/errors/InternalError.js";
 import { User } from "@prisma/client";

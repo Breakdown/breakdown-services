@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express";
 import { body } from "express-validator";
 import { errorPassthrough, handleValidationErrors } from "../utils/express.js";
-import AuthService from "./AuthService.js";
+import AuthService from "./service.js";
 
 const router = Router();
 

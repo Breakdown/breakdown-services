@@ -5,7 +5,7 @@ import {
   handleValidationErrors,
   requireAuth,
 } from "../utils/express.js";
-import RepresentativesService from "./RepsService.js";
+import RepresentativesService from "./service.js";
 
 const router = Router();
 
