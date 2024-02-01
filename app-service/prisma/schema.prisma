@@ -21,9 +21,11 @@ model User {
   updatedAt         DateTime? @updatedAt @map("updated_at")
   emailVerified     Boolean   @default(false) @map("email_verified")
 
-  locationData   UserLocationData?
-  seenBills      Bill[]            @relation("SeenBills")
-  followingBills Bill[]            @relation("FollowingBills")
+  locationData    UserLocationData?
+  seenBills       Bill[]            @relation("SeenBills")
+  followingBills  Bill[]            @relation("FollowingBills")
+  followingReps   Representative[]  @relation("FollowingReps")
+  followingIssues Issue[]           @relation("FollowingIssues")
 
   @@index([id, email, phone])
   @@map("users")
@@ -92,11 +94,12 @@ model Bill {
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime? @updatedAt @map("updated_at")
 
-  primaryIssue Issue?           @relation(fields: [primaryIssueId], references: [id])
-  sponsor      Representative?  @relation(fields: [sponsorId], references: [id], "Sponsor")
-  cosponsors   Representative[] @relation("Cosponsor")
-  seenBy       User[]           @relation("SeenBills")
-  followers    User[]           @relation("FollowingBills")
+  primaryIssue        Issue?               @relation(fields: [primaryIssueId], references: [id])
+  sponsor             Representative?      @relation(fields: [sponsorId], references: [id], "Sponsor")
+  cosponsors          Representative[]     @relation("Cosponsor")
+  seenBy              User[]               @relation("SeenBills")
+  followers           User[]               @relation("FollowingBills")
+  representativeVotes RepresentativeVote[]
 
   @@map("bills")
 }
@@ -112,6 +115,7 @@ model Issue {
   updatedAt   DateTime? @updatedAt @map("updated_at")
 
   billsWherePrimaryIssue Bill[]
+  followers              User[] @relation("FollowingIssues")
 
   @@map("issues")
 }
@@ -168,8 +172,24 @@ model Representative {
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime? @updatedAt @map("updated_at")
 
-  sponsored_bills   Bill[] @relation("Sponsor")
-  cosponsored_bills Bill[] @relation("Cosponsor")
+  sponsoredBills   Bill[]               @relation("Sponsor")
+  cosponsoredBills Bill[]               @relation("Cosponsor")
+  votes            RepresentativeVote[]
+  followers        User[]               @relation("FollowingReps")
 
   @@map("representatives")
+}
+
+model RepresentativeVote {
+  id               String    @id @default(uuid())
+  representativeId String    @map("representative_id")
+  billId           String    @map("bill_id")
+  vote             Boolean
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime? @updatedAt @map("updated_at")
+
+  representative Representative @relation(fields: [representativeId], references: [id])
+  bill           Bill           @relation(fields: [billId], references: [id])
+
+  @@map("representative_votes")
 }
