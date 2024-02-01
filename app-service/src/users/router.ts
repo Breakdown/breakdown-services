@@ -23,4 +23,19 @@ router.get(
   })
 );
 
+router.patch(
+  "/me",
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(requireAuth),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const usersService = new UsersService(req.session.userId as string);
+    const me = await usersService.patchMe(req.body);
+    res.status(201).send({
+      data: {
+        user: me,
+      },
+    });
+  })
+);
+
 export default router;

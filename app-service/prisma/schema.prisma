@@ -21,10 +21,11 @@ model User {
   updatedAt         DateTime? @updatedAt @map("updated_at")
   emailVerified     Boolean   @default(false) @map("email_verified")
 
-  locationData   UserLocationData?
-  seenBills      Bill[]            @relation("SeenBills")
-  followingBills Bill[]            @relation("FollowingBills")
-  followingReps  Representative[]  @relation("FollowingReps")
+  locationData    UserLocationData?
+  seenBills       Bill[]            @relation("SeenBills")
+  followingBills  Bill[]            @relation("FollowingBills")
+  followingReps   Representative[]  @relation("FollowingReps")
+  followingIssues Issue[]           @relation("FollowingIssues")
 
   @@index([id, email, phone])
   @@map("users")
@@ -114,6 +115,7 @@ model Issue {
   updatedAt   DateTime? @updatedAt @map("updated_at")
 
   billsWherePrimaryIssue Bill[]
+  followers              User[] @relation("FollowingIssues")
 
   @@map("issues")
 }
