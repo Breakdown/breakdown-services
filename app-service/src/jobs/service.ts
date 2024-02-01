@@ -148,11 +148,28 @@ class JobService {
         connection: this.redisConnection,
       }
     );
+
     // cosponsors worker
     // votes for bill worker
+
+    const allWorkers = [
+      repsWorker,
+      billsWorker,
+      billFullTextWorker,
+      billSummariesWorker,
+    ];
+
+    for (const worker of allWorkers) {
+      worker.on("completed", (job) => {
+        console.log(`${job.name} job completed`);
+      });
+      worker.on("failed", (job, err) => {
+        console.error(`${job?.name} job failed: ${err}`);
+      });
+    }
   }
 
-  async startJobRunners() {
+  async startScheduledJobRunners() {
     // Create workers
     await this.createWorkers();
     // Schedule repsSync and billsSync

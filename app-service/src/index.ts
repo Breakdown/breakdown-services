@@ -14,4 +14,4 @@ server().listen(port);
 
 // Start job runner
 const jobService = new JobService();
-await jobService.startJobRunners();
+await jobService.startScheduledJobRunners();
