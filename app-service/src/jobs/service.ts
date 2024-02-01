@@ -1,4 +1,4 @@
-import { Queue, ConnectionOptions } from "bullmq";
+import { Queue, ConnectionOptions, Worker } from "bullmq";
 import dbClient from "../utils/prisma.js";
 import { Bill } from "@prisma/client";
 
@@ -7,6 +7,7 @@ class JobService {
   redisConnection: ConnectionOptions;
   constructor() {
     this.queue = new Queue("app-service-queue");
+
     this.redisConnection = {
       host: process.env.REDIS_HOST || "redis",
       port: parseInt(process.env.REDIS_PORT || "6379"),
@@ -66,16 +67,64 @@ class JobService {
     }
   }
 
+  async queueBillSummariesScheduled() {
+    const allBillsWhereNecessary = await dbClient.bill.findMany({
+      where: {
+        AND: [
+          {
+            // AI Summary does not exist
+            aiSummary: null,
+            // And full text is not null
+            fullText: {
+              isNot: null,
+            },
+          },
+        ],
+      },
+    });
+    const allBillIds = allBillsWhereNecessary.map((bill: Bill) => bill.id);
+    // Queue a billFullText job for each bill
+    for (const billId of allBillIds) {
+      this.queue.add("bill-summary", { billId });
+    }
+  }
+
   async queueMeilisearchSyncScheduled() {
     // TODO: Meilisearch connection and syncing here
   }
 
+  async createWorkers() {
+    // Create workers
+    // repsSync worker
+    const repsWorker = new Worker("app-service-queue", async (job) => {
+      console.log("reps-sync job started");
+    });
+    // billsSync worker
+    const billsWorker = new Worker("app-service-queue", async (job) => {
+      console.log("bills-sync job started");
+    });
+    // billFullText worker
+    const billFullTextWorker = new Worker("app-service-queue", async (job) => {
+      console.log("bill-full-text job started");
+    });
+    // billSummaries worker
+    const billSummariesWorker = new Worker("app-service-queue", async (job) => {
+      console.log("bill-summary job started");
+    });
+    // cosponsors worker
+    // votes for bill worker
+  }
+
   async startJobRunners() {
+    // Create workers
+    await this.createWorkers();
     // Schedule repsSync and billsSync
     await this.queueRepsSyncScheduled();
     await this.queueBillsSyncScheduled();
     // Schedule billFullText runs
     await this.queueBillFullTextsScheduled();
+    // Schedule billSummary runs
+    await this.queueBillSummariesScheduled();
   }
 }
 
