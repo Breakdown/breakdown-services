@@ -6,12 +6,13 @@ class JobService {
   queue: Queue;
   redisConnection: ConnectionOptions;
   constructor() {
-    this.queue = new Queue("app-service-queue");
-
     this.redisConnection = {
       host: process.env.REDIS_HOST || "redis",
       port: parseInt(process.env.REDIS_PORT || "6379"),
     };
+    this.queue = new Queue("app-service-queue", {
+      connection: this.redisConnection,
+    });
   }
 
   async queueRepsSyncScheduled() {
@@ -32,10 +33,22 @@ class JobService {
       where: {
         OR: [
           {
-            // Full text does not exist
-            fullText: {
-              is: null,
-            },
+            AND: [
+              {
+                jobData: {
+                  // Greater than 3 days ago
+                  lastFullTextSync: {
+                    lt: pivotDate,
+                  },
+                },
+              },
+              {
+                // Full text does not exist
+                fullText: {
+                  is: null,
+                },
+              },
+            ],
           },
           {
             // Or, full text has not been synced in the last 3 days
@@ -71,10 +84,10 @@ class JobService {
     const allBillsWhereNecessary = await dbClient.bill.findMany({
       where: {
         AND: [
+          // AI Summary does not exist
+          { aiSummary: null },
+          // And full text is not null
           {
-            // AI Summary does not exist
-            aiSummary: null,
-            // And full text is not null
             fullText: {
               isNot: null,
             },
@@ -96,21 +109,45 @@ class JobService {
   async createWorkers() {
     // Create workers
     // repsSync worker
-    const repsWorker = new Worker("app-service-queue", async (job) => {
-      console.log("reps-sync job started");
-    });
+    const repsWorker = new Worker(
+      "app-service-queue",
+      async (job) => {
+        console.log("reps-sync job started");
+      },
+      {
+        connection: this.redisConnection,
+      }
+    );
     // billsSync worker
-    const billsWorker = new Worker("app-service-queue", async (job) => {
-      console.log("bills-sync job started");
-    });
+    const billsWorker = new Worker(
+      "app-service-queue",
+      async (job) => {
+        console.log("bills-sync job started");
+      },
+      {
+        connection: this.redisConnection,
+      }
+    );
     // billFullText worker
-    const billFullTextWorker = new Worker("app-service-queue", async (job) => {
-      console.log("bill-full-text job started");
-    });
+    const billFullTextWorker = new Worker(
+      "app-service-queue",
+      async (job) => {
+        console.log("bill-full-text job started");
+      },
+      {
+        connection: this.redisConnection,
+      }
+    );
     // billSummaries worker
-    const billSummariesWorker = new Worker("app-service-queue", async (job) => {
-      console.log("bill-summary job started");
-    });
+    const billSummariesWorker = new Worker(
+      "app-service-queue",
+      async (job) => {
+        console.log("bill-summary job started");
+      },
+      {
+        connection: this.redisConnection,
+      }
+    );
     // cosponsors worker
     // votes for bill worker
   }
