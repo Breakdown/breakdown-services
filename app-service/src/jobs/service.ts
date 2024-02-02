@@ -8,6 +8,7 @@ class JobService {
   repsSyncScheduledQueue: Queue;
   billsSyncScheduledQueue: Queue;
   subjectsSyncQueue: Queue;
+  cosponsorsSyncQueue: Queue;
   redisConnection: ConnectionOptions;
   constructor() {
     this.redisConnection = {
@@ -21,6 +22,9 @@ class JobService {
       connection: this.redisConnection,
     });
     this.subjectsSyncQueue = new Queue("subjects-sync-queue", {
+      connection: this.redisConnection,
+    });
+    this.cosponsorsSyncQueue = new Queue("cosponsors-for-bill-queue", {
       connection: this.redisConnection,
     });
   }
@@ -229,6 +233,38 @@ class JobService {
     } as Bill;
   }
 
+  async syncCosponsorsForBill(propublicaId: string) {
+    // Fetch cosponsors for bill from API
+    const propubService = new PropublicaService();
+    const existingBill = await dbClient.bill.findUnique({
+      where: {
+        propublicaId: propublicaId,
+      },
+      include: {
+        cosponsors: true,
+      },
+    });
+    // If bill already has cosponsors, do not fetch
+    if (existingBill?.cosponsors?.length) {
+      return true;
+    }
+    const cosponsors = await propubService.fetchCosponsorsForBill(propublicaId);
+    // Upsert all cosponsors
+    await dbClient.bill.update({
+      where: {
+        propublicaId: propublicaId,
+      },
+      data: {
+        cosponsors: {
+          connect: cosponsors.map((cosponsor) => ({
+            propublicaId: cosponsor.cosponsor_id,
+          })),
+        },
+      },
+    });
+    return true;
+  }
+
   async scheduledRepsSync() {
     // Fetch all representatives from the house and senate
     // Upsert all of them matching on propublica ID
@@ -329,6 +365,12 @@ class JobService {
         propublicaId: bill.bill_id,
       });
     }
+    // Trigger cosponsors sync job for all bills
+    for (const bill of allBillsDeduped) {
+      this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
+        propublicaId: bill.bill_id,
+      });
+    }
     // TODO: Trigger votes sync job for this bill if it has been voted on (and set lastVotesSync on bill job data)
 
     return true;
@@ -408,15 +450,18 @@ class JobService {
       }
     );
     // cosponsors worker (for single bill)
-    // const cosponsorsSyncWorker = new Worker(
-    //   "app-service-queue",
-    //   async (job) => {
-    //     console.log("cosponsors-sync job started");
-    //   },
-    //   {
-    //     connection: this.redisConnection,
-    //   }
-    // );
+    const cosponsorsSyncWorker = new Worker(
+      "cosponsors-for-bill-queue",
+      async (job) => {
+        if (job.data.propublicaId) {
+          await this.syncCosponsorsForBill(job.data.propublicaId as string);
+        }
+      },
+      {
+        connection: this.redisConnection,
+        concurrency: 3,
+      }
+    );
     // // votesSync worker (for single bill)
     // const votesSyncWorker = new Worker(
     //   "app-service-queue",
