@@ -62,20 +62,20 @@ model Bill {
   gpoPdfUri             String?   @map("gpo_pdf_uri")
   congressdotgovUrl     String?   @map("congressdotgov_url")
   govtrackUrl           String?   @map("govtrack_url")
-  introducedDate        String?   @map("introduced_date")
-  lastVote              String?   @map("last_vote")
-  housePassage          String?   @map("house_passage")
-  senatePassage         String?   @map("senate_passage")
-  enacted               String?
-  vetoed                String?
+  introducedDate        DateTime? @map("introduced_date")
+  lastVote              DateTime? @map("last_vote")
+  housePassage          DateTime? @map("house_passage")
+  senatePassage         DateTime? @map("senate_passage")
+  enacted               DateTime?
+  vetoed                DateTime?
   primarySubject        String?   @map("primary_subject")
   summary               String?
   summaryShort          String?   @map("summary_short")
-  latestMajorActionDate String?   @map("latest_major_action_date")
+  latestMajorActionDate DateTime? @map("latest_major_action_date")
   latestMajorAction     String?   @map("latest_major_action")
   active                Boolean?
   committees            String[]
-  committeCodes         String[]  @map("committee_codes")
+  committeeCodes        String[]  @map("committee_codes")
   subcommitteCodes      String[]  @map("subcommittee_codes")
   cosponsorsD           Int?      @map("cosponsors_d")
   cosponsorsR           Int?      @map("cosponsors_r")

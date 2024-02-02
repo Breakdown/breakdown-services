@@ -57,7 +57,7 @@ class PropublicaService {
       },
     });
     const data = response.data;
-    const bills = data.results[0].bills;
+    const bills = data.results?.[0]?.bills;
     return bills;
   }
 
