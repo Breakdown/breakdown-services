@@ -5,6 +5,7 @@ import {
   PropublicaBillsResponse,
   PropublicaMember,
   PropublicaMembersResponse,
+  PropublicaSubjectsResponse,
 } from "./types.js";
 
 class PropublicaService {
@@ -58,6 +59,18 @@ class PropublicaService {
     const data = response.data;
     const bills = data.results[0].bills;
     return bills;
+  }
+
+  async fetchSubjectsForBill(billId: string): Promise<string[]> {
+    const url = `${this.baseUrl}/bills/${billId}/subjects.json`;
+    const response = await axios.get<PropublicaSubjectsResponse>(url, {
+      headers: {
+        "X-API-Key": this.apiKey,
+      },
+    });
+    const data = response.data;
+    const bill = data.results[0];
+    return bill.subjects.map((subject) => subject.name);
   }
 }
 

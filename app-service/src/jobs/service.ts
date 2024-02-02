@@ -229,13 +229,6 @@ class JobService {
       offset: 0,
     });
     const allMembers = [...houseMembers, ...senateMembers];
-    allMembers.map((member) => {
-      if (member.cook_pvi) {
-        console.log("cook pvi", member.cook_pvi);
-      } else {
-        console.log("no cook pvi");
-      }
-    });
     await dbClient.$transaction(
       allMembers.map((propubMember) =>
         dbClient.representative.upsert({
@@ -247,17 +240,17 @@ class JobService {
         })
       )
     );
+    // TODO: Trigger cosponsors sync job for all reps
   }
 
   async scheduledBillsSync() {
-    // Fetch last 40 bills from the API
+    // Fetch last 60 updated and 60 introduced bills from the API
     const numBillsFetched = 60; // Keep in increments of 20
     const propubService = new PropublicaService();
     // Loop through chunks in incrememts of 20 and create fetch requests
     let introducedFetches = [];
     let updatedFetches = [];
     for (let i = 0; i < numBillsFetched; i += 20) {
-      // If last chunk of size < 20, queue remaining at offset
       if (i >= numBillsFetched) {
         break;
       }
@@ -307,11 +300,8 @@ class JobService {
         introducedBillPropubIdToSponsorDbIdMap[bill.bill_id] = sponsor.id;
       }
     }
-    // TODO: Trigger subjects sync job for all bills
-    // TODO: Trigger cosponsors sync job for all bills
-    // TODO: Trigger votes sync job for this bill if it has been voted on (and set lastVotesSync on bill job data)
     // Upsert all bills matching on propublica ID
-    await dbClient.$transaction(
+    const response = await dbClient.$transaction(
       allBillsDeduped.map((bill) =>
         dbClient.bill.upsert({
           where: {
@@ -322,6 +312,34 @@ class JobService {
         })
       )
     );
+
+    // Get bill primary IDs from DB
+
+    // Trigger subjects sync job for all bills
+    for (const bill of allBillsDeduped) {
+      this.queue.add("subjects-sync", { propublicaId: bill.bill_id });
+    }
+
+    // TODO: Trigger votes sync job for this bill if it has been voted on (and set lastVotesSync on bill job data)
+    return true;
+  }
+
+  async syncBillSubjects(propublicaId: string) {
+    // Fetch subjects for bill from API
+    const propubService = new PropublicaService();
+    const subjects = await propubService.fetchSubjectsForBill(propublicaId);
+    // Upsert all subjects
+    await dbClient.bill.update({
+      where: {
+        propublicaId: propublicaId,
+      },
+      data: {
+        subjects: {
+          set: subjects,
+        },
+      },
+    });
+    return true;
   }
 
   async createWorkers() {
@@ -368,13 +386,44 @@ class JobService {
         connection: this.redisConnection,
       }
     );
-
-    // cosponsors worker
-    // votes for bill worker
+    // subjectsSync worker (for single bill)
+    const subjectsSyncWorker = new Worker(
+      "app-service-queue",
+      async (job) => {
+        if (job.name === "subjects-sync" && job.data.propublicaId) {
+          await this.syncBillSubjects(job.data.propublicaId as string);
+        }
+        console.log("subjects-sync job started");
+      },
+      {
+        connection: this.redisConnection,
+      }
+    );
+    // cosponsors worker (for single bill)
+    const cosponsorsSyncWorker = new Worker(
+      "app-service-queue",
+      async (job) => {
+        console.log("cosponsors-sync job started");
+      },
+      {
+        connection: this.redisConnection,
+      }
+    );
+    // votesSync worker (for single bill)
+    const votesSyncWorker = new Worker(
+      "app-service-queue",
+      async (job) => {
+        console.log("votes-sync job started");
+      },
+      {
+        connection: this.redisConnection,
+      }
+    );
 
     const allWorkers = [
       repsWorker,
       billsWorker,
+      subjectsSyncWorker,
       billFullTextWorker,
       billSummariesWorker,
     ];
