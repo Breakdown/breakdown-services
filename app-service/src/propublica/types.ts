@@ -10,6 +10,10 @@ interface PropublicaBillsResult {
   bills: ProPublicaBill[];
 }
 
+interface PropublicaCosponsorsResult {
+  cosponsors: ProPublicaCosponsor[];
+}
+
 export interface PropublicaSubject {
   url_name: string;
   name: string;
@@ -21,6 +25,16 @@ interface PropublicaSubjectsResult {
 interface CosponsorsByParty {
   D: number;
   R: number;
+}
+
+export interface ProPublicaCosponsor {
+  cosponsor_id: string;
+  name: string;
+  cosponsor_title: string;
+  cosponsor_state: string;
+  cosponsor_party: string;
+  cosponsor_uri: string;
+  date: string;
 }
 export interface ProPublicaBill {
   bill_id: string;
@@ -139,3 +153,6 @@ export interface PropublicaMembersResponse
 
 export interface PropublicaSubjectsResponse
   extends ProPublicaResponse<PropublicaSubjectsResult> {}
+
+export interface PropublicaCosponsorsResponse
+  extends ProPublicaResponse<PropublicaCosponsorsResult> {}
