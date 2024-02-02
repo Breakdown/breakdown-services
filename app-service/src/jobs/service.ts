@@ -301,7 +301,7 @@ class JobService {
       }
     }
     // Upsert all bills matching on propublica ID
-    const response = await dbClient.$transaction(
+    await dbClient.$transaction(
       allBillsDeduped.map((bill) =>
         dbClient.bill.upsert({
           where: {
@@ -313,14 +313,12 @@ class JobService {
       )
     );
 
-    // Get bill primary IDs from DB
-
     // Trigger subjects sync job for all bills
     for (const bill of allBillsDeduped) {
       this.queue.add("subjects-sync", { propublicaId: bill.bill_id });
     }
-
     // TODO: Trigger votes sync job for this bill if it has been voted on (and set lastVotesSync on bill job data)
+
     return true;
   }
 

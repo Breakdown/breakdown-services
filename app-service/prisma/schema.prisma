@@ -218,7 +218,7 @@ model RepresentativeVote {
   id               String    @id @default(uuid())
   representativeId String    @map("representative_id")
   billId           String    @map("bill_id")
-  vote             Boolean
+  position         String
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime? @updatedAt @map("updated_at")
 
