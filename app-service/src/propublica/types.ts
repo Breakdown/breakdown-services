@@ -10,6 +10,14 @@ interface PropublicaBillsResult {
   bills: ProPublicaBill[];
 }
 
+export interface PropublicaSubject {
+  url_name: string;
+  name: string;
+}
+interface PropublicaSubjectsResult {
+  subjects: PropublicaSubject[];
+}
+
 interface CosponsorsByParty {
   D: number;
   R: number;
@@ -128,3 +136,6 @@ export interface PropublicaBillsResponse
 
 export interface PropublicaMembersResponse
   extends ProPublicaResponse<PropublicaMembersResult> {}
+
+export interface PropublicaSubjectsResponse
+  extends ProPublicaResponse<PropublicaSubjectsResult> {}

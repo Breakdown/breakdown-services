@@ -5,14 +5,22 @@ import PropublicaService from "../propublica/service.js";
 import { ProPublicaBill, PropublicaMember } from "../propublica/types.js";
 
 class JobService {
-  queue: Queue;
+  repsSyncScheduledQueue: Queue;
+  billsSyncScheduledQueue: Queue;
+  subjectsSyncQueue: Queue;
   redisConnection: ConnectionOptions;
   constructor() {
     this.redisConnection = {
       host: process.env.REDIS_HOST || "redis",
       port: parseInt(process.env.REDIS_PORT || "6379"),
     };
-    this.queue = new Queue("app-service-queue", {
+    this.repsSyncScheduledQueue = new Queue("reps-sync-queue", {
+      connection: this.redisConnection,
+    });
+    this.billsSyncScheduledQueue = new Queue("bills-sync-queue", {
+      connection: this.redisConnection,
+    });
+    this.subjectsSyncQueue = new Queue("subjects-sync-queue", {
       connection: this.redisConnection,
     });
   }
@@ -20,7 +28,7 @@ class JobService {
   async queueRepsSyncScheduled() {
     // Add repsSync job to queue
     // Repeat every 12 hours at 03:00 and 15:00
-    this.queue.add(
+    this.repsSyncScheduledQueue.add(
       "reps-sync-scheduled",
       {},
       { repeat: { pattern: "0 3,15 * * *" } }
@@ -30,7 +38,7 @@ class JobService {
   async queueBillsSyncScheduled() {
     // Add billsSync job to queue
     // Repeat every 12 hours at 06:00 and 18:00
-    this.queue.add(
+    this.billsSyncScheduledQueue.add(
       "bills-sync-scheduled",
       {},
       { repeat: { pattern: "0 6,18 * * *" } }
@@ -86,7 +94,7 @@ class JobService {
     const allBillIds = allBillsWhereNecessary.map((bill: Bill) => bill.id);
     // Queue a billFullText job for each bill
     for (const billId of allBillIds) {
-      this.queue.add("bill-full-text", { billId });
+      // TODO:  this.queue.add("bill-full-text", { billId });
     }
   }
 
@@ -108,7 +116,7 @@ class JobService {
     const allBillIds = allBillsWhereNecessary.map((bill: Bill) => bill.id);
     // Queue a billFullText job for each bill
     for (const billId of allBillIds) {
-      this.queue.add("bill-summary", { billId });
+      // TODO: this.queue.add("bill-summary", { billId });
     }
   }
 
@@ -178,6 +186,46 @@ class JobService {
   transformPropublicaBillToDbBill(bill: ProPublicaBill): Bill {
     return {
       propublicaId: bill.bill_id,
+      billCode: bill.bill_slug,
+      billUri: bill.bill_uri,
+      billType: bill.bill_type,
+      title: bill.title,
+      shortTitle: bill.short_title,
+      sponsorPropublicaId: bill.sponsor_id,
+      sponsorState: bill.sponsor_state,
+      sponsorParty: bill.sponsor_party,
+      gpoPdfUri: bill.gpo_pdf_uri,
+      congressdotgovUrl: bill.congressdotgov_url,
+      govtrackUrl: bill.govtrack_url,
+      introducedDate: bill.introduced_date
+        ? new Date(bill.introduced_date)
+        : undefined,
+      lastVote: bill.last_vote ? new Date(bill.last_vote) : undefined,
+      housePassage: bill.house_passage
+        ? new Date(bill.house_passage)
+        : undefined,
+      senatePassage: bill.senate_passage
+        ? new Date(bill.senate_passage)
+        : undefined,
+      enacted: bill.enacted ? new Date(bill.enacted) : undefined,
+      vetoed: bill.vetoed ? new Date(bill.vetoed) : undefined,
+      primarySubject: bill.primary_subject,
+      summary: bill.summary,
+      summaryShort: bill.summary_short,
+      latestMajorActionDate: bill.latest_major_action_date
+        ? new Date(bill.latest_major_action_date)
+        : undefined,
+      latestMajorAction: bill.latest_major_action,
+      committees:
+        typeof bill.committees === "object"
+          ? bill.committees
+          : bill.committees?.length
+          ? [bill.committees]
+          : [],
+      committeeCodes: bill.committee_codes,
+      cosponsorsD: bill.cosponsors_by_party?.D,
+      cosponsorsR: bill.cosponsors_by_party?.R,
+      active: bill.active,
     } as Bill;
   }
 
@@ -194,13 +242,6 @@ class JobService {
       offset: 0,
     });
     const allMembers = [...houseMembers, ...senateMembers];
-    allMembers.map((member) => {
-      if (member.cook_pvi) {
-        console.log("cook pvi", member.cook_pvi);
-      } else {
-        console.log("no cook pvi");
-      }
-    });
     await dbClient.$transaction(
       allMembers.map((propubMember) =>
         dbClient.representative.upsert({
@@ -212,20 +253,17 @@ class JobService {
         })
       )
     );
+    // TODO: Trigger cosponsors sync job for all reps
   }
 
   async scheduledBillsSync() {
-    // Fetch last 40 bills from the API
-    const numBillsFetched = 60; // Keep in increments of 20
+    // Fetch last 60 updated and 60 introduced bills from the API
+    const numBillsFetched = 40; // Keep in increments of 20
     const propubService = new PropublicaService();
     // Loop through chunks in incrememts of 20 and create fetch requests
     let introducedFetches = [];
     let updatedFetches = [];
-    for (let i = 0; i < numBillsFetched; i += 20) {
-      // If last chunk of size < 20, queue remaining at offset
-      if (i >= numBillsFetched) {
-        break;
-      }
+    for (let i = 0; i <= numBillsFetched; i += 20) {
       // Fetch next 20 introduced
       introducedFetches.push(
         propubService.fetchBills({
@@ -249,8 +287,8 @@ class JobService {
     const allUpdatedBills = updatedBills.flat();
     // Prioritize updates over introductions - OoO matters - if dupe updated will have most up to date data
     const allBills = [...allUpdatedBills, ...allIntroducedBills];
-    let idToSeenMap: { [key: string]: boolean } = {};
     // Dedupe on bill.bill_id
+    let idToSeenMap: { [key: string]: boolean } = {};
     const allBillsDeduped = allBills.filter((bill) => {
       if (idToSeenMap[bill.bill_id]) {
         return false;
@@ -259,7 +297,7 @@ class JobService {
         return true;
       }
     });
-    // TODO: Get sponsor DB ID for introduced bills
+    // Get sponsor DB ID for introduced bills
     const introducedBillPropubIdToSponsorDbIdMap: { [key: string]: string } =
       {};
     for (const bill of allIntroducedBills) {
@@ -272,21 +310,55 @@ class JobService {
         introducedBillPropubIdToSponsorDbIdMap[bill.bill_id] = sponsor.id;
       }
     }
-    // TODO: Get primary issue for bill
+    // Upsert all bills matching on propublica ID
+    await dbClient.$transaction(
+      allBillsDeduped.map((bill) =>
+        dbClient.bill.upsert({
+          where: {
+            propublicaId: bill.bill_id,
+          },
+          update: this.transformPropublicaBillToDbBill(bill),
+          create: this.transformPropublicaBillToDbBill(bill),
+        })
+      )
+    );
 
-    // TODO: Trigger cosponsors sync job for this bill
+    // Trigger subjects sync job for all bills
+    for (const bill of allBillsDeduped) {
+      this.subjectsSyncQueue.add("subjects-sync", {
+        propublicaId: bill.bill_id,
+      });
+    }
     // TODO: Trigger votes sync job for this bill if it has been voted on (and set lastVotesSync on bill job data)
+
+    return true;
+  }
+
+  async syncBillSubjects(propublicaId: string) {
+    // Fetch subjects for bill from API
+    const propubService = new PropublicaService();
+    const subjects = await propubService.fetchSubjectsForBill(propublicaId);
+    // Upsert all subjects
+    await dbClient.bill.update({
+      where: {
+        propublicaId: propublicaId,
+      },
+      data: {
+        subjects: {
+          set: subjects,
+        },
+      },
+    });
+    return true;
   }
 
   async createWorkers() {
     // Create workers
     // repsSync worker
     const repsWorker = new Worker(
-      "app-service-queue",
+      "reps-sync-queue",
       async (job) => {
-        if (job.name === "reps-sync-scheduled") {
-          await this.scheduledRepsSync();
-        }
+        await this.scheduledRepsSync();
       },
       {
         connection: this.redisConnection,
@@ -294,43 +366,74 @@ class JobService {
     );
     // billsSync worker
     const billsWorker = new Worker(
-      "app-service-queue",
+      "bills-sync-queue",
       async (job) => {
         console.log("bills-sync job started");
+        await this.scheduledBillsSync();
       },
       {
         connection: this.redisConnection,
       }
     );
     // billFullText worker
-    const billFullTextWorker = new Worker(
-      "app-service-queue",
+    // const billFullTextWorker = new Worker(
+    //   "app-service-queue",
+    //   async (job) => {
+    //     console.log("bill-full-text job started");
+    //   },
+    //   {
+    //     connection: this.redisConnection,
+    //   }
+    // );
+    // // billSummaries worker
+    // const billSummariesWorker = new Worker(
+    //   "app-service-queue",
+    //   async (job) => {
+    //     console.log("bill-summary job started");
+    //   },
+    //   {
+    //     connection: this.redisConnection,
+    //   }
+    // );
+    // subjectsSync worker (for single bill)
+    const subjectsSyncWorker = new Worker(
+      "subjects-sync-queue",
       async (job) => {
-        console.log("bill-full-text job started");
+        if (job.data.propublicaId) {
+          await this.syncBillSubjects(job.data.propublicaId as string);
+        }
       },
       {
         connection: this.redisConnection,
       }
     );
-    // billSummaries worker
-    const billSummariesWorker = new Worker(
-      "app-service-queue",
-      async (job) => {
-        console.log("bill-summary job started");
-      },
-      {
-        connection: this.redisConnection,
-      }
-    );
-
-    // cosponsors worker
-    // votes for bill worker
+    // cosponsors worker (for single bill)
+    // const cosponsorsSyncWorker = new Worker(
+    //   "app-service-queue",
+    //   async (job) => {
+    //     console.log("cosponsors-sync job started");
+    //   },
+    //   {
+    //     connection: this.redisConnection,
+    //   }
+    // );
+    // // votesSync worker (for single bill)
+    // const votesSyncWorker = new Worker(
+    //   "app-service-queue",
+    //   async (job) => {
+    //     console.log("votes-sync job started");
+    //   },
+    //   {
+    //     connection: this.redisConnection,
+    //   }
+    // );
 
     const allWorkers = [
-      repsWorker,
+      // repsWorker,
       billsWorker,
-      billFullTextWorker,
-      billSummariesWorker,
+      // subjectsSyncWorker,
+      // billFullTextWorker,
+      // billSummariesWorker,
     ];
 
     for (const worker of allWorkers) {
