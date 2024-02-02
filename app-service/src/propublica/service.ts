@@ -2,7 +2,9 @@ import axios from "axios";
 import InternalError from "../utils/errors/InternalError.js";
 import {
   ProPublicaBill,
+  ProPublicaCosponsor,
   PropublicaBillsResponse,
+  PropublicaCosponsorsResponse,
   PropublicaMember,
   PropublicaMembersResponse,
   PropublicaSubjectsResponse,
@@ -71,6 +73,18 @@ class PropublicaService {
     const data = response.data;
     const bill = data.results[0];
     return bill.subjects.map((subject) => subject.name);
+  }
+
+  async fetchCosponsorsForBill(billId: string): Promise<ProPublicaCosponsor[]> {
+    const url = `${this.baseUrl}/bills/${billId}/cosponsors.json`;
+    const response = await axios.get<PropublicaCosponsorsResponse>(url, {
+      headers: {
+        "X-API-Key": this.apiKey,
+      },
+    });
+    const data = response.data;
+    const members = data.results[0].cosponsors;
+    return members;
   }
 }
 
