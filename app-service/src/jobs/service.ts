@@ -52,8 +52,8 @@ class JobService {
     // Repeat every 12 hours at 06:00 and 18:00
     this.billsSyncScheduledQueue.add(
       "bills-sync-scheduled",
-      {},
-      { repeat: { pattern: "0 6,18 * * *" } }
+      {}
+      // { repeat: { pattern: "0 6,18 * * *" } }
     );
   }
 
@@ -335,25 +335,49 @@ class JobService {
       )
     );
 
-    // Trigger subjects sync job for all bills
-    for (const bill of allBillsDeduped) {
+    // FOR TESTING OR BULK APPLYING CHILD SYNCS
+    const allBillsForExtendedSyncs = await dbClient.bill.findMany({
+      where: {
+        propublicaId: {
+          not: undefined,
+        },
+      },
+    });
+    for (const bill of allBillsForExtendedSyncs) {
       this.subjectsSyncQueue.add("subjects-sync", {
-        propublicaId: bill.bill_slug,
+        propublicaId: bill.billCode,
       });
     }
-    // Trigger cosponsors sync job for all bills
-    for (const bill of allBillsDeduped) {
+    for (const bill of allBillsForExtendedSyncs) {
       this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
-        propublicaId: bill.bill_slug,
+        propublicaId: bill.billCode,
+      });
+    }
+    for (const bill of allBillsForExtendedSyncs) {
+      this.votesSyncQueue.add("votes-for-bill", {
+        propublicaId: bill.billCode,
       });
     }
 
-    // Trigger votes sync job for this bill
-    for (const bill of allBillsDeduped) {
-      this.votesSyncQueue.add("votes-for-bill", {
-        propublicaId: bill.bill_slug,
-      });
-    }
+    // // Trigger subjects sync job for all bills
+    // for (const bill of allBillsDeduped) {
+    //   this.subjectsSyncQueue.add("subjects-sync", {
+    //     propublicaId: bill.bill_slug,
+    //   });
+    // }
+    // // Trigger cosponsors sync job for all bills
+    // for (const bill of allBillsDeduped) {
+    //   this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
+    //     propublicaId: bill.bill_slug,
+    //   });
+    // }
+
+    // // Trigger votes sync job for this bill
+    // for (const bill of allBillsDeduped) {
+    //   this.votesSyncQueue.add("votes-for-bill", {
+    //     propublicaId: bill.bill_slug,
+    //   });
+    // }
 
     return true;
   }
@@ -452,9 +476,7 @@ class JobService {
 
     const allCompleteBillVotes = await dbClient.billVote.findMany({
       where: {
-        apiUrl: {
-          in: formattedVotes.map((vote) => vote.api_url),
-        },
+        billId: fullBill.id,
       },
     });
     // Queue repVotesSync for each vote
@@ -475,7 +497,7 @@ class JobService {
       },
     });
     const repVotes = await propubService.fetchRepVotesForBillVote(
-      billVote?.apiUri
+      billVote?.apiUrl
     );
     // Format and upsert all repVotes
     if (!repVotes.length) {
@@ -570,6 +592,7 @@ class JobService {
       },
       {
         connection: this.redisConnection,
+        concurrency: 3,
       }
     );
     // cosponsors worker (for single bill)
@@ -585,7 +608,7 @@ class JobService {
         concurrency: 3,
       }
     );
-    // // votesSync worker (for single bill)
+    // votesSync worker (for single bill)
     const votesSyncWorker = new Worker(
       "votes-for-bill-queue",
       async (job) => {
@@ -595,6 +618,21 @@ class JobService {
       },
       {
         connection: this.redisConnection,
+        concurrency: 3,
+      }
+    );
+
+    // repVotesSync worker (for single bill vote)
+    const repVotesSyncWorker = new Worker(
+      "votes-for-rep-queue",
+      async (job) => {
+        if (job.data.billVoteId) {
+          await this.syncRepVotesForBillVote(job.data.billVoteId as string);
+        }
+      },
+      {
+        connection: this.redisConnection,
+        concurrency: 3,
       }
     );
 
@@ -606,14 +644,30 @@ class JobService {
       // billSummariesWorker,
       cosponsorsSyncWorker,
       votesSyncWorker,
+      repVotesSyncWorker,
     ];
 
     for (const worker of allWorkers) {
+      worker.on("active", (job) => {
+        console.info(`job started`, {
+          jobId: job.id,
+          name: job.name,
+          data: job.data,
+        });
+      });
       worker.on("completed", (job) => {
-        console.log(`${job.name} job completed`);
+        console.info(`job completed`, {
+          jobId: job.id,
+          name: job.name,
+          data: job.data,
+        });
       });
       worker.on("failed", (job, err) => {
-        console.error(`${job?.name} job failed: ${err}`);
+        console.error(`job failed: ${err}`, {
+          jobId: job?.id,
+          name: job?.name,
+          data: job?.data,
+        });
       });
     }
   }
