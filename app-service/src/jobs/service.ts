@@ -120,10 +120,14 @@ class JobService {
         ],
       },
     });
-    const allBillIds = allBillsWhereNecessary.map((bill: Bill) => bill.id);
-    // Queue a billFullText job for each bill
-    for (const billId of allBillIds) {
-      // TODO:  this.queue.add("bill-full-text", { billId });
+    const allBillCodes = allBillsWhereNecessary.map(
+      (bill: Bill) => bill.billCode
+    );
+    // Trigger bill full text job for each bill
+    for (const billCode of allBillCodes) {
+      this.billFullTextQueue.add("bill-full-text", {
+        billCode,
+      });
     }
   }
 
@@ -142,11 +146,10 @@ class JobService {
         ],
       },
     });
-    const allBillIds = allBillsWhereNecessary.map((bill: Bill) => bill.id);
-    // Queue a billFullText job for each bill
-    for (const billId of allBillIds) {
-      // TODO: this.queue.add("bill-summary", { billId });
-    }
+    const allBillCodes = allBillsWhereNecessary.map(
+      (bill: Bill) => bill.billCode
+    );
+    // TODO: Queue a billFullText job for each bill
   }
 
   async queueMeilisearchSyncScheduled() {
@@ -375,6 +378,11 @@ class JobService {
     //     propublicaId: bill.billCode,
     //   });
     // }
+    // for (const bill of allBillsForExtendedSyncs) {
+    //   this.billFullTextQueue.add("bill-full-text", {
+    //     billCode: bill.billCode,
+    //   });
+    // }
 
     // Trigger subjects sync job for all bills
     for (const bill of allBillsDeduped) {
@@ -587,7 +595,6 @@ class JobService {
     const xmlResponse = await axios.get(billXmlUrl);
     const xmlData = xmlResponse.data;
     const fullText = xmlData;
-    console.info("xml response", fullText);
     if (fullText) {
       // Upsert full text
       await dbClient.billFullText.upsert({
@@ -599,6 +606,18 @@ class JobService {
         },
         create: {
           fullText,
+          billId: existingBill.id,
+        },
+      });
+      await dbClient.billJobData.upsert({
+        where: {
+          billId: existingBill.id,
+        },
+        update: {
+          lastFullTextSync: new Date(),
+        },
+        create: {
+          lastFullTextSync: new Date(),
           billId: existingBill.id,
         },
       });
