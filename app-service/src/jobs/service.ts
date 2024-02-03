@@ -5,6 +5,7 @@ import PropublicaService from "../propublica/service.js";
 import { ProPublicaBill, PropublicaMember } from "../propublica/types.js";
 import InternalError from "../utils/errors/InternalError.js";
 import axios from "axios";
+import AiService from "../ai/service.js";
 
 enum HouseEnum {
   House,
@@ -22,6 +23,7 @@ class JobService {
   repVotesSyncQueue: Queue;
   issuesAssociationQueue: Queue;
   billFullTextQueue: Queue;
+  billAiSummaryQueue: Queue;
   redisConnection: ConnectionOptions;
   constructor() {
     this.redisConnection = {
@@ -52,6 +54,9 @@ class JobService {
     this.billFullTextQueue = new Queue("bill-full-text-queue", {
       connection: this.redisConnection,
     });
+    this.billAiSummaryQueue = new Queue("bill-ai-summary-queue", {
+      connection: this.redisConnection,
+    });
   }
 
   async queueRepsSyncScheduled() {
@@ -69,8 +74,8 @@ class JobService {
     // Repeat every 12 hours at 06:00 and 18:00
     this.billsSyncScheduledQueue.add(
       "bills-sync-scheduled",
-      {},
-      { repeat: { pattern: "0 6,18 * * *" } }
+      {}
+      // { repeat: { pattern: "0 6,18 * * *" } }
     );
   }
 
@@ -146,10 +151,8 @@ class JobService {
         ],
       },
     });
-    const allBillCodes = allBillsWhereNecessary.map(
-      (bill: Bill) => bill.billCode
-    );
-    // TODO: Queue a billFullText job for each bill
+    const allBillIds = allBillsWhereNecessary.map((bill: Bill) => bill.id);
+    // TODO: Queue a billSummary job for each bill
   }
 
   async queueMeilisearchSyncScheduled() {
@@ -285,7 +288,6 @@ class JobService {
         })
       )
     );
-    // TODO: Trigger cosponsors sync job for all reps
   }
 
   async scheduledBillsSync() {
@@ -356,13 +358,13 @@ class JobService {
     );
 
     // FOR TESTING OR BULK APPLYING CHILD SYNCS
-    // const allBillsForExtendedSyncs = await dbClient.bill.findMany({
-    //   where: {
-    //     propublicaId: {
-    //       not: undefined,
-    //     },
-    //   },
-    // });
+    const allBillsForExtendedSyncs = await dbClient.bill.findMany({
+      where: {
+        propublicaId: {
+          not: undefined,
+        },
+      },
+    });
     // for (const bill of allBillsForExtendedSyncs) {
     //   this.subjectsSyncQueue.add("subjects-sync", {
     //     propublicaId: bill.billCode,
@@ -378,36 +380,36 @@ class JobService {
     //     propublicaId: bill.billCode,
     //   });
     // }
-    // for (const bill of allBillsForExtendedSyncs) {
-    //   this.billFullTextQueue.add("bill-full-text", {
-    //     billCode: bill.billCode,
+    for (const bill of allBillsForExtendedSyncs) {
+      this.billFullTextQueue.add("bill-full-text", {
+        billCode: bill.billCode,
+      });
+    }
+
+    // // Trigger subjects sync job for all bills
+    // for (const bill of allBillsDeduped) {
+    //   this.subjectsSyncQueue.add("subjects-sync", {
+    //     billCode: bill.bill_slug,
     //   });
     // }
-
-    // Trigger subjects sync job for all bills
-    for (const bill of allBillsDeduped) {
-      this.subjectsSyncQueue.add("subjects-sync", {
-        billCode: bill.bill_slug,
-      });
-    }
-    // Trigger cosponsors sync job for all bills
-    for (const bill of allBillsDeduped) {
-      this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
-        billCode: bill.bill_slug,
-      });
-    }
-    // Trigger votes sync job for this bill
-    for (const bill of allBillsDeduped) {
-      this.votesSyncQueue.add("votes-for-bill", {
-        billCode: bill.bill_slug,
-      });
-    }
-    // Trigger bill full text job for each bill
-    for (const bill of allBillsDeduped) {
-      this.billFullTextQueue.add("bill-full-text", {
-        billCode: bill.bill_slug,
-      });
-    }
+    // // Trigger cosponsors sync job for all bills
+    // for (const bill of allBillsDeduped) {
+    //   this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
+    //     billCode: bill.bill_slug,
+    //   });
+    // }
+    // // Trigger votes sync job for this bill
+    // for (const bill of allBillsDeduped) {
+    //   this.votesSyncQueue.add("votes-for-bill", {
+    //     billCode: bill.bill_slug,
+    //   });
+    // }
+    // // Trigger bill full text job for each bill
+    // for (const bill of allBillsDeduped) {
+    //   this.billFullTextQueue.add("bill-full-text", {
+    //     billCode: bill.bill_slug,
+    //   });
+    // }
 
     return true;
   }
@@ -621,9 +623,28 @@ class JobService {
           billId: existingBill.id,
         },
       });
+      // Queue summary sync for bill
+      this.billAiSummaryQueue.add("bill-ai-summary", {
+        billId: existingBill.id,
+      });
     }
 
     return true;
+  }
+
+  async syncBillSummary(billId: string) {
+    // TODO: Short summmary
+    const aiService = new AiService();
+    const summary = await aiService.getBillSummary(billId);
+    // Save the response as aiSummary on the bill
+    await dbClient.bill.update({
+      where: {
+        id: billId,
+      },
+      data: {
+        aiSummary: summary,
+      },
+    });
   }
 
   async syncRepVotesForBillVote(billVoteId: string) {
@@ -752,16 +773,17 @@ class JobService {
         concurrency: 3,
       }
     );
-    // // billSummaries worker
-    // const billSummariesWorker = new Worker(
-    //   "app-service-queue",
-    //   async (job) => {
-    //     console.log("bill-summary job started");
-    //   },
-    //   {
-    //     connection: this.redisConnection,
-    //   }
-    // );
+    // AI summary worker
+    const billAiSummaryWorker = new Worker(
+      "bill-ai-summary-queue",
+      async (job) => {
+        await this.syncBillSummary(job.data.billId as string);
+      },
+      {
+        connection: this.redisConnection,
+        concurrency: 3,
+      }
+    );
     // subjectsSync worker (for single bill)
     const subjectsSyncWorker = new Worker(
       "subjects-sync-queue",
@@ -838,6 +860,7 @@ class JobService {
       repVotesSyncWorker,
       issuesAssociationWorker,
       billFullTextWorker,
+      billAiSummaryWorker,
     ];
 
     for (const worker of allWorkers) {

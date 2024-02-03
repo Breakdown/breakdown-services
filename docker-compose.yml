@@ -49,6 +49,7 @@ services:
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
       GEOCODIO_API_KEY: ${GEOCODIO_API_KEY}
       PROPUBLICA_API_KEY: ${PROPUBLICA_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
 
 networks:
   breakdown-dev:
