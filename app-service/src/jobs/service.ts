@@ -53,7 +53,7 @@ class JobService {
     this.billsSyncScheduledQueue.add(
       "bills-sync-scheduled",
       {}
-      // { repeat: { pattern: "0 6,18 * * *" } }
+      { repeat: { pattern: "0 6,18 * * *" } }
     );
   }
 
