@@ -353,13 +353,13 @@ class JobService {
     );
 
     // FOR TESTING OR BULK APPLYING CHILD SYNCS
-    const allBillsForExtendedSyncs = await dbClient.bill.findMany({
-      where: {
-        propublicaId: {
-          not: undefined,
-        },
-      },
-    });
+    // const allBillsForExtendedSyncs = await dbClient.bill.findMany({
+    //   where: {
+    //     propublicaId: {
+    //       not: undefined,
+    //     },
+    //   },
+    // });
     // for (const bill of allBillsForExtendedSyncs) {
     //   this.subjectsSyncQueue.add("subjects-sync", {
     //     propublicaId: bill.billCode,
@@ -375,36 +375,31 @@ class JobService {
     //     propublicaId: bill.billCode,
     //   });
     // }
-    for (const bill of allBillsForExtendedSyncs) {
-      this.billFullTextQueue.add("bill-full-text", {
-        billCode: bill.billCode,
+
+    // Trigger subjects sync job for all bills
+    for (const bill of allBillsDeduped) {
+      this.subjectsSyncQueue.add("subjects-sync", {
+        billCode: bill.bill_slug,
       });
     }
-
-    // // Trigger subjects sync job for all bills
-    // for (const bill of allBillsDeduped) {
-    //   this.subjectsSyncQueue.add("subjects-sync", {
-    //     billCode: bill.bill_slug,
-    //   });
-    // }
-    // // Trigger cosponsors sync job for all bills
-    // for (const bill of allBillsDeduped) {
-    //   this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
-    //     billCode: bill.bill_slug,
-    //   });
-    // }
-    // // Trigger votes sync job for this bill
-    // for (const bill of allBillsDeduped) {
-    //   this.votesSyncQueue.add("votes-for-bill", {
-    //     billCode: bill.bill_slug,
-    //   });
-    // }
-    // // Trigger bill full text job for each bill
-    // for (const bill of allBillsDeduped) {
-    //   this.billFullTextQueue.add("bill-full-text", {
-    //     billCode: bill.bill_slug,
-    //   });
-    // }
+    // Trigger cosponsors sync job for all bills
+    for (const bill of allBillsDeduped) {
+      this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
+        billCode: bill.bill_slug,
+      });
+    }
+    // Trigger votes sync job for this bill
+    for (const bill of allBillsDeduped) {
+      this.votesSyncQueue.add("votes-for-bill", {
+        billCode: bill.bill_slug,
+      });
+    }
+    // Trigger bill full text job for each bill
+    for (const bill of allBillsDeduped) {
+      this.billFullTextQueue.add("bill-full-text", {
+        billCode: bill.bill_slug,
+      });
+    }
 
     return true;
   }
