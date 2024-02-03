@@ -336,48 +336,48 @@ class JobService {
     );
 
     // FOR TESTING OR BULK APPLYING CHILD SYNCS
-    const allBillsForExtendedSyncs = await dbClient.bill.findMany({
-      where: {
-        propublicaId: {
-          not: undefined,
-        },
-      },
-    });
-    for (const bill of allBillsForExtendedSyncs) {
-      this.subjectsSyncQueue.add("subjects-sync", {
-        propublicaId: bill.billCode,
-      });
-    }
-    for (const bill of allBillsForExtendedSyncs) {
-      this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
-        propublicaId: bill.billCode,
-      });
-    }
-    for (const bill of allBillsForExtendedSyncs) {
-      this.votesSyncQueue.add("votes-for-bill", {
-        propublicaId: bill.billCode,
-      });
-    }
-
-    // // Trigger subjects sync job for all bills
-    // for (const bill of allBillsDeduped) {
+    // const allBillsForExtendedSyncs = await dbClient.bill.findMany({
+    //   where: {
+    //     propublicaId: {
+    //       not: undefined,
+    //     },
+    //   },
+    // });
+    // for (const bill of allBillsForExtendedSyncs) {
     //   this.subjectsSyncQueue.add("subjects-sync", {
-    //     propublicaId: bill.bill_slug,
+    //     propublicaId: bill.billCode,
     //   });
     // }
-    // // Trigger cosponsors sync job for all bills
-    // for (const bill of allBillsDeduped) {
+    // for (const bill of allBillsForExtendedSyncs) {
     //   this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
-    //     propublicaId: bill.bill_slug,
+    //     propublicaId: bill.billCode,
+    //   });
+    // }
+    // for (const bill of allBillsForExtendedSyncs) {
+    //   this.votesSyncQueue.add("votes-for-bill", {
+    //     propublicaId: bill.billCode,
     //   });
     // }
 
-    // // Trigger votes sync job for this bill
-    // for (const bill of allBillsDeduped) {
-    //   this.votesSyncQueue.add("votes-for-bill", {
-    //     propublicaId: bill.bill_slug,
-    //   });
-    // }
+    // Trigger subjects sync job for all bills
+    for (const bill of allBillsDeduped) {
+      this.subjectsSyncQueue.add("subjects-sync", {
+        propublicaId: bill.bill_slug,
+      });
+    }
+    // Trigger cosponsors sync job for all bills
+    for (const bill of allBillsDeduped) {
+      this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
+        propublicaId: bill.bill_slug,
+      });
+    }
+
+    // Trigger votes sync job for this bill
+    for (const bill of allBillsDeduped) {
+      this.votesSyncQueue.add("votes-for-bill", {
+        propublicaId: bill.bill_slug,
+      });
+    }
 
     return true;
   }
