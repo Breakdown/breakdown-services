@@ -56,8 +56,8 @@ class JobService {
     // Repeat every 12 hours at 06:00 and 18:00
     this.billsSyncScheduledQueue.add(
       "bills-sync-scheduled",
-      {}
-      // { repeat: { pattern: "0 6,18 * * *" } }
+      {},
+      { repeat: { pattern: "0 6,18 * * *" } }
     );
   }
 
