@@ -11,6 +11,7 @@ class JobService {
   cosponsorsSyncQueue: Queue;
   votesSyncQueue: Queue;
   repVotesSyncQueue: Queue;
+  issuesAssociationQueue: Queue;
   redisConnection: ConnectionOptions;
   constructor() {
     this.redisConnection = {
@@ -33,6 +34,9 @@ class JobService {
       connection: this.redisConnection,
     });
     this.repVotesSyncQueue = new Queue("votes-for-rep-queue", {
+      connection: this.redisConnection,
+    });
+    this.issuesAssociationQueue = new Queue("issues-association-queue", {
       connection: this.redisConnection,
     });
   }
@@ -362,32 +366,38 @@ class JobService {
     // Trigger subjects sync job for all bills
     for (const bill of allBillsDeduped) {
       this.subjectsSyncQueue.add("subjects-sync", {
-        propublicaId: bill.bill_slug,
+        billCode: bill.bill_slug,
       });
     }
     // Trigger cosponsors sync job for all bills
     for (const bill of allBillsDeduped) {
       this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
-        propublicaId: bill.bill_slug,
+        billCode: bill.bill_slug,
       });
     }
 
     // Trigger votes sync job for this bill
     for (const bill of allBillsDeduped) {
       this.votesSyncQueue.add("votes-for-bill", {
-        propublicaId: bill.bill_slug,
+        billCode: bill.bill_slug,
+      });
+    }
+
+    for (const bill of allBillsDeduped) {
+      this.issuesAssociationQueue.add("issues-association", {
+        propublicaId: bill.bill_id,
       });
     }
 
     return true;
   }
 
-  async syncCosponsorsForBill(propublicaId: string) {
+  async syncCosponsorsForBill(billCode: string) {
     // Fetch cosponsors for bill from API
     const propubService = new PropublicaService();
     const existingBill = await dbClient.bill.findUnique({
       where: {
-        billCode: propublicaId,
+        billCode: billCode,
       },
       include: {
         cosponsors: true,
@@ -397,11 +407,11 @@ class JobService {
     if (existingBill?.cosponsors?.length) {
       return true;
     }
-    const cosponsors = await propubService.fetchCosponsorsForBill(propublicaId);
+    const cosponsors = await propubService.fetchCosponsorsForBill(billCode);
     // Upsert all cosponsors
     await dbClient.bill.update({
       where: {
-        billCode: propublicaId,
+        billCode: billCode,
       },
       data: {
         cosponsors: {
@@ -414,14 +424,14 @@ class JobService {
     return true;
   }
 
-  async syncBillSubjects(propublicaId: string) {
+  async syncBillSubjects(billCode: string) {
     // Fetch subjects for bill from API
     const propubService = new PropublicaService();
-    const subjects = await propubService.fetchSubjectsForBill(propublicaId);
+    const subjects = await propubService.fetchSubjectsForBill(billCode);
     // Upsert all subjects
     await dbClient.bill.update({
       where: {
-        billCode: propublicaId,
+        billCode: billCode,
       },
       data: {
         subjects: {
@@ -540,6 +550,48 @@ class JobService {
     );
   }
 
+  async associateBillWithIssues(propublicaId: string) {
+    const bill = await dbClient.bill.findUnique({
+      where: {
+        propublicaId,
+      },
+    });
+    if (!bill.primarySubject && !bill.subjects?.length) {
+      return true;
+    }
+    // Find issue that matches bill's primary subject
+    const issue = await dbClient.issue.findFirst({
+      where: {
+        subjects: {
+          hasSome: [bill?.primarySubject],
+        },
+      },
+    });
+    // Find issues that match any of the bill's subjects
+    const issues = await dbClient.issue.findMany({
+      where: {
+        subjects: {
+          hasSome: bill?.subjects,
+        },
+      },
+    });
+    // Connect bill to primary issue and issues
+    await dbClient.bill.update({
+      where: {
+        propublicaId,
+      },
+      data: {
+        issues: {
+          connect: issues,
+        },
+        primaryIssue: {
+          connect: issue,
+        },
+      },
+    });
+    return true;
+  }
+
   async createWorkers() {
     // Create workers
     // repsSync worker
@@ -636,6 +688,17 @@ class JobService {
       }
     );
 
+    const issuesAssociationWorker = new Worker(
+      "issues-association-queue",
+      async (job) => {
+        await this.associateBillWithIssues(job.data.propublicaId as string);
+      },
+      {
+        connection: this.redisConnection,
+        concurrency: 3,
+      }
+    );
+
     const allWorkers = [
       repsWorker,
       billsWorker,
@@ -645,6 +708,7 @@ class JobService {
       cosponsorsSyncWorker,
       votesSyncWorker,
       repVotesSyncWorker,
+      issuesAssociationWorker,
     ];
 
     for (const worker of allWorkers) {
