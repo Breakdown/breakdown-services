@@ -854,8 +854,6 @@ class JobService {
       repsWorker,
       billsWorker,
       subjectsSyncWorker,
-      // billFullTextWorker,
-      // billSummariesWorker,
       cosponsorsSyncWorker,
       votesSyncWorker,
       repVotesSyncWorker,
