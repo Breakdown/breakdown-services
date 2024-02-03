@@ -16,7 +16,8 @@
     "generate": "prisma generate --schema prisma/schema.prisma --generator client",
     "migrate": "prisma migrate dev",
     "migrate:soft": "prisma migrate dev --create-only",
-    "migrate:prod": "prisma migrate deploy"
+    "migrate:prod": "prisma migrate deploy",
+    "createIssues": "ts-node --experimental-specifier-resolution=node ./src/seed/createIssues.ts"
   },
   "devDependencies": {
     "@jest/globals": "^29.6.4",

@@ -140,7 +140,7 @@ model Issue {
   id          String    @id @default(uuid())
   name        String    @unique
   description String?
-  slug        String    @unique
+  slug        String?   @unique
   subjects    String[]
   imageUrl    String?   @map("image_url")
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -150,7 +150,7 @@ model Issue {
   followers              User[] @relation("FollowingIssues")
   bills                  Bill[] @relation("BillsIssues")
 
-  @@index([id, name, slug])
+  @@index([id, name, slug, subjects])
   @@map("issues")
 }
 
