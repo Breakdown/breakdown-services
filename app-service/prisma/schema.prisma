@@ -51,7 +51,7 @@ model Bill {
   primaryIssueId        String?   @map("primary_issue_id")
   sponsorId             String?   @map("sponsor_id")
   propublicaId          String    @unique @map("propublica_id")
-  billCode              String    @map("bill_code")
+  billCode              String    @unique @map("bill_code")
   billUri               String    @map("bill_uri")
   billType              String    @map("bill_type")
   title                 String    @map("title")
@@ -102,6 +102,7 @@ model Bill {
   issues              Issue[]              @relation("BillsIssues")
   jobData             BillJobData?
   fullText            BillFullText?
+  votes               BillVote[]
 
   @@index([primaryIssueId, sponsorId, id, housePassage, senatePassage, importance])
   @@map("bills")
@@ -214,11 +215,33 @@ model Representative {
   @@map("representatives")
 }
 
+model BillVote {
+  id             String    @id @default(uuid())
+  chamber        String
+  dateTime       DateTime  @map("date_time")
+  question       String
+  result         String
+  totalYes       Int       @map("total_yes")
+  totalNo        Int       @map("total_no")
+  totalNotVoting Int       @map("total_not_voting")
+  apiUrl         String    @unique @map("api_url")
+  billId         String    @map("bill_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime? @updatedAt @map("updated_at")
+
+  bill Bill @relation(fields: [billId], references: [id])
+
+  @@index([chamber, billId])
+  @@map("bill_votes")
+}
+
 model RepresentativeVote {
   id               String    @id @default(uuid())
   representativeId String    @map("representative_id")
   billId           String    @map("bill_id")
   position         String
+  voteNumber       Int?      @map("vote_number")
+  date             DateTime?
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime? @updatedAt @map("updated_at")
 

@@ -14,6 +14,10 @@ interface PropublicaCosponsorsResult {
   cosponsors: ProPublicaCosponsor[];
 }
 
+interface ProPublicaSingleBillResult {
+  votes: PropublicaBillVote[];
+}
+
 export interface PropublicaSubject {
   url_name: string;
   name: string;
@@ -25,6 +29,19 @@ interface PropublicaSubjectsResult {
 interface CosponsorsByParty {
   D: number;
   R: number;
+}
+
+export interface PropublicaBillVote {
+  chamber: string;
+  date: string;
+  time: string;
+  roll_call: string;
+  question: string;
+  result: string;
+  total_yes: number;
+  total_no: number;
+  total_not_voting: number;
+  api_url: string;
 }
 
 export interface ProPublicaCosponsor {
@@ -156,3 +173,6 @@ export interface PropublicaSubjectsResponse
 
 export interface PropublicaCosponsorsResponse
   extends ProPublicaResponse<PropublicaCosponsorsResult> {}
+
+export interface PropublicaBillByIdResponse
+  extends ProPublicaResponse<ProPublicaSingleBillResult> {}

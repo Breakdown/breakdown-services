@@ -3,6 +3,7 @@ import InternalError from "../utils/errors/InternalError.js";
 import {
   ProPublicaBill,
   ProPublicaCosponsor,
+  PropublicaBillByIdResponse,
   PropublicaBillsResponse,
   PropublicaCosponsorsResponse,
   PropublicaMember,
@@ -64,7 +65,7 @@ class PropublicaService {
   }
 
   async fetchSubjectsForBill(billId: string): Promise<string[]> {
-    const url = `${this.baseUrl}/bills/${billId}/subjects.json`;
+    const url = `${this.baseUrl}/118/bills/${billId}/subjects.json`;
     const response = await axios.get<PropublicaSubjectsResponse>(url, {
       headers: {
         "X-API-Key": this.apiKey,
@@ -76,7 +77,7 @@ class PropublicaService {
   }
 
   async fetchCosponsorsForBill(billId: string): Promise<ProPublicaCosponsor[]> {
-    const url = `${this.baseUrl}/bills/${billId}/cosponsors.json`;
+    const url = `${this.baseUrl}/118/bills/${billId}/cosponsors.json`;
     const response = await axios.get<PropublicaCosponsorsResponse>(url, {
       headers: {
         "X-API-Key": this.apiKey,
@@ -85,6 +86,17 @@ class PropublicaService {
     const data = response.data;
     const members = data.results[0].cosponsors;
     return members;
+  }
+
+  async fetchVotesForBill(billCode: string) {
+    const url = `${this.baseUrl}/118/bills/${billCode}.json`;
+    const response = await axios.get<PropublicaBillByIdResponse>(url, {
+      headers: {
+        "X-API-Key": this.apiKey,
+      },
+    });
+    const data = response.data;
+    return data.results?.[0]?.votes;
   }
 }
 
