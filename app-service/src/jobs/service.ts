@@ -10,6 +10,7 @@ class JobService {
   subjectsSyncQueue: Queue;
   cosponsorsSyncQueue: Queue;
   votesSyncQueue: Queue;
+  repVotesSyncQueue: Queue;
   redisConnection: ConnectionOptions;
   constructor() {
     this.redisConnection = {
@@ -29,6 +30,9 @@ class JobService {
       connection: this.redisConnection,
     });
     this.votesSyncQueue = new Queue("votes-for-bill-queue", {
+      connection: this.redisConnection,
+    });
+    this.repVotesSyncQueue = new Queue("votes-for-rep-queue", {
       connection: this.redisConnection,
     });
   }
@@ -446,7 +450,72 @@ class JobService {
       )
     );
 
+    const allCompleteBillVotes = await dbClient.billVote.findMany({
+      where: {
+        apiUrl: {
+          in: formattedVotes.map((vote) => vote.api_url),
+        },
+      },
+    });
+    // Queue repVotesSync for each vote
+    for (const vote of allCompleteBillVotes) {
+      this.repVotesSyncQueue.add("votes-for-rep", {
+        billVoteId: vote.id,
+      });
+    }
+
     return true;
+  }
+
+  async syncRepVotesForBillVote(billVoteId: string) {
+    const propubService = new PropublicaService();
+    const billVote = await dbClient.billVote.findUnique({
+      where: {
+        id: billVoteId,
+      },
+    });
+    const repVotes = await propubService.fetchRepVotesForBillVote(
+      billVote?.apiUri
+    );
+    // Format and upsert all repVotes
+    if (!repVotes.length) {
+      return true;
+    }
+    let upsertInputs: Prisma.RepresentativeVoteUpsertArgs[] = [];
+    for (const repVote of repVotes) {
+      const billId = billVote?.billId;
+      const representative = await dbClient.representative.findUnique({
+        where: {
+          propublicaId: repVote.member_id,
+        },
+      });
+      const representativeId = representative?.id;
+      const formattedVote = {
+        representativeId,
+        billId,
+        billVoteId,
+        position: repVote.vote_position,
+        date: billVote.dateTime,
+      };
+      if (representative) {
+        upsertInputs.push({
+          where: {
+            unique_representative_vote: {
+              representativeId,
+              billVoteId,
+              billId,
+            },
+          },
+          update: formattedVote,
+          create: formattedVote,
+        });
+      }
+    }
+
+    // Upsert
+    await dbClient.$transaction(
+      upsertInputs.map((input) => dbClient.representativeVote.upsert(input))
+    );
   }
 
   async createWorkers() {

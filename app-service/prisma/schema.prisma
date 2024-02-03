@@ -229,7 +229,8 @@ model BillVote {
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime? @updatedAt @map("updated_at")
 
-  bill Bill @relation(fields: [billId], references: [id])
+  bill     Bill                 @relation(fields: [billId], references: [id])
+  repVotes RepresentativeVote[]
 
   @@index([chamber, billId])
   @@map("bill_votes")
@@ -239,15 +240,17 @@ model RepresentativeVote {
   id               String    @id @default(uuid())
   representativeId String    @map("representative_id")
   billId           String    @map("bill_id")
+  billVoteId       String    @map("bill_vote_id")
   position         String
-  voteNumber       Int?      @map("vote_number")
   date             DateTime?
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime? @updatedAt @map("updated_at")
 
   representative Representative @relation(fields: [representativeId], references: [id])
-  bill           Bill           @relation(fields: [billId], references: [id])
+  billVote       BillVote       @relation(fields: [billVoteId], references: [id])
+  bill           Bill?          @relation(fields: [billId], references: [id])
 
-  @@index([representativeId, billId])
+  @@unique([representativeId, billVoteId, billId], name: "unique_representative_vote")
+  @@index([representativeId, billVoteId])
   @@map("representative_votes")
 }

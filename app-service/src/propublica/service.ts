@@ -8,6 +8,7 @@ import {
   PropublicaCosponsorsResponse,
   PropublicaMember,
   PropublicaMembersResponse,
+  PropublicaRollCallVoteByIdResponse,
   PropublicaSubjectsResponse,
 } from "./types.js";
 
@@ -97,6 +98,17 @@ class PropublicaService {
     });
     const data = response.data;
     return data.results?.[0]?.votes;
+  }
+
+  async fetchRepVotesForBillVote(voteUri: string) {
+    const url = `${voteUri}`;
+    const response = await axios.get<PropublicaRollCallVoteByIdResponse>(url, {
+      headers: {
+        "X-API-Key": this.apiKey,
+      },
+    });
+    const data = response.data;
+    return data.results?.votes?.vote?.positions;
   }
 }
 

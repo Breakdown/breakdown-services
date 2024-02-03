@@ -176,3 +176,25 @@ export interface PropublicaCosponsorsResponse
 
 export interface PropublicaBillByIdResponse
   extends ProPublicaResponse<ProPublicaSingleBillResult> {}
+
+// Custom response - no array of results
+
+interface ProPublicaPosition {
+  member_id: string;
+  name: string;
+  party: string;
+  state: string;
+  district: string;
+  cook_pvi?: number;
+  vote_position: string;
+  dw_nominate?: number;
+}
+export interface PropublicaRollCallVoteByIdResponse {
+  results: {
+    votes: {
+      vote: {
+        positions: ProPublicaPosition[];
+      };
+    };
+  };
+}
