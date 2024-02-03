@@ -3,6 +3,15 @@ import dbClient from "../utils/prisma.js";
 import { Bill, BillVote, Prisma, Representative } from "@prisma/client";
 import PropublicaService from "../propublica/service.js";
 import { ProPublicaBill, PropublicaMember } from "../propublica/types.js";
+import InternalError from "../utils/errors/InternalError.js";
+import axios from "axios";
+
+enum HouseEnum {
+  House,
+  Senate,
+  Joint,
+  Unknown,
+}
 
 class JobService {
   repsSyncScheduledQueue: Queue;
@@ -12,6 +21,7 @@ class JobService {
   votesSyncQueue: Queue;
   repVotesSyncQueue: Queue;
   issuesAssociationQueue: Queue;
+  billFullTextQueue: Queue;
   redisConnection: ConnectionOptions;
   constructor() {
     this.redisConnection = {
@@ -37,6 +47,9 @@ class JobService {
       connection: this.redisConnection,
     });
     this.issuesAssociationQueue = new Queue("issues-association-queue", {
+      connection: this.redisConnection,
+    });
+    this.billFullTextQueue = new Queue("bill-full-text-queue", {
       connection: this.redisConnection,
     });
   }
@@ -107,10 +120,14 @@ class JobService {
         ],
       },
     });
-    const allBillIds = allBillsWhereNecessary.map((bill: Bill) => bill.id);
-    // Queue a billFullText job for each bill
-    for (const billId of allBillIds) {
-      // TODO:  this.queue.add("bill-full-text", { billId });
+    const allBillCodes = allBillsWhereNecessary.map(
+      (bill: Bill) => bill.billCode
+    );
+    // Trigger bill full text job for each bill
+    for (const billCode of allBillCodes) {
+      this.billFullTextQueue.add("bill-full-text", {
+        billCode,
+      });
     }
   }
 
@@ -129,11 +146,10 @@ class JobService {
         ],
       },
     });
-    const allBillIds = allBillsWhereNecessary.map((bill: Bill) => bill.id);
-    // Queue a billFullText job for each bill
-    for (const billId of allBillIds) {
-      // TODO: this.queue.add("bill-summary", { billId });
-    }
+    const allBillCodes = allBillsWhereNecessary.map(
+      (bill: Bill) => bill.billCode
+    );
+    // TODO: Queue a billFullText job for each bill
   }
 
   async queueMeilisearchSyncScheduled() {
@@ -362,6 +378,11 @@ class JobService {
     //     propublicaId: bill.billCode,
     //   });
     // }
+    // for (const bill of allBillsForExtendedSyncs) {
+    //   this.billFullTextQueue.add("bill-full-text", {
+    //     billCode: bill.billCode,
+    //   });
+    // }
 
     // Trigger subjects sync job for all bills
     for (const bill of allBillsDeduped) {
@@ -378,6 +399,12 @@ class JobService {
     // Trigger votes sync job for this bill
     for (const bill of allBillsDeduped) {
       this.votesSyncQueue.add("votes-for-bill", {
+        billCode: bill.bill_slug,
+      });
+    }
+    // Trigger bill full text job for each bill
+    for (const bill of allBillsDeduped) {
+      this.billFullTextQueue.add("bill-full-text", {
         billCode: bill.bill_slug,
       });
     }
@@ -489,6 +516,110 @@ class JobService {
     for (const vote of allCompleteBillVotes) {
       this.repVotesSyncQueue.add("votes-for-rep", {
         billVoteId: vote.id,
+      });
+    }
+
+    return true;
+  }
+
+  getHouseFromBillType(billType: string): HouseEnum {
+    switch (billType) {
+      case "hr":
+        return HouseEnum.House;
+      case "s":
+        return HouseEnum.Senate;
+      case "hjres":
+        return HouseEnum.Joint;
+      case "sconres":
+        return HouseEnum.Joint;
+      case "hconres":
+        return HouseEnum.Joint;
+      case "sjres":
+        return HouseEnum.Joint;
+      case "hres":
+        return HouseEnum.House;
+      case "sres":
+        return HouseEnum.Senate;
+      default:
+        return HouseEnum.Unknown;
+    }
+  }
+
+  async syncBillFullText(billCode: string) {
+    // Fetch full text for bill from API
+    const existingBill = await dbClient.bill.findUnique({
+      where: {
+        billCode,
+      },
+      include: {
+        fullText: true,
+        jobData: true,
+      },
+    });
+
+    if (!existingBill) {
+      throw new InternalError(`Bill not found for bill code ${billCode}`);
+    }
+
+    // If bill already has full text and has been synced in the last week
+    if (
+      existingBill?.fullText &&
+      existingBill?.jobData?.lastFullTextSync &&
+      Date.now() - existingBill?.jobData?.lastFullTextSync.getTime() <
+        7 * 24 * 60 * 60 * 1000
+    ) {
+      return true;
+    }
+
+    // Fetch full text
+    const billType = existingBill.billType;
+    const houseEnum = this.getHouseFromBillType(billType);
+
+    // If resolution, we probably won't care
+    if (!["hr", "s"].includes(billType)) {
+      return true;
+    }
+
+    const urlParam = (() => {
+      switch (houseEnum) {
+        case HouseEnum.House:
+          return "h";
+        case HouseEnum.Senate:
+          return "s";
+        default:
+          return "h";
+      }
+    })();
+
+    const billXmlUrl = `https://www.congress.gov/118/bills/${billCode}/BILLS-118${billCode}i${urlParam}.xml`;
+    const xmlResponse = await axios.get(billXmlUrl);
+    const xmlData = xmlResponse.data;
+    const fullText = xmlData;
+    if (fullText) {
+      // Upsert full text
+      await dbClient.billFullText.upsert({
+        where: {
+          billId: existingBill.id,
+        },
+        update: {
+          fullText,
+        },
+        create: {
+          fullText,
+          billId: existingBill.id,
+        },
+      });
+      await dbClient.billJobData.upsert({
+        where: {
+          billId: existingBill.id,
+        },
+        update: {
+          lastFullTextSync: new Date(),
+        },
+        create: {
+          lastFullTextSync: new Date(),
+          billId: existingBill.id,
+        },
       });
     }
 
@@ -611,15 +742,16 @@ class JobService {
       }
     );
     // billFullText worker
-    // const billFullTextWorker = new Worker(
-    //   "app-service-queue",
-    //   async (job) => {
-    //     console.log("bill-full-text job started");
-    //   },
-    //   {
-    //     connection: this.redisConnection,
-    //   }
-    // );
+    const billFullTextWorker = new Worker(
+      "bill-full-text-queue",
+      async (job) => {
+        await this.syncBillFullText(job.data.billCode as string);
+      },
+      {
+        connection: this.redisConnection,
+        concurrency: 3,
+      }
+    );
     // // billSummaries worker
     // const billSummariesWorker = new Worker(
     //   "app-service-queue",
@@ -705,6 +837,7 @@ class JobService {
       votesSyncWorker,
       repVotesSyncWorker,
       issuesAssociationWorker,
+      billFullTextWorker,
     ];
 
     for (const worker of allWorkers) {
