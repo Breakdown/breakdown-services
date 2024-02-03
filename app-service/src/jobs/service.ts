@@ -56,8 +56,8 @@ class JobService {
     // Repeat every 12 hours at 06:00 and 18:00
     this.billsSyncScheduledQueue.add(
       "bills-sync-scheduled",
-      {},
-      { repeat: { pattern: "0 6,18 * * *" } }
+      {}
+      // { repeat: { pattern: "0 6,18 * * *" } }
     );
   }
 
@@ -375,17 +375,10 @@ class JobService {
         billCode: bill.bill_slug,
       });
     }
-
     // Trigger votes sync job for this bill
     for (const bill of allBillsDeduped) {
       this.votesSyncQueue.add("votes-for-bill", {
         billCode: bill.bill_slug,
-      });
-    }
-
-    for (const bill of allBillsDeduped) {
-      this.issuesAssociationQueue.add("issues-association", {
-        propublicaId: bill.bill_id,
       });
     }
 
@@ -429,15 +422,18 @@ class JobService {
     const propubService = new PropublicaService();
     const subjects = await propubService.fetchSubjectsForBill(billCode);
     // Upsert all subjects
-    await dbClient.bill.update({
+    const bill = await dbClient.bill.update({
       where: {
-        billCode: billCode,
+        billCode,
       },
       data: {
         subjects: {
           set: subjects,
         },
       },
+    });
+    this.issuesAssociationQueue.add("issues-association", {
+      propublicaId: bill.propublicaId,
     });
     return true;
   }
