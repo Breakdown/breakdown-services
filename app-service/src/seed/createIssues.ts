@@ -1,5 +1,4 @@
 import dbClient from "../utils/prisma.js";
-import allSubjects from "./data/allSubjects.json" assert { type: "json" };
 import issuesToSubjectsMap from "./data/issuesToSubjectsMap.json" assert { type: "json" };
 
 const issueSubjectMap = issuesToSubjectsMap as {
