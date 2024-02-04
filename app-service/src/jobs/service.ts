@@ -896,7 +896,7 @@ class JobService {
     // Schedule billFullText runs
     await this.queueBillFullTextsScheduled();
     // Schedule billSummary runs
-    await this.queueBillSummariesScheduled();
+    // await this.queueBillSummariesScheduled();
   }
 }
 
