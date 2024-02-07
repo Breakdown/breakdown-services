@@ -64,8 +64,8 @@ class JobService {
     // Repeat every 12 hours at 03:00 and 15:00
     this.repsSyncScheduledQueue.add(
       "reps-sync-scheduled",
-      {},
-      { repeat: { pattern: "0 3,15 * * *" } }
+      {}
+      // { repeat: { pattern: "0 3,15 * * *" } }
     );
   }
 
@@ -278,15 +278,19 @@ class JobService {
     });
     const allMembers = [...houseMembers, ...senateMembers];
     await dbClient.$transaction(
-      allMembers.map((propubMember) =>
-        dbClient.representative.upsert({
+      allMembers.map((propubMember) => {
+        const transformedMember =
+          this.transformPropublicaMemberToDbRep(propubMember);
+        transformedMember.imageUrl = `https://theunitedstates.io/images/congress/450x550/${transformedMember.propublicaId}.jpg`;
+
+        return dbClient.representative.upsert({
           where: {
             propublicaId: propubMember.id,
           },
-          update: this.transformPropublicaMemberToDbRep(propubMember),
-          create: this.transformPropublicaMemberToDbRep(propubMember),
-        })
-      )
+          update: transformedMember,
+          create: transformedMember,
+        });
+      })
     );
   }
 
