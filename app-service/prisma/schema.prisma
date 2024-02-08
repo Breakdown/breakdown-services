@@ -26,6 +26,7 @@ model User {
   followingBills  Bill[]            @relation("FollowingBills")
   followingReps   Representative[]  @relation("FollowingReps")
   followingIssues Issue[]           @relation("FollowingIssues")
+  myReps          Representative[]  @relation("RepsConstituents")
 
   @@index([id, email, phone])
   @@map("users")
@@ -104,7 +105,7 @@ model Bill {
   fullText            BillFullText?
   votes               BillVote[]
 
-  @@index([primaryIssueId, sponsorId, id, housePassage, senatePassage, importance])
+  @@index([primaryIssueId, sponsorId, id, housePassage, senatePassage, importance, propublicaId])
   @@map("bills")
 }
 
@@ -210,6 +211,7 @@ model Representative {
   cosponsoredBills Bill[]               @relation("Cosponsor")
   votes            RepresentativeVote[]
   followers        User[]               @relation("FollowingReps")
+  constituents     User[]               @relation("RepsConstituents")
 
   @@index([id, propublicaId, state, district, house])
   @@map("representatives")
