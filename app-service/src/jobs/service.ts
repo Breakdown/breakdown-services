@@ -1,11 +1,15 @@
 import { Queue, ConnectionOptions, Worker } from "bullmq";
 import dbClient from "../utils/prisma.js";
-import { Bill, BillVote, Prisma, Representative } from "@prisma/client";
+import { Bill, BillVote, Prisma, Representative, User } from "@prisma/client";
 import PropublicaService from "../propublica/service.js";
 import { ProPublicaBill, PropublicaMember } from "../propublica/types.js";
 import InternalError from "../utils/errors/InternalError.js";
 import axios from "axios";
 import AiService from "../ai/service.js";
+import NotificationService, {
+  NotificationJobData,
+  NotificationType,
+} from "../notifications/service.js";
 
 enum HouseEnum {
   House,
@@ -24,6 +28,7 @@ class JobService {
   issuesAssociationQueue: Queue;
   billFullTextQueue: Queue;
   billAiSummaryQueue: Queue;
+  notificationQueue: Queue;
   redisConnection: ConnectionOptions;
   constructor() {
     this.redisConnection = {
@@ -57,6 +62,9 @@ class JobService {
     this.billAiSummaryQueue = new Queue("bill-ai-summary-queue", {
       connection: this.redisConnection,
     });
+    this.notificationQueue = new Queue("notification-queue", {
+      connection: this.redisConnection,
+    });
   }
 
   async queueRepsSyncScheduled() {
@@ -64,8 +72,8 @@ class JobService {
     // Repeat every 12 hours at 03:00 and 15:00
     this.repsSyncScheduledQueue.add(
       "reps-sync-scheduled",
-      {}
-      // { repeat: { pattern: "0 3,15 * * *" } }
+      {},
+      { repeat: { pattern: "0 3,15 * * *" } }
     );
   }
 
@@ -348,6 +356,13 @@ class JobService {
         introducedBillPropubIdToSponsorDbIdMap[bill.bill_id] = sponsor.id;
       }
     }
+    const previousBills = await dbClient.bill.findMany({
+      where: {
+        propublicaId: {
+          in: allBillsDeduped.map((bill) => bill.bill_id),
+        },
+      },
+    });
     // Upsert all bills matching on propublica ID
     await dbClient.$transaction(
       allBillsDeduped.map((bill) =>
@@ -389,6 +404,82 @@ class JobService {
     //     billCode: bill.billCode,
     //   });
     // }
+
+    // Get all bills that have been updated
+    const newlySavedBills = await dbClient.bill.findMany({
+      where: {
+        propublicaId: {
+          in: allUpdatedBills.map((bill) => bill.bill_id),
+        },
+      },
+    });
+    // Notifications: Check if summary has been updated for each bill, and if it has then send
+    // Get all users to be notified
+    const notifService = new NotificationService();
+    const usersPromises = newlySavedBills.map((bill: Bill) =>
+      notifService.getUsersInterestedInNotification(
+        NotificationType.BILL_SUMMARY_UPDATED,
+        {
+          billId: bill.id,
+          billTitle: bill.title,
+        }
+      )
+    );
+    const users = await Promise.all(usersPromises);
+    const userIdMap: { [key: string]: boolean } = {};
+    const dedupedUsers = users.flat().filter((user: User) => {
+      if (userIdMap[user.id]) {
+        return false;
+      } else {
+        userIdMap[user.id] = true;
+        return true;
+      }
+    });
+    for (const bill of newlySavedBills) {
+      // TODO: Filter bills more for only user-relevant ones
+      if (bill.summary) {
+        const previousBill = previousBills.find(
+          (prevBill: Bill) => prevBill.propublicaId === bill.propublicaId
+        );
+        if (previousBill?.summary !== bill.summary) {
+          // Queue notification job for every user
+          for (const user of dedupedUsers) {
+            this.notificationQueue.add("notification", {
+              userId: user.id,
+              notificationType: NotificationType.BILL_SUMMARY_UPDATED,
+              data: {
+                billId: bill.id,
+                billTitle: bill.title,
+              },
+            });
+          }
+        }
+      }
+      continue;
+    }
+    // Notifications: Check if bill last_vote has been updated, if so send
+    for (const bill of newlySavedBills) {
+      if (bill.lastVote) {
+        const previousBill = previousBills.find(
+          (prevBill: Bill) => prevBill.propublicaId === bill.propublicaId
+        );
+        if (previousBill?.lastVote !== bill.lastVote) {
+          for (const user of dedupedUsers) {
+            this.notificationQueue.add("notification", {
+              userId: user.id,
+              notificationType: NotificationType.BILL_VOTED_ON,
+              data: {
+                billId: bill.id,
+                billTitle: bill.title,
+              },
+            });
+          }
+        }
+      }
+      continue;
+    }
+
+    // Child jobs other than notifications
 
     // Trigger subjects sync job for all bills
     for (const bill of allBillsDeduped) {
@@ -745,6 +836,18 @@ class JobService {
     return true;
   }
 
+  async sendNotification(data: NotificationJobData) {
+    // TODO: Send notification to user
+    const notifService = new NotificationService();
+
+    await notifService.sendNotification(
+      data.userId,
+      data.notificationType,
+      data.data
+    );
+    return;
+  }
+
   async createWorkers() {
     // Create workers
     // repsSync worker
@@ -854,6 +957,18 @@ class JobService {
       }
     );
 
+    const notificationsWorker = new Worker(
+      "notification-queue",
+      async (job) => {
+        await this.sendNotification(job.data as NotificationJobData);
+        return;
+      },
+      {
+        connection: this.redisConnection,
+        concurrency: 10,
+      }
+    );
+
     const allWorkers = [
       repsWorker,
       billsWorker,
@@ -864,6 +979,7 @@ class JobService {
       issuesAssociationWorker,
       billFullTextWorker,
       billAiSummaryWorker,
+      notificationsWorker,
     ];
 
     for (const worker of allWorkers) {
