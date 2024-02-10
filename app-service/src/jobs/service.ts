@@ -435,6 +435,8 @@ class JobService {
         return true;
       }
     });
+
+    // Notifications: Check if bill is a new one with a recently saved summary
     for (const bill of newlySavedBills) {
       // TODO: Filter bills more for only user-relevant ones
       if (bill.summary) {
