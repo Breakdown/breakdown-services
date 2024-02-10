@@ -26,6 +26,18 @@ services:
       - "6378:6379"
     networks:
       - breakdown-dev
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: meilisearch
+    restart: always
+    ports:
+      - 7700:7700
+    volumes:
+      - breakdown-meilisearch-data:/data.ms
+    networks:
+      - breakdown-dev
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
   app-service:
     networks:
       - breakdown-dev
@@ -50,6 +62,8 @@ services:
       GEOCODIO_API_KEY: ${GEOCODIO_API_KEY}
       PROPUBLICA_API_KEY: ${PROPUBLICA_API_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_HOST: ${MEILI_HOST}
 
 networks:
   breakdown-dev:
@@ -57,3 +71,4 @@ networks:
 volumes:
   breakdown-postgres-data: {}
   breakdown-redis-data: {}
+  breakdown-meilisearch-data: {}

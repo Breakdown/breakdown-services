@@ -55,6 +55,7 @@
     "helmet": "^6.0.1",
     "ioredis": "^5.3.1",
     "long": "^5.2.3",
+    "meilisearch": "^0.37.0",
     "moment": "^2.29.4",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",

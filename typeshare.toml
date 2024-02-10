@@ -1,5 +1,0 @@
-[typescript.type_mappings]
-"DateTime" = "string"
-"DateTime<Utc>" = "string"
-"Uuid" = "string"
-"BigDecimal" = "number"

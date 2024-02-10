@@ -10,6 +10,7 @@ import NotificationService, {
   NotificationJobData,
   NotificationType,
 } from "../notifications/service.js";
+import MeilisearchService from "../meilisearch/service.js";
 
 enum HouseEnum {
   House,
@@ -29,6 +30,7 @@ class JobService {
   billFullTextQueue: Queue;
   billAiSummaryQueue: Queue;
   notificationQueue: Queue;
+  meilisearchSyncQueue: Queue;
   redisConnection: ConnectionOptions;
   constructor() {
     this.redisConnection = {
@@ -65,6 +67,9 @@ class JobService {
     this.notificationQueue = new Queue("notification-queue", {
       connection: this.redisConnection,
     });
+    this.meilisearchSyncQueue = new Queue("meilisearch-sync-queue", {
+      connection: this.redisConnection,
+    });
   }
 
   async queueRepsSyncScheduled() {
@@ -84,6 +89,16 @@ class JobService {
       "bills-sync-scheduled",
       {},
       { repeat: { pattern: "0 6,18 * * *" } }
+    );
+  }
+
+  async queueMeilisearchSyncScheduled() {
+    // Add meilisearchSync job to queue
+    // Repeat every 12 hours at 09:00 and 21:00
+    this.meilisearchSyncQueue.add(
+      "global-sync-meilisearch",
+      {},
+      { repeat: { pattern: "0 9,21 * * *" } }
     );
   }
 
@@ -142,10 +157,6 @@ class JobService {
         billCode,
       });
     }
-  }
-
-  async queueMeilisearchSyncScheduled() {
-    // TODO: Meilisearch connection and syncing here
   }
 
   transformPropublicaMemberToDbRep(
@@ -417,9 +428,10 @@ class JobService {
       }
     });
 
-    // Notifications: Check if bill is a new one with a recently saved summary
+    // Send Notifications
     for (const bill of newlySavedBills) {
       // TODO: Filter bills more for only user-relevant ones
+      // Notifications: Check if bill is a new one with a recently saved summary
       if (bill.summary) {
         const previousBill = previousBills.find(
           (prevBill: Bill) => prevBill.propublicaId === bill.propublicaId
@@ -438,10 +450,7 @@ class JobService {
           }
         }
       }
-      continue;
-    }
-    // Notifications: Check if bill last_vote has been updated, if so send
-    for (const bill of newlySavedBills) {
+      // Notifications: Check if bill last_vote has been updated, if so send
       if (bill.lastVote) {
         const previousBill = previousBills.find(
           (prevBill: Bill) => prevBill.propublicaId === bill.propublicaId
@@ -951,6 +960,21 @@ class JobService {
       }
     );
 
+    const meilisearchSyncWorker = new Worker(
+      "meilisearch-sync-queue",
+      async (job) => {
+        if (job.name === "global-sync-meilisearch") {
+          const meilisearchService = new MeilisearchService();
+          await meilisearchService.globalSync();
+        }
+        return;
+      },
+      {
+        connection: this.redisConnection,
+        concurrency: 10,
+      }
+    );
+
     const allWorkers = [
       repsWorker,
       billsWorker,
@@ -962,6 +986,7 @@ class JobService {
       billFullTextWorker,
       billAiSummaryWorker,
       notificationsWorker,
+      meilisearchSyncWorker,
     ];
 
     for (const worker of allWorkers) {
@@ -997,6 +1022,7 @@ class JobService {
     await this.queueBillsSyncScheduled();
     // Schedule billFullText runs
     await this.queueBillFullTextsScheduled();
+    await this.queueMeilisearchSyncScheduled();
   }
 }
 
