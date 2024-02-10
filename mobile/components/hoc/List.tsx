@@ -5,28 +5,32 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { BreakdownBill } from "../../types/api";
+import { BreakdownBill, BreakdownIssue, BreakdownRep } from "../../types/api";
 
-// TODO: Genericize this
-interface Props extends FlatListProps<BreakdownBill> {
-  data: BreakdownBill[];
-  renderItem: ListRenderItem<BreakdownBill>;
+interface Props<T> extends FlatListProps<T> {
+  data: T[];
+  renderItem: ListRenderItem<T>;
 }
 
-const List = ({ data, renderItem, onRefresh, ...otherProps }: Props) => {
+function List<T extends BreakdownBill | BreakdownRep | BreakdownIssue>({
+  data,
+  renderItem,
+  onRefresh,
+  ...otherProps
+}: Props<T>) {
   return (
     <View style={styles.container}>
       <FlatList
         onRefresh={onRefresh}
         data={data}
         renderItem={(item) => renderItem(item)}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id || ""}
         showsVerticalScrollIndicator={false}
         {...otherProps}
       />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {

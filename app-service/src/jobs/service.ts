@@ -144,25 +144,6 @@ class JobService {
     }
   }
 
-  async queueBillSummariesScheduled() {
-    const allBillsWhereNecessary = await dbClient.bill.findMany({
-      where: {
-        AND: [
-          // AI Summary does not exist
-          { aiSummary: null },
-          // And full text is not null
-          {
-            fullText: {
-              isNot: null,
-            },
-          },
-        ],
-      },
-    });
-    const allBillIds = allBillsWhereNecessary.map((bill: Bill) => bill.id);
-    // TODO: Queue a billSummary job for each bill
-  }
-
   async queueMeilisearchSyncScheduled() {
     // TODO: Meilisearch connection and syncing here
   }
@@ -839,7 +820,6 @@ class JobService {
   }
 
   async sendNotification(data: NotificationJobData) {
-    // TODO: Send notification to user
     const notifService = new NotificationService();
 
     await notifService.sendNotification(
@@ -1017,8 +997,6 @@ class JobService {
     await this.queueBillsSyncScheduled();
     // Schedule billFullText runs
     await this.queueBillFullTextsScheduled();
-    // Schedule billSummary runs
-    // await this.queueBillSummariesScheduled();
   }
 }
 
