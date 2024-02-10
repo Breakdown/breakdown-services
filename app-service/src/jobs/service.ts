@@ -144,10 +144,6 @@ class JobService {
     }
   }
 
-  async queueMeilisearchSyncScheduled() {
-    // TODO: Meilisearch connection and syncing here
-  }
-
   transformPropublicaMemberToDbRep(
     member: PropublicaMember
   ): Partial<Representative> {
@@ -417,9 +413,10 @@ class JobService {
       }
     });
 
-    // Notifications: Check if bill is a new one with a recently saved summary
+    // Send Notifications
     for (const bill of newlySavedBills) {
       // TODO: Filter bills more for only user-relevant ones
+      // Notifications: Check if bill is a new one with a recently saved summary
       if (bill.summary) {
         const previousBill = previousBills.find(
           (prevBill: Bill) => prevBill.propublicaId === bill.propublicaId
@@ -438,10 +435,7 @@ class JobService {
           }
         }
       }
-      continue;
-    }
-    // Notifications: Check if bill last_vote has been updated, if so send
-    for (const bill of newlySavedBills) {
+      // Notifications: Check if bill last_vote has been updated, if so send
       if (bill.lastVote) {
         const previousBill = previousBills.find(
           (prevBill: Bill) => prevBill.propublicaId === bill.propublicaId
