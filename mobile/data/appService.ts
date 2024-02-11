@@ -3,6 +3,14 @@ import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import { Environment, getEnv } from "../utils/env";
 import { getDeviceId } from "../utils/device";
+import {
+  Bill,
+  Issue,
+  Representative,
+  RepresentativeStats,
+  RepresentativeVote,
+  User,
+} from "./types";
 
 interface BaseFetchOptions {
   url: string;
@@ -30,7 +38,7 @@ export const GET_REP_VOTE_ON_BILL = "GET_REP_VOTE_ON_BILL";
 export const GET_ME = "GET_ME";
 
 // Response interfaces
-interface GenericAuthResponse {
+interface GenericSuccessBoolResponse {
   data: {
     success: boolean;
   };
@@ -113,7 +121,7 @@ class AppService {
     password: string;
     receivePromotions: boolean;
   }) {
-    return this.fetch<GenericAuthResponse>({
+    return this.fetch<GenericSuccessBoolResponse>({
       url: "/auth/email/signup",
       method: "POST",
       body: { email, password, receivePromotions },
@@ -121,7 +129,7 @@ class AppService {
   }
   // Email Signin
   async emailSignin({ email, password }: { email: string; password: string }) {
-    return this.fetch<GenericAuthResponse>({
+    return this.fetch<GenericSuccessBoolResponse>({
       url: "/auth/email/signin",
       method: "POST",
       body: { email, password },
@@ -130,7 +138,7 @@ class AppService {
   // SMS Signin
   async smsSignin({ phone }: { phone: string }) {
     const deviceId = await getDeviceId();
-    return this.fetch<GenericAuthResponse>({
+    return this.fetch<GenericSuccessBoolResponse>({
       url: "/auth/sms/signin",
       method: "POST",
       body: { phone, deviceId },
@@ -139,7 +147,7 @@ class AppService {
   // SMS Signup
   async smsSignup({ phone }: { phone: string }) {
     const deviceId = await getDeviceId();
-    return this.fetch<GenericAuthResponse>({
+    return this.fetch<GenericSuccessBoolResponse>({
       url: "/auth/sms/signup",
       method: "POST",
       body: { phone, deviceId },
@@ -148,7 +156,7 @@ class AppService {
   // SMS Signin Verify
   async smsSignupVerify({ code }: { code: string }) {
     const deviceId = await getDeviceId();
-    return this.fetch<GenericAuthResponse>({
+    return this.fetch<GenericSuccessBoolResponse>({
       url: "/auth/sms/signup/verify",
       method: "POST",
       body: { deviceId, code },
@@ -157,7 +165,7 @@ class AppService {
   // SMS Signup Verify
   async smsSigninVerify({ code }: { code: string }) {
     const deviceId = await getDeviceId();
-    return this.fetch<GenericAuthResponse>({
+    return this.fetch<GenericSuccessBoolResponse>({
       url: "/auth/sms/signin/verify",
       method: "POST",
       body: { deviceId, code },
@@ -165,7 +173,7 @@ class AppService {
   }
   // Signout
   async signout() {
-    return this.fetch<GenericAuthResponse>({
+    return this.fetch<GenericSuccessBoolResponse>({
       url: "/auth/signout",
       method: "POST",
     });
@@ -174,21 +182,25 @@ class AppService {
   // Bills Module
 
   // Get Bill by ID
-  async getBillById({ id }: { id: string }) {
+  async getBillById({ id }: { id: string }): Promise<Bill> {
     return this.fetch({
       url: `/bills/${id}`,
       method: "GET",
     });
   }
   // Get bill sponsor by bill ID
-  async getBillSponsor({ id }: { id: string }) {
+  async getBillSponsor({ id }: { id: string }): Promise<Representative> {
     return this.fetch({
       url: `/bills/${id}/sponsor`,
       method: "GET",
     });
   }
   // Mark bill as seen by user
-  async markBillAsSeen({ id }: { id: string }) {
+  async markBillAsSeen({
+    id,
+  }: {
+    id: string;
+  }): Promise<GenericSuccessBoolResponse> {
     return this.fetch({
       url: `/bills/${id}/seen`,
       method: "POST",
@@ -201,7 +213,7 @@ class AppService {
   }: {
     id: string;
     following: boolean;
-  }) {
+  }): Promise<GenericSuccessBoolResponse> {
     return this.fetch({
       url: `/bills/${id}/follow`,
       method: "POST",
@@ -209,7 +221,7 @@ class AppService {
     });
   }
   // Get following bills
-  async getFollowingBills() {
+  async getFollowingBills(): Promise<Bill[]> {
     return this.fetch({
       url: `/bills/following`,
       method: "GET",
@@ -219,28 +231,28 @@ class AppService {
   // Issues Module
 
   // Get issues
-  async getIssues() {
+  async getIssues(): Promise<Issue[]> {
     return this.fetch({
       url: "/issues",
       method: "GET",
     });
   }
   // Get issue by ID
-  async getIssueById({ id }: { id: string }) {
+  async getIssueById({ id }: { id: string }): Promise<Issue> {
     return this.fetch({
       url: `/issues/${id}`,
       method: "GET",
     });
   }
   // Get bills for issue by ID
-  async getBillsForIssueId({ id }: { id: string }) {
+  async getBillsForIssueId({ id }: { id: string }): Promise<Bill[]> {
     return this.fetch({
       url: `/issues/${id}/bills`,
       method: "GET",
     });
   }
   // Get following issues
-  async getFollowingIssues() {
+  async getFollowingIssues(): Promise<Issue[]> {
     return this.fetch({
       url: "/issues/following",
       method: "GET",
@@ -250,7 +262,13 @@ class AppService {
   // Location module
 
   // Submit user location lat lon
-  async submitUserLocationLatLon({ lat, lon }: { lat: number; lon: number }) {
+  async submitUserLocationLatLon({
+    lat,
+    lon,
+  }: {
+    lat: number;
+    lon: number;
+  }): Promise<GenericSuccessBoolResponse> {
     return this.fetch({
       url: "/location/latlon",
       method: "POST",
@@ -258,7 +276,11 @@ class AppService {
     });
   }
   // Submit user location address
-  async submitUserLocationAddress({ address }: { address: string }) {
+  async submitUserLocationAddress({
+    address,
+  }: {
+    address: string;
+  }): Promise<GenericSuccessBoolResponse> {
     return this.fetch({
       url: "/location/address",
       method: "POST",
@@ -269,42 +291,48 @@ class AppService {
   // Reps Module
 
   // Get rep by ID
-  async getRepById({ id }: { id: string }) {
+  async getRepById({ id }: { id: string }): Promise<Representative> {
     return this.fetch({
       url: `/reps/${id}`,
       method: "GET",
     });
   }
   // Get rep stats by ID
-  async getRepStatsById({ id }: { id: string }) {
+  async getRepStatsById({ id }: { id: string }): Promise<RepresentativeStats> {
     return this.fetch({
       url: `/reps/${id}/stats`,
       method: "GET",
     });
   }
   // Get rep votes by ID
-  async getRepVotesById({ id }: { id: string }) {
+  async getRepVotesById({ id }: { id: string }): Promise<RepresentativeVote[]> {
     return this.fetch({
       url: `/reps/${id}/votes`,
       method: "GET",
     });
   }
   // Get rep bills sponsored by ID
-  async getRepBillsSponsored({ id }: { id: string }) {
+  async getRepBillsSponsored({ id }: { id: string }): Promise<Bill[]> {
     return this.fetch({
       url: `/reps/${id}/bills/sponsored`,
       method: "GET",
     });
   }
   // Get rep bills cosponsored by ID
-  async getRepBillsCosponsored({ id }: { id: string }) {
+  async getRepBillsCosponsored({ id }: { id: string }): Promise<Bill[]> {
     return this.fetch({
       url: `/reps/${id}/bills/cosponsored`,
       method: "GET",
     });
   }
   // Following rep
-  async setFollowingRep({ id, following }: { id: string; following: boolean }) {
+  async setFollowingRep({
+    id,
+    following,
+  }: {
+    id: string;
+    following: boolean;
+  }): Promise<GenericSuccessBoolResponse> {
     return this.fetch({
       url: `/reps/${id}/follow`,
       method: "POST",
@@ -312,21 +340,27 @@ class AppService {
     });
   }
   // Get following reps
-  async getFollowingReps() {
+  async getFollowingReps(): Promise<Representative[]> {
     return this.fetch({
       url: "/reps/following",
       method: "GET",
     });
   }
   // Get local reps
-  async getLocalReps() {
+  async getLocalReps(): Promise<Representative[]> {
     return this.fetch({
       url: "/reps/local",
       method: "GET",
     });
   }
   // Get rep vote on bill
-  async getRepVoteOnBill({ id, billId }: { id: string; billId: string }) {
+  async getRepVoteOnBill({
+    id,
+    billId,
+  }: {
+    id: string;
+    billId: string;
+  }): Promise<RepresentativeVote | null> {
     return this.fetch({
       url: `/reps/${id}/bills/${billId}/vote`,
       method: "GET",
@@ -336,14 +370,14 @@ class AppService {
   // Users Module
 
   // Get me
-  async getMe() {
+  async getMe(): Promise<User> {
     return this.fetch({
       url: "/users/me",
       method: "GET",
     });
   }
   // Patch me
-  async patchMe({ name }: { name: string }) {
+  async patchMe({ name }: { name: string }): Promise<User> {
     return this.fetch({
       url: "/users/me",
       method: "PATCH",
