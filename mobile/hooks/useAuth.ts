@@ -20,7 +20,7 @@ export default function useAuth({
   const [user, setUser] = useState<User | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const nav = useNavigation()
+  const nav = useNavigation();
   useEffect(() => {
     (async () => {
       const sessionToken = await SecureStore.getItemAsync("session");
@@ -30,7 +30,7 @@ export default function useAuth({
 
   const { data, error, refetch } = useQuery([QUERY_GET_ME], {
     queryFn: getMe,
-    refetchInterval: 1000 * 60, // 1 minute
+    refetchInterval: 1000 * 60 * 15, // 15 minutes
     refetchOnWindowFocus: false,
     retry: false,
     enabled: !!sessionToken,

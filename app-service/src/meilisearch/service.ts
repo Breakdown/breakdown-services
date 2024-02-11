@@ -11,26 +11,26 @@ export enum MeiliSearchIndex {
 
 export interface MeilisearchBill {
   id: string;
-  title: string;
-  short_title: string;
-  summary?: string;
-  short_summary?: string;
-  human_short_summary?: string;
-  ai_summary?: string;
-  ai_short_summary?: string;
-  sponsor_name?: string;
-  issues: string[];
-  primary_issue: string;
+  title: string | null;
+  short_title: string | null;
+  summary: string | null;
+  short_summary: string | null;
+  human_short_summary: string | null;
+  ai_summary: string | null;
+  ai_short_summary: string | null;
+  sponsor_name: string | null;
+  primary_issue: string | null;
+  issues: string[] | null;
 }
 
 export interface MeilisearchRep {
-  firstName: string;
-  lastName: string;
-  district: string;
-  state: string;
-  party: string;
-  title: string;
-  short_title: string;
+  firstName: string | null;
+  lastName: string | null;
+  district: string | null;
+  state: string | null;
+  party: string | null;
+  title: string | null;
+  short_title: string | null;
 }
 
 export interface MeilisearchIssue {
@@ -52,9 +52,9 @@ class MeilisearchService {
 
   transformDbBillToMeiliBill(
     bill: Bill & {
-      sponsor: Representative;
-      issues: Issue[];
-      primaryIssue: Issue;
+      sponsor: Representative | null;
+      issues: Issue[] | null;
+      primaryIssue: Issue | null;
     }
   ): MeilisearchBill {
     return {
@@ -62,15 +62,15 @@ class MeilisearchService {
       title: bill.title,
       short_title: bill.shortTitle,
       summary: bill.summary,
-      short_summary: bill.shortSummary,
+      short_summary: bill.summaryShort,
       human_short_summary: bill.humanShortSummary,
       ai_summary: bill.aiSummary,
       ai_short_summary: bill.aiShortSummary,
       sponsor_name: bill.sponsor
         ? `${bill.sponsor.firstName} ${bill.sponsor.lastName}`
-        : undefined,
-      issues: bill.issues?.map((issue: Issue) => issue.name),
-      primary_issue: bill.primaryIssue?.name,
+        : null,
+      issues: bill.issues?.map((issue: Issue) => issue.name) || null,
+      primary_issue: bill.primaryIssue?.name || null,
     };
   }
 
@@ -101,7 +101,7 @@ class MeilisearchService {
     }
   }
 
-  async upsertBills(bills: Bill[]) {
+  async upsertBills(bills: MeilisearchBill[]) {
     try {
       return await this.client
         .index(MeiliSearchIndex.BILLS)
@@ -111,7 +111,7 @@ class MeilisearchService {
     }
   }
 
-  async upsertRepresentatives(representatives: Representative[]) {
+  async upsertRepresentatives(representatives: MeilisearchRep[]) {
     try {
       return await this.client
         .index(MeiliSearchIndex.REPRESENTATIVES)
@@ -121,7 +121,7 @@ class MeilisearchService {
     }
   }
 
-  async upsertIssues(issues: Issue[]) {
+  async upsertIssues(issues: MeilisearchIssue[]) {
     try {
       return await this.client
         .index(MeiliSearchIndex.ISSUES)

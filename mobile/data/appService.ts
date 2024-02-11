@@ -11,6 +11,31 @@ interface BaseFetchOptions {
   body?: any;
 }
 
+// Query Constants
+export const GET_BILL_BY_ID = "GET_BILL_BY_ID";
+export const GET_BILL_SPONSOR = "GET_BILL_SPONSOR";
+export const GET_FOLLOWING_BILLS = "GET_FOLLOWING_BILLS";
+export const GET_ISSUES = "GET_ISSUES";
+export const GET_ISSUE_BY_ID = "GET_ISSUE_BY_ID";
+export const GET_BILLS_FOR_ISSUE_ID = "GET_BILLS_FOR_ISSUE_ID";
+export const GET_FOLLOWING_ISSUES = "GET_FOLLOWING_ISSUES";
+export const GET_REP_BY_ID = "GET_REP_BY_ID";
+export const GET_REP_STATS_BY_ID = "GET_REP_STATS_BY_ID";
+export const GET_REP_VOTES_BY_ID = "GET_REP_VOTES_BY_ID";
+export const GET_REP_BILLS_SPONSORED = "GET_REP_BILLS_SPONSORED";
+export const GET_REP_BILLS_COSPONSORED = "GET_REP_BILLS_COSPONSORED";
+export const GET_FOLLOWING_REPS = "GET_FOLLOWING_REPS";
+export const GET_LOCAL_REPS = "GET_LOCAL_REPS";
+export const GET_REP_VOTE_ON_BILL = "GET_REP_VOTE_ON_BILL";
+export const GET_ME = "GET_ME";
+
+// Response interfaces
+interface GenericAuthResponse {
+  data: {
+    success: boolean;
+  };
+}
+
 class AppService {
   apiUrl: string;
   sessionCookie: string | null = null;
@@ -31,7 +56,7 @@ class AppService {
     this.sessionCookie = await SecureStore.getItemAsync("session");
   }
 
-  async fetch({ url, method, headers, body }: BaseFetchOptions) {
+  async fetch<T>({ url, method, headers, body }: BaseFetchOptions): Promise<T> {
     try {
       // Get cookie in async storage
       // If we're doing an auth request, don't include the cookie - no need to fetch
@@ -69,7 +94,7 @@ class AppService {
         const cookie = response.headers["set-cookie"]?.[0];
         await SecureStore.setItemAsync("session", cookie);
       }
-      return response;
+      return response.data;
     } catch (err) {
       console.error(`error fetching url ${this.apiUrl}${url}`, err);
       throw new Error(err);
@@ -88,7 +113,7 @@ class AppService {
     password: string;
     receivePromotions: boolean;
   }) {
-    return this.fetch({
+    return this.fetch<GenericAuthResponse>({
       url: "/auth/email/signup",
       method: "POST",
       body: { email, password, receivePromotions },
@@ -96,7 +121,7 @@ class AppService {
   }
   // Email Signin
   async emailSignin({ email, password }: { email: string; password: string }) {
-    return this.fetch({
+    return this.fetch<GenericAuthResponse>({
       url: "/auth/email/signin",
       method: "POST",
       body: { email, password },
@@ -105,7 +130,7 @@ class AppService {
   // SMS Signin
   async smsSignin({ phone }: { phone: string }) {
     const deviceId = await getDeviceId();
-    return this.fetch({
+    return this.fetch<GenericAuthResponse>({
       url: "/auth/sms/signin",
       method: "POST",
       body: { phone, deviceId },
@@ -114,7 +139,7 @@ class AppService {
   // SMS Signup
   async smsSignup({ phone }: { phone: string }) {
     const deviceId = await getDeviceId();
-    return this.fetch({
+    return this.fetch<GenericAuthResponse>({
       url: "/auth/sms/signup",
       method: "POST",
       body: { phone, deviceId },
@@ -123,7 +148,7 @@ class AppService {
   // SMS Signin Verify
   async smsSignupVerify({ code }: { code: string }) {
     const deviceId = await getDeviceId();
-    return this.fetch({
+    return this.fetch<GenericAuthResponse>({
       url: "/auth/sms/signup/verify",
       method: "POST",
       body: { deviceId, code },
@@ -132,7 +157,7 @@ class AppService {
   // SMS Signup Verify
   async smsSigninVerify({ code }: { code: string }) {
     const deviceId = await getDeviceId();
-    return this.fetch({
+    return this.fetch<GenericAuthResponse>({
       url: "/auth/sms/signin/verify",
       method: "POST",
       body: { deviceId, code },
@@ -140,7 +165,7 @@ class AppService {
   }
   // Signout
   async signout() {
-    return this.fetch({
+    return this.fetch<GenericAuthResponse>({
       url: "/auth/signout",
       method: "POST",
     });

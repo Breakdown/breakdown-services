@@ -161,61 +161,57 @@ class JobService {
 
   transformPropublicaMemberToDbRep(
     member: PropublicaMember
-  ): Partial<Representative> {
+  ): Prisma.RepresentativeCreateInput {
     const houseValue = member.short_title === "Sen." ? "senate" : "house";
     return {
       title: member.title,
       shortTitle: member.short_title,
       apiUri: member.api_uri,
       firstName: member.first_name,
-      middleName: member.middle_name,
+      middleName: member.middle_name || null,
       lastName: member.last_name,
-      suffix: member.suffix,
-      dateOfBirth: member.date_of_birth
-        ? new Date(member.date_of_birth)
-        : undefined,
+      suffix: member.suffix || null,
+      dateOfBirth: member.date_of_birth ? new Date(member.date_of_birth) : null,
       gender: member.gender,
       party: member.party,
       propublicaId: member.id,
-      twitter: member.twitter_account,
-      facebook: member.facebook_account,
+      twitter: member.twitter_account || null,
+      facebook: member.facebook_account || null,
       govtrackId: member.id,
-      cspanId: member.cspan_id,
-      votesmartId: member.votesmart_id,
-      icpsrId: member.icpsr_id,
-      crpId: member.crp_id,
-      googleEntityId: member.google_entity_id,
-      fecCandidateId: member.fec_candidate_id,
-      url: member.url,
-      rssUrl: member.rss_url,
-      contactForm: member.contact_form,
-      inOffice: member.in_office,
-      cookPvi: member.cook_pvi, // Not filling - not in the API response? Or mismapped?
-      dwNominate: member.dw_nominate,
-      seniority: member.seniority,
+      cspanId: member.cspan_id || null,
+      votesmartId: member.votesmart_id || null,
+      icpsrId: member.icpsr_id || null,
+      crpId: member.crp_id || null,
+      googleEntityId: member.google_entity_id || null,
+      fecCandidateId: member.fec_candidate_id || null,
+      url: member.url || null,
+      rssUrl: member.rss_url || null,
+      contactForm: member.contact_form || null,
+      inOffice: member.in_office || null,
+      cookPvi: member.cook_pvi || null, // Not filling - not in the API response? Or mismapped?
+      dwNominate: member.dw_nominate || null,
+      seniority: member.seniority || null,
       nextElection: member.next_election
         ? new Date(member.next_election)
-        : undefined,
-      totalVotes: member.total_votes,
-      missedVotes: member.missed_votes,
-      totalPresent: member.total_present,
-      lastUpdated: member.last_updated
-        ? new Date(member.last_updated)
-        : undefined,
-      ocdId: member.ocd_id,
-      office: member.office,
-      phone: member.phone,
-      fax: member.fax,
-      state: member.state,
-      district: member.district,
-      senateClass: member.senate_class,
-      stateRank: member.state_rank,
-      lisId: member.lis_id,
-      missedVotesPct: member.missed_votes_pct,
-      votesWithPartyPct: member.votes_with_party_pct,
-      votesAgainstPartyPct: member.votes_against_party_pct,
+        : null,
+      totalVotes: member.total_votes || null,
+      missedVotes: member.missed_votes || null,
+      totalPresent: member.total_present || null,
+      lastUpdated: member.last_updated ? new Date(member.last_updated) : null,
+      ocdId: member.ocd_id || null,
+      office: member.office || null,
+      phone: member.phone || null,
+      fax: member.fax || null,
+      state: member.state || null,
+      district: member.district || null,
+      senateClass: member.senate_class || null,
+      stateRank: member.state_rank || null,
+      lisId: member.lis_id || null,
+      missedVotesPct: member.missed_votes_pct || null,
+      votesWithPartyPct: member.votes_with_party_pct || null,
+      votesAgainstPartyPct: member.votes_against_party_pct || null,
       house: houseValue,
-    } as Partial<Representative>;
+    };
   }
 
   transformPropublicaBillToDbBill(bill: ProPublicaBill): Bill {
@@ -562,7 +558,7 @@ class JobService {
         billCode: billCode,
       },
     });
-    if (!fullBill.lastVote) {
+    if (!fullBill?.lastVote) {
       return true;
     }
     const votes = await propubService.fetchVotesForBill(billCode);
@@ -570,7 +566,7 @@ class JobService {
     if (!votes.length) {
       return true;
     }
-    const formattedVotes: BillVote[] = votes.map((vote) => {
+    const formattedVotes: Prisma.BillVoteCreateInput[] = votes.map((vote) => {
       return {
         chamber: vote.chamber,
         dateTime: new Date(`${vote.date}T${vote.time}`),
@@ -580,7 +576,11 @@ class JobService {
         totalNo: vote.total_no,
         totalNotVoting: vote.total_not_voting,
         apiUrl: vote.api_url,
-        billId: fullBill.id,
+        bill: {
+          connect: {
+            id: fullBill.id,
+          },
+        },
       };
     });
     // Upsert all votes
@@ -742,6 +742,11 @@ class JobService {
         id: billVoteId,
       },
     });
+    if (!billVote) {
+      throw new InternalError(
+        `Bill vote not found for bill vote ID ${billVoteId}`
+      );
+    }
     const repVotes = await propubService.fetchRepVotesForBillVote(
       billVote?.apiUrl
     );
@@ -757,6 +762,9 @@ class JobService {
           propublicaId: repVote.member_id,
         },
       });
+      if (!representative) {
+        continue;
+      }
       const representativeId = representative?.id;
       const formattedVote = {
         representativeId,
@@ -792,17 +800,25 @@ class JobService {
         propublicaId,
       },
     });
+    if (!bill) {
+      throw new InternalError(
+        `Bill not found for propublica ID ${propublicaId}`
+      );
+    }
     if (!bill.primarySubject && !bill.subjects?.length) {
       return true;
     }
     // Find issue that matches bill's primary subject
-    const issue = await dbClient.issue.findFirst({
-      where: {
-        subjects: {
-          hasSome: [bill?.primarySubject],
+    let primaryIssue;
+    if (bill.primarySubject) {
+      primaryIssue = await dbClient.issue.findFirst({
+        where: {
+          subjects: {
+            hasSome: [bill?.primarySubject],
+          },
         },
-      },
-    });
+      });
+    }
     // Find issues that match any of the bill's subjects
     const issues = await dbClient.issue.findMany({
       where: {
@@ -818,10 +834,14 @@ class JobService {
       },
       data: {
         issues: {
-          connect: issues,
+          connect: issues.map((issue) => ({
+            id: issue.id,
+          })),
         },
         primaryIssue: {
-          connect: issue,
+          connect: {
+            id: primaryIssue?.id,
+          },
         },
       },
     });

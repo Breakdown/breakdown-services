@@ -3,14 +3,16 @@
     "esm": true
   },
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "NodeNext",
+    "target": "ESNext",                              
+    "module": "NodeNext",                      
     "moduleResolution": "nodenext",
     "rootDir": "./src",
     "outDir": "./dist",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "lib": ["ESNext"],
+    "lib": [
+      "ESNext"
+    ],
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,

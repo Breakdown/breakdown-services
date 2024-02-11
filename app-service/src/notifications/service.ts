@@ -114,11 +114,11 @@ class NotificationService {
                 some: {
                   OR: [
                     {
-                      id: billWithIssues.primaryIssue.id,
+                      id: billWithIssues?.primaryIssue?.id,
                     },
                     {
                       id: {
-                        in: billWithIssues.issues.map(
+                        in: billWithIssues?.issues.map(
                           (issue: Issue) => issue.id
                         ),
                       },
