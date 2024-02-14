@@ -27,6 +27,7 @@ model User {
   followingReps   Representative[]  @relation("FollowingReps")
   followingIssues Issue[]           @relation("FollowingIssues")
   myReps          Representative[]  @relation("RepsConstituents")
+  myBillVotes     UserBillVote[]
 
   @@index([id, email, phone])
   @@map("users")
@@ -104,6 +105,7 @@ model Bill {
   jobData             BillJobData?
   fullText            BillFullText?
   votes               BillVote[]
+  UserBillVote        UserBillVote[]
 
   @@index([primaryIssueId, sponsorId, id, housePassage, senatePassage, importance, propublicaId])
   @@map("bills")
@@ -255,4 +257,21 @@ model RepresentativeVote {
   @@unique([representativeId, billVoteId, billId], name: "unique_representative_vote")
   @@index([representativeId, billVoteId])
   @@map("representative_votes")
+}
+
+model UserBillVote {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  billId    String    @map("bill_id")
+  position  Boolean
+  date      DateTime?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+  bill Bill @relation(fields: [billId], references: [id])
+
+  @@unique([userId, billId], name: "unique_user_bill_vote")
+  @@index([userId, billId])
+  @@map("user_bill_votes")
 }

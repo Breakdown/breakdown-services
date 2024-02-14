@@ -5,12 +5,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { BreakdownRep } from "../types/api";
 import Text, { TextVariant } from "./Text";
 import { BD_BLUE, BD_RED } from "../styles";
 import { useNavigation } from "@react-navigation/native";
+import { Representative } from "../data/types";
 
-const RepCarouselItem = ({ rep }: { rep: BreakdownRep }) => {
+const RepCarouselItem = ({ rep }: { rep: Representative }) => {
   const navigation = useNavigation();
   return (
     <TouchableOpacity
@@ -21,12 +21,12 @@ const RepCarouselItem = ({ rep }: { rep: BreakdownRep }) => {
     >
       <View style={styles.repPfp}>
         <Text>
-          {rep.first_name.charAt(0)}
-          {rep.last_name.charAt(0)}
+          {rep.firstName.charAt(0)}
+          {rep.lastName.charAt(0)}
         </Text>
       </View>
       <Text style={styles.repNameText}>
-        {rep.first_name} {rep.last_name}
+        {rep.firstName} {rep.lastName}
       </Text>
       <Text
         variant={TextVariant.SUBHEADER}
@@ -41,7 +41,7 @@ const RepCarouselItem = ({ rep }: { rep: BreakdownRep }) => {
   );
 };
 
-interface RepsCarouselProps extends Partial<FlatListProps<BreakdownRep>> {
+interface RepsCarouselProps extends Partial<FlatListProps<Representative>> {
   reps: BreakdownRep[];
 }
 

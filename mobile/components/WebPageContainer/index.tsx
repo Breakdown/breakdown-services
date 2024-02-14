@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { WebView } from "react-native-webview";
-
+// import { Exit}
 const WebPageContainer = ({ open, uri, onExitPress }) => {
   return (
     <>
@@ -10,7 +10,8 @@ const WebPageContainer = ({ open, uri, onExitPress }) => {
           style={{ height: 24, width: 24, marginBottom: 18 }}
           onPress={onExitPress}
         >
-          <Exit height={24} width={24} stroke={"#000000"} />
+          Exit
+          {/* <Exit height={24} width={24} stroke={"#000000"} /> */}
         </TouchableOpacity>
       </View>
       <WebView

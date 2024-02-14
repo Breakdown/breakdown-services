@@ -2,31 +2,29 @@ import { StyleSheet, View } from "react-native";
 import Button, { ButtonType } from "./Button";
 import Text, { TextVariant } from "./Text";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  QUERY_GET_BILL,
-  QUERY_GET_BILL_SPONSOR,
-  QUERY_GET_USER_VOTE_ON_BILL,
-  getBillById,
-  getBillSponsorById,
-  getUserVoteOnBill,
-} from "../data/queries";
-import { useMemo } from "react";
-import { voteOnBillMutation } from "../data/mutations";
+
+import { useMemo, useState } from "react";
 import useAuth from "../hooks/useAuth";
+import AppService, {
+  GET_BILL_BY_ID,
+  GET_BILL_SPONSOR,
+  GET_MY_VOTE_ON_BILL,
+} from "../data/appService";
 
 const VoteOnBill = ({ id }: { id: string }) => {
+  const [appService] = useState(() => new AppService());
   const { data, error, isLoading } = useQuery({
-    queryKey: [QUERY_GET_BILL, id],
-    queryFn: () => getBillById(id),
+    queryKey: [GET_BILL_BY_ID, id],
+    queryFn: () => appService.getBillById({ id }),
   });
   const { data: sponsorData } = useQuery({
-    queryKey: [QUERY_GET_BILL_SPONSOR, id],
-    queryFn: () => getBillSponsorById(id),
+    queryKey: [GET_BILL_SPONSOR, id],
+    queryFn: () => appService.getBillSponsor({ id }),
   });
 
   const relevantRepTitle = useMemo(() => {
     if (isLoading) return "Representative";
-    if (sponsorData?.short_title === "Sen." || !!data?.house_passage) {
+    if (sponsorData?.shortTitle === "Sen." || !!data?.housePassage) {
       return "Senator";
     }
     return "Representative";
@@ -34,28 +32,28 @@ const VoteOnBill = ({ id }: { id: string }) => {
 
   const auth = useAuth();
   const existingVoteOnBill = useQuery({
-    queryKey: [QUERY_GET_USER_VOTE_ON_BILL, id, auth?.user?.id],
-    queryFn: () => getUserVoteOnBill({ billId: id }),
+    queryKey: [GET_MY_VOTE_ON_BILL, id, auth?.user?.id],
+    queryFn: () => appService.getMyVoteOnBill({ billId: id }),
   });
 
   const voteOnBill = useMutation({
     mutationFn: (vote: boolean) => {
       if (vote === true) {
-        if (existingVoteOnBill.data?.vote === true) {
+        if (existingVoteOnBill.data?.position === true) {
           // No need to mutate, all good
           // Maybe still show a success message?
           return;
         } else {
-          return voteOnBillMutation({ billId: id, vote: true });
+          return appService.voteOnBill({ billId: id, position: true });
         }
       }
       if (vote === false) {
-        if (existingVoteOnBill.data?.vote === false) {
+        if (existingVoteOnBill.data?.position === false) {
           // No need to mutate, all good
           // Maybe still show a success message?
           return;
         } else {
-          return voteOnBillMutation({ billId: id, vote: false });
+          return appService.voteOnBill({ billId: id, position: false });
         }
       }
     },
@@ -78,7 +76,7 @@ const VoteOnBill = ({ id }: { id: string }) => {
           title={"Yes"}
           style={[
             styles.button,
-            existingVoteOnBill.data?.vote === true
+            existingVoteOnBill.data?.position === true
               ? { backgroundColor: "green" }
               : {},
           ]}
@@ -91,7 +89,7 @@ const VoteOnBill = ({ id }: { id: string }) => {
           title={"No"}
           style={[
             styles.button,
-            existingVoteOnBill.data?.vote === false
+            existingVoteOnBill.data?.position === false
               ? { backgroundColor: "green" }
               : {},
           ]}

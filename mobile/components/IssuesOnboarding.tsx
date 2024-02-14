@@ -1,42 +1,40 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import useAuth from "../hooks/useAuth";
-import {
-  QUERY_GET_ALL_ISSUES,
-  QUERY_GET_YOUR_ISSUES,
-  getAllIssues,
-  getYourIssues,
-} from "../data/queries";
 import { useCallback, useMemo, useRef, useState } from "react";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import { BreakdownIssue } from "../types/api";
 import IssueCard from "./IssueCard";
 import Toast from "react-native-toast-message";
-import { submitIssuesInterests } from "../data/mutations";
 import { StyleSheet, View } from "react-native";
 import Text, { TextVariant } from "./Text";
 import Button, { ButtonType } from "./Button";
+import AppService, {
+  GET_FOLLOWING_ISSUES,
+  GET_ISSUES,
+} from "../data/appService";
+import { Issue } from "../data/types";
 
 const IssuesOnboarding = () => {
   const { user } = useAuth();
+  const [appService] = useState(() => new AppService());
   const yourIssuesQueryResult = useQuery({
-    queryKey: [QUERY_GET_YOUR_ISSUES, user?.id],
-    queryFn: getYourIssues,
+    queryKey: [GET_FOLLOWING_ISSUES, user?.id],
+    queryFn: appService.getFollowingIssues,
     enabled: false,
   });
   const sheetRef = useRef<BottomSheet>(null);
 
   const { data } = useQuery({
-    queryKey: [QUERY_GET_ALL_ISSUES],
-    queryFn: getAllIssues,
+    queryKey: [GET_ISSUES],
+    queryFn: appService.getIssues,
     staleTime: 6000 * 60 * 24,
   });
 
   const snapPoints = useMemo(() => ["25%", "50%", "96%"], []);
 
-  const [selectedIssues, setSelectedIssues] = useState<BreakdownIssue[]>([]);
+  const [selectedIssues, setSelectedIssues] = useState<Issue[]>([]);
   // render
   const renderItem = useCallback(
-    ({ item }: { item: BreakdownIssue }) => (
+    ({ item }: { item: Issue }) => (
       <IssueCard
         issue={item}
         onChangeChecked={(checked) => {
@@ -62,9 +60,10 @@ const IssuesOnboarding = () => {
   };
   const submitIssuesMutation = useMutation({
     mutationFn: async () => {
-      await submitIssuesInterests({
-        issueIds: selectedIssues.map((i) => i.id),
-      });
+      // TODO: Implement this
+      // await submitIssuesInterests({
+      //   issueIds: selectedIssues.map((i) => i.id),
+      // });
       yourIssuesQueryResult.refetch();
       showToast();
     },

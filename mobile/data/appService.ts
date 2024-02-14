@@ -10,6 +10,7 @@ import {
   RepresentativeStats,
   RepresentativeVote,
   User,
+  UserBillVote,
 } from "./types";
 
 interface BaseFetchOptions {
@@ -35,6 +36,7 @@ export const GET_REP_BILLS_COSPONSORED = "GET_REP_BILLS_COSPONSORED";
 export const GET_FOLLOWING_REPS = "GET_FOLLOWING_REPS";
 export const GET_LOCAL_REPS = "GET_LOCAL_REPS";
 export const GET_REP_VOTE_ON_BILL = "GET_REP_VOTE_ON_BILL";
+export const GET_MY_VOTE_ON_BILL = "GET_MY_VOTE_ON_BILL";
 export const GET_ME = "GET_ME";
 
 // Response interfaces
@@ -382,6 +384,31 @@ class AppService {
       url: "/users/me",
       method: "PATCH",
       body: { name },
+    });
+  }
+
+  // Votes Module
+
+  // Vote on bill
+  async voteOnBill({
+    billId,
+    position,
+  }: {
+    billId: string;
+    position: boolean;
+  }): Promise<UserBillVote> {
+    return this.fetch({
+      url: `/votes/${billId}`,
+      method: "POST",
+      body: { position },
+    });
+  }
+
+  // Get my vote on bill
+  async getMyVoteOnBill({ billId }: { billId: string }): Promise<UserBillVote> {
+    return this.fetch({
+      url: `/votes/${billId}/me`,
+      method: "GET",
     });
   }
 }

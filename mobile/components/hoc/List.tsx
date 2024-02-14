@@ -5,14 +5,14 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { BreakdownBill, BreakdownIssue, BreakdownRep } from "../../types/api";
+import { Bill, Issue, Representative } from "../../data/types";
 
 interface Props<T> extends FlatListProps<T> {
   data: T[];
   renderItem: ListRenderItem<T>;
 }
 
-function List<T extends BreakdownBill | BreakdownRep | BreakdownIssue>({
+function List<T extends Bill | Representative | Issue>({
   data,
   renderItem,
   onRefresh,

@@ -56,7 +56,7 @@ const getTimeOfDay = () => {
 };
 
 const HomeStack = () => {
-  const firstName = useAuth().user?.first_name;
+  const firstName = "";
   return (
     <Stack.Navigator>
       <Stack.Screen

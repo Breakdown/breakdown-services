@@ -3,7 +3,7 @@ import { FlatList, StyleSheet, View } from "react-native";
 import { QUERY_GET_YOUR_ISSUES, getYourIssues } from "../data/queries";
 import useAuth from "../hooks/useAuth";
 import IssueCard from "./IssueCard";
-import { BreakdownIssue } from "../types/api";
+import { Issue } from "../types/api";
 import { useNavigation } from "@react-navigation/native";
 
 const YourIssues = () => {
@@ -14,7 +14,7 @@ const YourIssues = () => {
   });
   const navigation = useNavigation();
 
-  // const renderIssueCard = ({ item }: { item: BreakdownIssue }) => (
+  // const renderIssueCard = ({ item }: { item: Issue }) => (
   //   <IssueCard
   //     issue={item}
   //     onChangeChecked={undefined}

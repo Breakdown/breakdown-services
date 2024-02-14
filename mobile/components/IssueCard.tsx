@@ -1,18 +1,18 @@
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { BreakdownIssue } from "../types/api";
 import Text, { TextVariant } from "./Text";
 import { DEM_GRADIENT } from "./BillCard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
+import { Issue } from "../data/types";
 
 const IssueCard = ({
   issue,
   onChangeChecked,
   onPress,
 }: {
-  issue: BreakdownIssue;
+  issue: Issue;
   onChangeChecked?: (checked: boolean) => void;
-  onPress?: (issue: BreakdownIssue) => void;
+  onPress?: (issue: Issue) => void;
 }) => {
   const [checked, setChecked] = useState(false);
 

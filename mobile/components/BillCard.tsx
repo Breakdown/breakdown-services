@@ -2,14 +2,13 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { BreakdownBill } from "../types/api";
 import { Dimensions } from "react-native";
 import { BD_BLUE, BD_PURPLE, BD_RED } from "../styles";
 import { baseText, subtitleText } from "../styles/text";
 import { getBillSummary, getBillTitle } from "../utils/bills";
-import { ImageSize, getRepImage } from "../utils/reps";
+import { Bill } from "../data/types";
 interface Props {
-  bill: BreakdownBill;
+  bill: Bill;
 }
 
 export const DEM_GRADIENT = [BD_BLUE, BD_PURPLE, BD_RED];
@@ -43,7 +42,7 @@ const getMidpointFromNumCosponsors = (
 
 const BillCard = ({ bill }: Props) => {
   const { navigate } = useNavigation();
-  const sponsorParty = bill.sponsor_party;
+  const sponsorParty = bill.sponsorParty;
 
   const gradientColors = useMemo(() => {
     return getColorsForSponsorParty(sponsorParty);
@@ -51,15 +50,15 @@ const BillCard = ({ bill }: Props) => {
 
   const midpoint = useMemo(() => {
     return getMidpointFromNumCosponsors(
-      bill.cosponsors_d,
-      bill.cosponsors_r,
-      bill.sponsor_party
+      bill.cosponsorsD,
+      bill.cosponsorsR,
+      bill.sponsorParty
     );
-  }, [bill.cosponsors_d, bill.cosponsors_r, bill.sponsor_party]);
+  }, [bill.cosponsorsD, bill.cosponsorsR, bill.sponsorParty]);
 
   const imageUrl = useMemo(() => {
-    return getRepImage(bill.sponsor_propublica_id, ImageSize.Thumbnail);
-  }, [bill.sponsor_propublica_id]);
+    return bill.sponsor?.imageUrl;
+  }, [bill.sponsor?.imageUrl]);
 
   const title = getBillTitle(bill);
   const summary = getBillSummary(bill);

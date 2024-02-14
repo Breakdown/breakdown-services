@@ -5,26 +5,26 @@ import Text, { TextVariant } from "./Text";
 import * as Location from "expo-location";
 import Button, { ButtonType } from "./Button";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { submitLocationAddress, submitLocationLatLon } from "../data/mutations";
 import useAuth from "../hooks/useAuth";
 import TextInput from "./TextInput";
 import Divider from "./Divider";
-import { QUERY_GET_YOUR_REPS, getYourReps } from "../data/queries";
+import AppService, { GET_LOCAL_REPS } from "../data/appService";
 
 const LocationBottomSheet = () => {
   const { refetch, user } = useAuth();
   const snapPoints = useMemo(() => ["25%", "96%"], []);
   const sheetRef = useRef<BottomSheet>(null);
+  const [appService] = useState(() => new AppService());
   const [location, setLocation] = useState(null);
   const userRepsQuery = useQuery({
-    queryKey: [QUERY_GET_YOUR_REPS, user?.id],
-    queryFn: getYourReps,
+    queryKey: [GET_LOCAL_REPS, user?.id],
+    queryFn: appService.getFollowingReps,
   });
   const postLocationLatLonMutation = useMutation({
-    mutationFn: submitLocationLatLon,
+    mutationFn: appService.submitUserLocationLatLon,
   });
   const postLocationAddressMutation = useMutation({
-    mutationFn: submitLocationAddress,
+    mutationFn: appService.submitUserLocationAddress,
   });
   const onClickAllowLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();

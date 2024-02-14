@@ -212,3 +212,17 @@ export interface User {
   followingIssues?: Issue[];
   myReps?: Representative[];
 }
+
+export interface UserBillVote {
+  id: string;
+  userId: string;
+  billId: string;
+  position: boolean;
+  createdAt: string;
+  updatedAt?: string;
+
+  // Relations
+
+  user?: User;
+  bill?: Bill;
+}

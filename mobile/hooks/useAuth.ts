@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getMe, QUERY_GET_ME } from "../data/queries";
-import { User } from "../types/api";
 import { useNavigation } from "@react-navigation/native";
+import { User } from "../data/types";
+import AppService, { GET_ME } from "../data/appService";
 
 interface UseAuthExport {
   authenticated: boolean;
@@ -20,7 +20,8 @@ export default function useAuth({
   const [user, setUser] = useState<User | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const nav = useNavigation();
+  const [appService] = useState(() => new AppService());
+
   useEffect(() => {
     (async () => {
       const sessionToken = await SecureStore.getItemAsync("session");
@@ -28,8 +29,8 @@ export default function useAuth({
     })();
   }, [authenticated]);
 
-  const { data, error, refetch } = useQuery([QUERY_GET_ME], {
-    queryFn: getMe,
+  const { data, error, refetch } = useQuery([GET_ME], {
+    queryFn: appService.getMe,
     refetchInterval: 1000 * 60 * 15, // 15 minutes
     refetchOnWindowFocus: false,
     retry: false,
@@ -46,8 +47,8 @@ export default function useAuth({
   // Until the functionality is built into the app
   // logout();
   useEffect(() => {
-    if (data?.data) {
-      setUser(data.data?.data);
+    if (data) {
+      setUser(data);
       setAuthenticated(true);
     }
   }, [data]);
