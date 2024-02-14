@@ -66,7 +66,11 @@ class PropublicaService {
   }
 
   async fetchSubjectsForBill(billId: string): Promise<string[]> {
-    const url = `${this.baseUrl}/118/bills/${billId}/subjects.json`;
+    let offset = 0;
+    let subjects = [];
+    const url = `${this.baseUrl}/118/bills/${billId}/subjects.json?offset=${
+      offset ?? 0
+    }`;
     const response = await axios.get<PropublicaSubjectsResponse>(url, {
       headers: {
         "X-API-Key": this.apiKey,
@@ -74,7 +78,23 @@ class PropublicaService {
     });
     const data = response.data;
     const bill = data.results[0];
-    return bill.subjects.map((subject) => subject.name);
+    subjects = bill.subjects.map((subject) => subject.name);
+    let lastFetchedSubjectsLength = subjects.length;
+    // Loop over until get all subjects
+    while (lastFetchedSubjectsLength === 20) {
+      offset += 20;
+      const response = await axios.get<PropublicaSubjectsResponse>(url, {
+        headers: {
+          "X-API-Key": this.apiKey,
+        },
+      });
+      const data = response.data;
+      const bill = data.results[0];
+      lastFetchedSubjectsLength = bill.subjects.length;
+      subjects = subjects.concat(bill.subjects.map((subject) => subject.name));
+    }
+
+    return subjects;
   }
 
   async fetchCosponsorsForBill(billId: string): Promise<ProPublicaCosponsor[]> {
