@@ -37,11 +37,6 @@ class NotificationService {
   ): Promise<User[]> {
     // Get users interested in bill for the type
     // Join on user issues and bill issues
-    console.info(
-      `Getting users interested in notification type ${notificationType}, data: ${JSON.stringify(
-        data
-      )}`
-    );
     const billNotifTypes: NotificationType[] = [
       NotificationType.BILL_INTRODUCED,
       NotificationType.BILL_SUMMARIZED,
