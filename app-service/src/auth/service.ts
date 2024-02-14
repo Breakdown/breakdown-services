@@ -36,6 +36,12 @@ class AuthService {
       throw new BadRequestError("Invalid email");
     }
 
+    if (!validator.isStrongPassword(password)) {
+      throw new BadRequestError(
+        "Password must be at least 8 characters long and contain at least 1 lowercase, 1 uppercase, 1 number, and 1 special character"
+      );
+    }
+
     // Check if user exists
     const existingUser = await dbClient.user.findUnique({
       where: {
