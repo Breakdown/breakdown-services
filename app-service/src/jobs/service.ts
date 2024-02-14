@@ -11,6 +11,7 @@ import NotificationService, {
   NotificationType,
 } from "../notifications/service.js";
 import MeilisearchService from "../meilisearch/service.js";
+import { XMLBuilder, XMLParser } from "fast-xml-parser";
 
 enum HouseEnum {
   House,
@@ -19,6 +20,13 @@ enum HouseEnum {
   Unknown,
 }
 
+const isArray = function (a: any) {
+  return !!a && a.constructor === Array;
+};
+
+const isObject = function (a: any) {
+  return !!a && a.constructor === Object;
+};
 class JobService {
   repsSyncScheduledQueue: Queue;
   billsSyncScheduledQueue: Queue;
@@ -292,7 +300,7 @@ class JobService {
 
   async scheduledBillsSync() {
     // Fetch last 60 updated and 60 introduced bills from the API
-    const numBillsFetched = 40; // Keep in increments of 20
+    const numBillsFetched = 20; // Keep in increments of 20
     const propubService = new PropublicaService();
     // Loop through chunks in incrememts of 20 and create fetch requests
     let introducedFetches = [];
@@ -363,35 +371,6 @@ class JobService {
         })
       )
     );
-
-    // FOR TESTING OR BULK APPLYING CHILD SYNCS
-    // const allBillsForExtendedSyncs = await dbClient.bill.findMany({
-    //   where: {
-    //     propublicaId: {
-    //       not: undefined,
-    //     },
-    //   },
-    // });
-    // for (const bill of allBillsForExtendedSyncs) {
-    //   this.subjectsSyncQueue.add("subjects-sync", {
-    //     propublicaId: bill.billCode,
-    //   });
-    // }
-    // for (const bill of allBillsForExtendedSyncs) {
-    //   this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
-    //     propublicaId: bill.billCode,
-    //   });
-    // }
-    // for (const bill of allBillsForExtendedSyncs) {
-    //   this.votesSyncQueue.add("votes-for-bill", {
-    //     propublicaId: bill.billCode,
-    //   });
-    // }
-    // for (const bill of allBillsForExtendedSyncs) {
-    //   this.billFullTextQueue.add("bill-full-text", {
-    //     billCode: bill.billCode,
-    //   });
-    // }
 
     // Get all bills that have been updated
     const newlySavedBills = await dbClient.bill.findMany({
@@ -470,29 +449,58 @@ class JobService {
     // Child jobs other than notifications
 
     // Trigger subjects sync job for all bills
-    for (const bill of allBillsDeduped) {
-      this.subjectsSyncQueue.add("subjects-sync", {
-        billCode: bill.bill_slug,
-      });
-    }
-    // Trigger cosponsors sync job for all bills
-    for (const bill of allBillsDeduped) {
-      this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
-        billCode: bill.bill_slug,
-      });
-    }
-    // Trigger votes sync job for this bill
-    for (const bill of allBillsDeduped) {
-      this.votesSyncQueue.add("votes-for-bill", {
-        billCode: bill.bill_slug,
-      });
-    }
+    // for (const bill of allBillsDeduped) {
+    //   this.subjectsSyncQueue.add("subjects-sync", {
+    //     billCode: bill.bill_slug,
+    //   });
+    // }
+    // // Trigger cosponsors sync job for all bills
+    // for (const bill of allBillsDeduped) {
+    //   this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
+    //     billCode: bill.bill_slug,
+    //   });
+    // }
+    // // Trigger votes sync job for this bill
+    // for (const bill of allBillsDeduped) {
+    //   this.votesSyncQueue.add("votes-for-bill", {
+    //     billCode: bill.bill_slug,
+    //   });
+    // }
     // Trigger bill full text job for each bill
     for (const bill of allBillsDeduped) {
       this.billFullTextQueue.add("bill-full-text", {
         billCode: bill.bill_slug,
       });
     }
+
+    // FOR TESTING OR BULK APPLYING CHILD SYNCS
+    // const allBillsForExtendedSyncs = await dbClient.bill.findMany({
+    //   where: {
+    //     propublicaId: {
+    //       not: undefined,
+    //     },
+    //   },
+    // });
+    // for (const bill of allBillsForExtendedSyncs) {
+    //   this.subjectsSyncQueue.add("subjects-sync", {
+    //     propublicaId: bill.billCode,
+    //   });
+    // }
+    // for (const bill of allBillsForExtendedSyncs) {
+    //   this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
+    //     propublicaId: bill.billCode,
+    //   });
+    // }
+    // for (const bill of allBillsForExtendedSyncs) {
+    //   this.votesSyncQueue.add("votes-for-bill", {
+    //     propublicaId: bill.billCode,
+    //   });
+    // }
+    // for (const bill of allBillsForExtendedSyncs) {
+    //   this.billFullTextQueue.add("bill-full-text", {
+    //     billCode: bill.billCode,
+    //   });
+    // }
 
     return true;
   }
@@ -634,6 +642,23 @@ class JobService {
     }
   }
 
+  convertXmlNodeToText(node: any): string {
+    let fullText = "";
+    if (isArray(node)) {
+      const text = node.map((n: any) => this.convertXmlNodeToText(n)).join(" ");
+      fullText = `${fullText} ${text}`;
+    }
+    if (isObject(node)) {
+      return Object.keys(node)
+        .map((key) => this.convertXmlNodeToText(node[key]))
+        .join(" ");
+    }
+    if (typeof node === "string") {
+      fullText = `${fullText} ${node}`;
+    }
+    return `${fullText}\n`;
+  }
+
   async syncBillFullText(billCode: string) {
     // Fetch full text for bill from API
     const existingBill = await dbClient.bill.findUnique({
@@ -651,14 +676,15 @@ class JobService {
     }
 
     // If bill already has full text and has been synced in the last week
-    if (
-      existingBill?.fullText &&
-      existingBill?.jobData?.lastFullTextSync &&
-      Date.now() - existingBill?.jobData?.lastFullTextSync.getTime() <
-        7 * 24 * 60 * 60 * 1000
-    ) {
-      return true;
-    }
+    // TODO: Re-enable this after testing
+    // if (
+    //   existingBill?.fullText &&
+    //   existingBill?.jobData?.lastFullTextSync &&
+    //   Date.now() - existingBill?.jobData?.lastFullTextSync.getTime() <
+    //     7 * 24 * 60 * 60 * 1000
+    // ) {
+    //   return true;
+    // }
 
     // Fetch full text
     const billType = existingBill.billType;
@@ -685,6 +711,21 @@ class JobService {
     const xmlResponse = await axios.get(billXmlUrl);
     const xmlData = xmlResponse.data;
     const fullText = xmlData;
+
+    const parser = new XMLParser();
+    const jObj = parser.parse(xmlData);
+
+    const legisBody = jObj["bill"]?.["legis-body"];
+
+    for (const section of legisBody?.["section"]) {
+      let sectionText = "";
+      for (const sectionObjKey of Object.keys(section)) {
+        const value = section[sectionObjKey];
+        const text = this.convertXmlNodeToText(value);
+        sectionText = `${sectionText}\n${text}`;
+      }
+    }
+
     if (fullText) {
       // Upsert full text
       await dbClient.billFullText.upsert({
