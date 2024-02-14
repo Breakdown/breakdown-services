@@ -15,7 +15,7 @@ class AiService {
 
   async getBillSummary(id: string) {
     const basePrompt =
-      "The following XML text is a Bill active in the House or Senate in the United States. Please provide a succinct summary of the consequences of this bill passing or failing in a vote. Target audience for this summary is the average American. Respond in Markdown.";
+      "The following text is a Bill active in the House or Senate in the United States. Please provide a succinct summary of the consequences of this bill passing or failing in a vote. Target audience for this summary is the average American. Respond in Markdown.";
 
     const billFullText = await dbClient.billFullText.findUnique({
       where: {
