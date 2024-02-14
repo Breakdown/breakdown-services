@@ -54,6 +54,7 @@ export interface Bill {
   representativeVotes?: RepresentativeVote[];
   fullText?: BillFullText;
   votes?: BillVote[];
+  userBillVotes?: UserBillVote[];
 }
 
 export interface Issue {
@@ -211,6 +212,7 @@ export interface User {
   followingReps?: Representative[];
   followingIssues?: Issue[];
   myReps?: Representative[];
+  myBillVotes?: UserBillVote[];
 }
 
 export interface UserBillVote {
