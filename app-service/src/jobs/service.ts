@@ -352,13 +352,7 @@ class JobService {
         introducedBillPropubIdToSponsorDbIdMap[bill.bill_id] = sponsor.id;
       }
     }
-    const previousBills = await dbClient.bill.findMany({
-      where: {
-        propublicaId: {
-          in: allBillsDeduped.map((bill) => bill.bill_id),
-        },
-      },
-    });
+
     // Upsert all bills matching on propublica ID
     await dbClient.$transaction(
       allBillsDeduped.map((bill) =>
@@ -366,12 +360,25 @@ class JobService {
           where: {
             propublicaId: bill.bill_id,
           },
-          update: this.transformPropublicaBillToDbBill(bill),
-          create: this.transformPropublicaBillToDbBill(bill),
+          update: {
+            ...this.transformPropublicaBillToDbBill(bill),
+            sponsorId: introducedBillPropubIdToSponsorDbIdMap[bill.bill_id],
+          },
+          create: {
+            ...this.transformPropublicaBillToDbBill(bill),
+            sponsorId: introducedBillPropubIdToSponsorDbIdMap[bill.bill_id],
+          },
         })
       )
     );
 
+    const previousBills = await dbClient.bill.findMany({
+      where: {
+        propublicaId: {
+          in: allBillsDeduped.map((bill) => bill.bill_id),
+        },
+      },
+    });
     // Get all bills that have been updated
     const newlySavedBills = await dbClient.bill.findMany({
       where: {
@@ -710,13 +717,14 @@ class JobService {
     // Second option: https://www.govinfo.gov/content/pkg/BILLS-116hr502eh/xml/BILLS-116hr502eh.xml
     const xmlResponse = await axios.get(billXmlUrl);
     const xmlData = xmlResponse.data;
-    const fullText = xmlData;
 
+    // Parse XML into text
     const parser = new XMLParser();
     const jObj = parser.parse(xmlData);
 
     const legisBody = jObj["bill"]?.["legis-body"];
 
+    let fullText = "";
     for (const section of legisBody?.["section"]) {
       let sectionText = "";
       for (const sectionObjKey of Object.keys(section)) {
@@ -724,6 +732,7 @@ class JobService {
         const text = this.convertXmlNodeToText(value);
         sectionText = `${sectionText}\n${text}`;
       }
+      fullText = `${fullText}\n${sectionText}`;
     }
 
     if (fullText) {
@@ -752,10 +761,15 @@ class JobService {
           billId: existingBill.id,
         },
       });
-      // Queue summary sync for bill
-      this.billAiSummaryQueue.add("bill-ai-summary", {
-        billId: existingBill.id,
-      });
+
+      if (existingBill.fullText?.fullText === fullText) {
+        return true;
+      } else {
+        // Queue AI summary sync for bill
+        this.billAiSummaryQueue.add("bill-ai-summary", {
+          billId: existingBill.id,
+        });
+      }
     }
 
     return true;
