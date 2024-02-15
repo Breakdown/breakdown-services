@@ -95,8 +95,8 @@ class JobService {
     // Repeat every 12 hours at 06:00 and 18:00
     this.billsSyncScheduledQueue.add(
       "bills-sync-scheduled",
-      {}
-      // { repeat: { pattern: "0 6,18 * * *" } }
+      {},
+      { repeat: { pattern: "0 6,18 * * *" } }
     );
   }
 
@@ -449,23 +449,23 @@ class JobService {
     // Child jobs other than notifications
 
     // Trigger subjects sync job for all bills
-    // for (const bill of allBillsDeduped) {
-    //   this.subjectsSyncQueue.add("subjects-sync", {
-    //     billCode: bill.bill_slug,
-    //   });
-    // }
-    // // Trigger cosponsors sync job for all bills
-    // for (const bill of allBillsDeduped) {
-    //   this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
-    //     billCode: bill.bill_slug,
-    //   });
-    // }
-    // // Trigger votes sync job for this bill
-    // for (const bill of allBillsDeduped) {
-    //   this.votesSyncQueue.add("votes-for-bill", {
-    //     billCode: bill.bill_slug,
-    //   });
-    // }
+    for (const bill of allBillsDeduped) {
+      this.subjectsSyncQueue.add("subjects-sync", {
+        billCode: bill.bill_slug,
+      });
+    }
+    // Trigger cosponsors sync job for all bills
+    for (const bill of allBillsDeduped) {
+      this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
+        billCode: bill.bill_slug,
+      });
+    }
+    // Trigger votes sync job for this bill
+    for (const bill of allBillsDeduped) {
+      this.votesSyncQueue.add("votes-for-bill", {
+        billCode: bill.bill_slug,
+      });
+    }
     // Trigger bill full text job for each bill
     for (const bill of allBillsDeduped) {
       this.billFullTextQueue.add("bill-full-text", {
@@ -772,6 +772,11 @@ class JobService {
       },
       data: {
         aiSummary: summary,
+        jobData: {
+          update: {
+            lastSummarySync: new Date(),
+          },
+        },
       },
     });
   }
