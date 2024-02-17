@@ -46,6 +46,10 @@ interface GenericSuccessBoolResponse {
   };
 }
 
+interface AppServiceResponse<T> {
+  data: T;
+}
+
 class AppService {
   apiUrl: string;
   sessionCookie: string | null = null;
@@ -184,14 +188,18 @@ class AppService {
   // Bills Module
 
   // Get Bill by ID
-  async getBillById({ id }: { id: string }): Promise<Bill> {
+  async getBillById({ id }: { id: string }): Promise<AppServiceResponse<Bill>> {
     return this.fetch({
       url: `/bills/${id}`,
       method: "GET",
     });
   }
   // Get bill sponsor by bill ID
-  async getBillSponsor({ id }: { id: string }): Promise<Representative> {
+  async getBillSponsor({
+    id,
+  }: {
+    id: string;
+  }): Promise<AppServiceResponse<Representative>> {
     return this.fetch({
       url: `/bills/${id}/sponsor`,
       method: "GET",
@@ -223,7 +231,7 @@ class AppService {
     });
   }
   // Get following bills
-  async getFollowingBills(): Promise<Bill[]> {
+  async getFollowingBills(): Promise<AppServiceResponse<Bill[]>> {
     return this.fetch({
       url: `/bills/following`,
       method: "GET",
@@ -233,28 +241,36 @@ class AppService {
   // Issues Module
 
   // Get issues
-  async getIssues(): Promise<Issue[]> {
+  async getIssues(): Promise<AppServiceResponse<Issue[]>> {
     return this.fetch({
       url: "/issues",
       method: "GET",
     });
   }
   // Get issue by ID
-  async getIssueById({ id }: { id: string }): Promise<Issue> {
+  async getIssueById({
+    id,
+  }: {
+    id: string;
+  }): Promise<AppServiceResponse<Issue>> {
     return this.fetch({
       url: `/issues/${id}`,
       method: "GET",
     });
   }
   // Get bills for issue by ID
-  async getBillsForIssueId({ id }: { id: string }): Promise<Bill[]> {
+  async getBillsForIssueId({
+    id,
+  }: {
+    id: string;
+  }): Promise<AppServiceResponse<Bill[]>> {
     return this.fetch({
       url: `/issues/${id}/bills`,
       method: "GET",
     });
   }
   // Get following issues
-  async getFollowingIssues(): Promise<Issue[]> {
+  async getFollowingIssues(): Promise<AppServiceResponse<Issue[]>> {
     return this.fetch({
       url: "/issues/following",
       method: "GET",
@@ -293,35 +309,55 @@ class AppService {
   // Reps Module
 
   // Get rep by ID
-  async getRepById({ id }: { id: string }): Promise<Representative> {
+  async getRepById({
+    id,
+  }: {
+    id: string;
+  }): Promise<AppServiceResponse<Representative>> {
     return this.fetch({
       url: `/reps/${id}`,
       method: "GET",
     });
   }
   // Get rep stats by ID
-  async getRepStatsById({ id }: { id: string }): Promise<RepresentativeStats> {
+  async getRepStatsById({
+    id,
+  }: {
+    id: string;
+  }): Promise<AppServiceResponse<RepresentativeStats>> {
     return this.fetch({
       url: `/reps/${id}/stats`,
       method: "GET",
     });
   }
   // Get rep votes by ID
-  async getRepVotesById({ id }: { id: string }): Promise<RepresentativeVote[]> {
+  async getRepVotesById({
+    id,
+  }: {
+    id: string;
+  }): Promise<AppServiceResponse<RepresentativeVote[]>> {
     return this.fetch({
       url: `/reps/${id}/votes`,
       method: "GET",
     });
   }
   // Get rep bills sponsored by ID
-  async getRepBillsSponsored({ id }: { id: string }): Promise<Bill[]> {
+  async getRepBillsSponsored({
+    id,
+  }: {
+    id: string;
+  }): Promise<AppServiceResponse<Bill[]>> {
     return this.fetch({
       url: `/reps/${id}/bills/sponsored`,
       method: "GET",
     });
   }
   // Get rep bills cosponsored by ID
-  async getRepBillsCosponsored({ id }: { id: string }): Promise<Bill[]> {
+  async getRepBillsCosponsored({
+    id,
+  }: {
+    id: string;
+  }): Promise<AppServiceResponse<Bill[]>> {
     return this.fetch({
       url: `/reps/${id}/bills/cosponsored`,
       method: "GET",
@@ -342,14 +378,14 @@ class AppService {
     });
   }
   // Get following reps
-  async getFollowingReps(): Promise<Representative[]> {
+  async getFollowingReps(): Promise<AppServiceResponse<Representative[]>> {
     return this.fetch({
       url: "/reps/following",
       method: "GET",
     });
   }
   // Get local reps
-  async getLocalReps(): Promise<Representative[]> {
+  async getLocalReps(): Promise<AppServiceResponse<Representative[]>> {
     return this.fetch({
       url: "/reps/local",
       method: "GET",
@@ -362,7 +398,7 @@ class AppService {
   }: {
     id: string;
     billId: string;
-  }): Promise<RepresentativeVote | null> {
+  }): Promise<AppServiceResponse<RepresentativeVote | null>> {
     return this.fetch({
       url: `/reps/${id}/bills/${billId}/vote`,
       method: "GET",
@@ -372,14 +408,14 @@ class AppService {
   // Users Module
 
   // Get me
-  async getMe(): Promise<User> {
+  async getMe(): Promise<AppServiceResponse<User>> {
     return this.fetch({
       url: "/users/me",
       method: "GET",
     });
   }
   // Patch me
-  async patchMe({ name }: { name: string }): Promise<User> {
+  async patchMe({ name }: { name: string }): Promise<AppServiceResponse<User>> {
     return this.fetch({
       url: "/users/me",
       method: "PATCH",
@@ -396,7 +432,7 @@ class AppService {
   }: {
     billId: string;
     position: boolean;
-  }): Promise<UserBillVote> {
+  }): Promise<AppServiceResponse<UserBillVote>> {
     return this.fetch({
       url: `/votes/${billId}`,
       method: "POST",
@@ -405,7 +441,11 @@ class AppService {
   }
 
   // Get my vote on bill
-  async getMyVoteOnBill({ billId }: { billId: string }): Promise<UserBillVote> {
+  async getMyVoteOnBill({
+    billId,
+  }: {
+    billId: string;
+  }): Promise<AppServiceResponse<UserBillVote>> {
     return this.fetch({
       url: `/votes/${billId}/me`,
       method: "GET",

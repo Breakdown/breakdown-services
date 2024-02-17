@@ -721,9 +721,7 @@ class JobService {
     // Parse XML into text
     const parser = new XMLParser();
     const jObj = parser.parse(xmlData);
-
     const legisBody = jObj["bill"]?.["legis-body"];
-
     let fullText = "";
     for (const section of legisBody?.["section"]) {
       let sectionText = "";
