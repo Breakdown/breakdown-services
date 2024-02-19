@@ -353,6 +353,13 @@ class JobService {
       }
     }
 
+    const previousBills = await dbClient.bill.findMany({
+      where: {
+        propublicaId: {
+          in: allBillsDeduped.map((bill) => bill.bill_id),
+        },
+      },
+    });
     // Upsert all bills matching on propublica ID
     await dbClient.$transaction(
       allBillsDeduped.map((bill) =>
@@ -371,14 +378,6 @@ class JobService {
         })
       )
     );
-
-    const previousBills = await dbClient.bill.findMany({
-      where: {
-        propublicaId: {
-          in: allBillsDeduped.map((bill) => bill.bill_id),
-        },
-      },
-    });
     // Get all bills that have been updated
     const newlySavedBills = await dbClient.bill.findMany({
       where: {
