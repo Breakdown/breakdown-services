@@ -6,6 +6,7 @@ import router from "./router.js";
 import {
   errorHandler,
   errorPassthrough,
+  getDeviceId,
   headers,
   morganLogger,
   sessionLayer,
@@ -37,6 +38,8 @@ app.get(
   errorPassthrough((_: Request, res: Response) => res.sendStatus(404))
 );
 
+// DeviceId mapper
+app.use(getDeviceId);
 // Fallback error handler
 app.use(errorHandler);
 

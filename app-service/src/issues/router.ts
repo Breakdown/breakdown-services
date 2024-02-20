@@ -25,7 +25,7 @@ router.get(
   "/:id",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
+  // errorPassthrough(requireAuth),
   errorPassthrough(async (req: Request, res: Response) => {
     const { id } = req.params;
     const issuesService = new IssuesService();
@@ -40,7 +40,7 @@ router.get(
   "/:id/bills",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
+  // errorPassthrough(requireAuth),
   errorPassthrough(async (req: Request, res: Response) => {
     const { id } = req.params;
     const issuesService = new IssuesService();

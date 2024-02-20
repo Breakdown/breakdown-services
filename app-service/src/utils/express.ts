@@ -12,7 +12,6 @@ import {
 import { Redis } from "ioredis";
 import morgan from "morgan";
 
-
 // Base server headers
 export const headers = (req: Request, res: Response, next: NextFunction) => {
   res.header(
@@ -58,18 +57,26 @@ export const errorPassthrough =
     }
   };
 
-export const requireAuth = errorPassthrough(
-  (req: Request, _: Response, next: NextFunction) => {
-    try {
-      if (!req.session?.userId) {
-        throw new UnauthorizedError("Not authorized");
-      }
-      next();
-    } catch (err) {
-      next(err);
+export const requireAuth = (req: Request, _: Response, next: NextFunction) => {
+  try {
+    if (!req.session?.userId) {
+      throw new UnauthorizedError("Not authorized");
     }
+    next();
+  } catch (err) {
+    next(err);
   }
-);
+};
+
+export const getDeviceId = (req: Request, _: Response, next: NextFunction) => {
+  const deviceId = req.headers["X-Device-Id"] || "";
+  // Set on request object
+  if (typeof deviceId === "string" && deviceId.length > 0) {
+    req.deviceId = deviceId;
+  }
+
+  next();
+};
 
 // Error handler
 export const errorHandler = (
@@ -125,6 +132,14 @@ export const sessionLayer = () =>
 declare module "express-session" {
   interface SessionData {
     userId: string;
+  }
+}
+
+declare global {
+  namespace Express {
+    export interface Request {
+      deviceId?: string;
+    }
   }
 }
 

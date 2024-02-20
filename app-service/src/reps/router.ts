@@ -13,7 +13,7 @@ router.get(
   "/:id",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
+  // errorPassthrough(requireAuth),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const rep = await representativesService.getRepById(req.params.id);
@@ -29,7 +29,7 @@ router.get(
   "/:id/stats",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
+  // errorPassthrough(requireAuth),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const response = await representativesService.getRepStatsById(

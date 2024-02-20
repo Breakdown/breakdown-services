@@ -18,6 +18,7 @@ interface BaseFetchOptions {
   method?: "GET" | "POST" | "PATCH";
   headers?: { [key: string]: string };
   body?: any;
+  deviceId?: string;
 }
 
 // Query Constants
@@ -70,7 +71,13 @@ class AppService {
     this.sessionCookie = await SecureStore.getItemAsync("session");
   }
 
-  async fetch<T>({ url, method, headers, body }: BaseFetchOptions): Promise<T> {
+  async fetch<T>({
+    url,
+    method,
+    headers,
+    body,
+    deviceId,
+  }: BaseFetchOptions): Promise<T> {
     try {
       // Get cookie in async storage
       // If we're doing an auth request, don't include the cookie - no need to fetch
@@ -90,11 +97,17 @@ class AppService {
         );
       })();
 
+      if (!deviceId && !cookieInAsyncStorage) {
+        const newDeviceId = await getDeviceId();
+        deviceId = newDeviceId;
+      }
+
       const response = await axios(`${this.apiUrl}${url}`, {
         method,
         headers: {
           "Content-Type": "application/json",
           ...(cookieInAsyncStorage && { Cookie: cookieInAsyncStorage }),
+          ...(deviceId && { "X-Device-Id": deviceId }),
           ...headers,
         },
         data: JSON.stringify(body),
@@ -143,38 +156,34 @@ class AppService {
   }
   // SMS Signin
   async smsSignin({ phone }: { phone: string }) {
-    const deviceId = await getDeviceId();
     return this.fetch<GenericSuccessBoolResponse>({
       url: "/auth/sms/signin",
       method: "POST",
-      body: { phone, deviceId },
+      body: { phone },
     });
   }
   // SMS Signup
   async smsSignup({ phone }: { phone: string }) {
-    const deviceId = await getDeviceId();
     return this.fetch<GenericSuccessBoolResponse>({
       url: "/auth/sms/signup",
       method: "POST",
-      body: { phone, deviceId },
+      body: { phone },
     });
   }
   // SMS Signin Verify
   async smsSignupVerify({ code }: { code: string }) {
-    const deviceId = await getDeviceId();
     return this.fetch<GenericSuccessBoolResponse>({
       url: "/auth/sms/signup/verify",
       method: "POST",
-      body: { deviceId, code },
+      body: { code },
     });
   }
   // SMS Signup Verify
   async smsSigninVerify({ code }: { code: string }) {
-    const deviceId = await getDeviceId();
     return this.fetch<GenericSuccessBoolResponse>({
       url: "/auth/sms/signin/verify",
       method: "POST",
-      body: { deviceId, code },
+      body: { code },
     });
   }
   // Signout
