@@ -1,5 +1,9 @@
 # breakdown-services
 
+## To view Rust version of app-service:
+
+Check out [this commit](https://github.com/Breakdown/breakdown-services/tree/de6c2596133b0d2589acfb8b16f8988cf5f7fca0)
+
 ## Migrations
 
 To add a new migration:
