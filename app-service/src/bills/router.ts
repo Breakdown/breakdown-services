@@ -10,6 +10,22 @@ import BillsService from "./service.js";
 const router = Router();
 
 router.get(
+  "/me",
+  errorPassthrough(requireAuth),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const billsService = new BillsService();
+    const bills = await billsService.getBillsForUser(
+      req.session.userId as string
+    );
+    res.status(200).send({
+      data: {
+        bills,
+      },
+    });
+  })
+);
+
+router.get(
   "/:id",
   [param("id").exists()],
   // errorPassthrough(handleValidationErrors),

@@ -1,5 +1,6 @@
 import { Issue, User } from "@prisma/client";
 import dbClient from "../utils/prisma.js";
+import BillsService from "../bills/service.js";
 
 export enum NotificationType {
   BILL_INTRODUCED,
@@ -45,94 +46,8 @@ class NotificationService {
       NotificationType.BILL_VOTED_ON,
     ];
     if (billNotifTypes.includes(notificationType)) {
-      const billWithIssues = await dbClient.bill.findUnique({
-        where: {
-          id: data?.billId,
-        },
-        include: {
-          primaryIssue: true,
-          issues: true,
-        },
-      });
-      const users = dbClient.user.findMany({
-        where: {
-          OR: [
-            // User's representatives (matching on state and district) have sponsored or cosponsored the bill
-            {
-              myReps: {
-                some: {
-                  OR: [
-                    {
-                      sponsoredBills: {
-                        some: {
-                          id: data?.billId,
-                        },
-                      },
-                    },
-                    {
-                      cosponsoredBills: {
-                        some: {
-                          id: data?.billId,
-                        },
-                      },
-                    },
-                  ],
-                },
-              },
-            },
-            // User's following representatives have sponsored or cosponsored the bill
-            {
-              followingReps: {
-                some: {
-                  OR: [
-                    {
-                      sponsoredBills: {
-                        some: {
-                          id: data?.billId,
-                        },
-                      },
-                    },
-                    {
-                      cosponsoredBills: {
-                        some: {
-                          id: data?.billId,
-                        },
-                      },
-                    },
-                  ],
-                },
-              },
-            },
-            // User's following issues match the bill's primary issue or any of its issues
-            {
-              followingIssues: {
-                some: {
-                  OR: [
-                    {
-                      id: billWithIssues?.primaryIssue?.id,
-                    },
-                    {
-                      id: {
-                        in: billWithIssues?.issues.map(
-                          (issue: Issue) => issue.id
-                        ),
-                      },
-                    },
-                  ],
-                },
-              },
-            },
-            // User is following the bill
-            {
-              followingBills: {
-                some: {
-                  id: data?.billId,
-                },
-              },
-            },
-          ],
-        },
-      });
+      const billsService = new BillsService();
+      const users = billsService.getUsersInterestedInBill(data.billId);
       return users;
     }
     return [];

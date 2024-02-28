@@ -1,9 +1,9 @@
 import dbClient from "../utils/prisma.js";
 import InternalError from "../utils/errors/InternalError.js";
 import axios from "axios";
+import UsersService from "../users/service.js";
 
 const GEOCODIO_BASE_API_URI = "https://api.geocod.io/v1.7/";
-
 class LocationService {
   geocodioApiKey: string;
   constructor() {
@@ -79,6 +79,16 @@ class LocationService {
         address: formattedAddress,
       },
     });
+    // Update user's myReps
+    const userService = new UsersService(userId);
+    await userService.updateUserLocationAndReps({
+      district,
+      state,
+      formattedAddress,
+      latitude: lat,
+      longitude: lon,
+    });
+
     return;
   }
 
@@ -90,16 +100,13 @@ class LocationService {
     const locationData = await this.getDistrictAndStateFromAddress(address);
     const { district, state, formattedAddress } = locationData;
     // Update user with district and state
-    await dbClient.userLocationData.update({
-      where: {
-        userId,
-      },
-      data: {
-        district,
-        state,
-        address: formattedAddress,
-      },
+    const userService = new UsersService(userId);
+    await userService.updateUserLocationAndReps({
+      district,
+      state,
+      formattedAddress,
     });
+
     return;
   }
 }

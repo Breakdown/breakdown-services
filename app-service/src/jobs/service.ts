@@ -683,14 +683,14 @@ class JobService {
 
     // If bill already has full text and has been synced in the last week
     // TODO: Re-enable this after testing
-    // if (
-    //   existingBill?.fullText &&
-    //   existingBill?.jobData?.lastFullTextSync &&
-    //   Date.now() - existingBill?.jobData?.lastFullTextSync.getTime() <
-    //     7 * 24 * 60 * 60 * 1000
-    // ) {
-    //   return true;
-    // }
+    if (
+      existingBill?.fullText &&
+      existingBill?.jobData?.lastFullTextSync &&
+      Date.now() - existingBill?.jobData?.lastFullTextSync.getTime() <
+        7 * 24 * 60 * 60 * 1000
+    ) {
+      return true;
+    }
 
     // Fetch full text
     const billType = existingBill.billType;
