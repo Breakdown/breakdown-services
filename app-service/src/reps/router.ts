@@ -178,7 +178,7 @@ router.get(
 
 router.get(
   "/featured",
-  errorPassthrough(async (req: Request, res: Response) => {
+  errorPassthrough(async (_: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const reps = await representativesService.getFeaturedReps();
     res.status(200).send({
