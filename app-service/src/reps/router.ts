@@ -176,4 +176,17 @@ router.get(
   })
 );
 
+router.get(
+  "/featured",
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    const reps = await representativesService.getFeaturedReps();
+    res.status(200).send({
+      data: {
+        representatives: reps,
+      },
+    });
+  })
+);
+
 export default router;

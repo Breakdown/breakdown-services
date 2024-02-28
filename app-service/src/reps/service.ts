@@ -163,6 +163,67 @@ class RepresentativesService {
     });
     return dbResponse;
   }
+
+  async getFeaturedReps(): Promise<Representative[] | null> {
+    // TODO: Caching
+    const reps = await dbClient.representative.findMany({
+      where: {
+        OR: [
+          // Sponsored a bill in the past month
+          {
+            sponsoredBills: {
+              some: {
+                introducedDate: {
+                  gte: new Date(new Date().getTime() - 2.628e9),
+                },
+              },
+            },
+          },
+          // Cosponsored a bill in the past month
+          {
+            cosponsoredBills: {
+              some: {
+                introducedDate: {
+                  gte: new Date(new Date().getTime() - 2.628e9),
+                },
+              },
+            },
+          },
+          // Has a bill sponsored with an upcoming vote in the next week
+          {
+            sponsoredBills: {
+              some: {
+                votes: {
+                  some: {
+                    dateTime: {
+                      gte: new Date(),
+                      lte: new Date(new Date().getTime() + 6.048e8),
+                    },
+                  },
+                },
+              },
+            },
+          },
+          // Has a bill cosponsored with an upcoming vote in the next week
+          {
+            cosponsoredBills: {
+              some: {
+                votes: {
+                  some: {
+                    dateTime: {
+                      gte: new Date(),
+                      lte: new Date(new Date().getTime() + 6.048e8),
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+    return reps;
+  }
 }
 
 export default RepresentativesService;
