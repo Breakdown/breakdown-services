@@ -12,7 +12,7 @@ import {
 } from "./errors/index.js";
 import { Redis } from "ioredis";
 import morgan from "morgan";
-import CachingService from "../caching/service.js";
+import CacheService from "../cache/service.js";
 
 // Base server headers
 export const headers = (req: Request, res: Response, next: NextFunction) => {
@@ -81,7 +81,7 @@ export const cacheGenericResponse = async (
   const requestKey = `${req.method}-${req.originalUrl}`;
   const hashedKey = await bcrypt.hash(requestKey, 10);
   // Cache response
-  const cacheService = new CachingService();
+  const cacheService = new CacheService();
   return await cacheService.set(hashedKey, JSON.stringify(data));
 };
 
@@ -93,7 +93,7 @@ export const cacheUserSpecificResponse = async (
   const requestKey = `${req.method}-${req.originalUrl}-${userId}`;
   const hashedKey = await bcrypt.hash(requestKey, 10);
   // Cache response
-  const cacheService = new CachingService();
+  const cacheService = new CacheService();
   return await cacheService.set(hashedKey, JSON.stringify(data));
 };
 
@@ -105,7 +105,7 @@ export const genericCachedRequest = async (
   const requestKey = `${req.method}-${req.originalUrl}`;
   const hashedKey = await bcrypt.hash(requestKey, 10);
   // Get from cache
-  const cacheService = new CachingService();
+  const cacheService = new CacheService();
   const cachedResponse = await cacheService.getJson(hashedKey);
   if (cachedResponse) {
     return res.status(200).send(cachedResponse);
@@ -121,7 +121,7 @@ export const userSpecificCachedRequest = async (
   const requestKey = `${req.method}-${req.originalUrl}-${req.session.userId}`;
   const hashedKey = bcrypt.hashSync(requestKey, 10);
   // Get from cache
-  const cacheService = new CachingService();
+  const cacheService = new CacheService();
   const cachedResponse = cacheService.getJson(hashedKey);
   if (cachedResponse) {
     return res.status(200).send(cachedResponse);

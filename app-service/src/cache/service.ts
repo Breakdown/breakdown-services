@@ -1,7 +1,7 @@
 import { Redis } from "ioredis";
 import { redis } from "../utils/redis.js";
 
-class CachingService {
+class CacheService {
   redis: Redis;
 
   constructor() {
@@ -30,4 +30,4 @@ class CachingService {
   }
 }
 
-export default CachingService;
+export default CacheService;
