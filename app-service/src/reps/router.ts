@@ -1,9 +1,13 @@
 import { Router, Request, Response } from "express";
 import { body, param } from "express-validator";
 import {
+  cacheGenericResponse,
+  cacheUserSpecificResponse,
   errorPassthrough,
+  genericCachedRequest,
   handleValidationErrors,
   requireAuth,
+  userSpecificCachedRequest,
 } from "../utils/express.js";
 import RepresentativesService from "./service.js";
 
@@ -14,14 +18,17 @@ router.get(
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
   // errorPassthrough(requireAuth),
+  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const rep = await representativesService.getRepById(req.params.id);
-    res.status(200).send({
+    const response = {
       data: {
         representative: rep,
       },
-    });
+    };
+    await cacheGenericResponse(req, response);
+    res.status(200).send(response);
   })
 );
 
@@ -30,16 +37,19 @@ router.get(
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
   // errorPassthrough(requireAuth),
+  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const response = await representativesService.getRepStatsById(
       req.params.id
     );
-    res.status(200).send({
+    const data = {
       data: {
         stats: response,
       },
-    });
+    };
+    await cacheGenericResponse(req, data);
+    res.status(200).send(data);
   })
 );
 
@@ -48,16 +58,19 @@ router.get(
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
   errorPassthrough(requireAuth),
+  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const response = await representativesService.getRepVotesById(
       req.params.id
     );
-    res.status(200).send({
+    const data = {
       data: {
         votes: response,
       },
-    });
+    };
+    await cacheGenericResponse(req, data);
+    res.status(200).send();
   })
 );
 
@@ -66,16 +79,20 @@ router.get(
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
   errorPassthrough(requireAuth),
+  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const response = await representativesService.getSponsoredBillsById(
       req.params.id
     );
-    res.status(200).send({
+
+    const data = {
       data: {
         bills: response,
       },
-    });
+    };
+    await cacheGenericResponse(req, data);
+    res.status(200).send(data);
   })
 );
 
@@ -84,16 +101,19 @@ router.get(
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
   errorPassthrough(requireAuth),
+  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const response = await representativesService.getCosponsoredBillsById(
       req.params.id
     );
-    res.status(200).send({
+    const data = {
       data: {
         bills: response,
       },
-    });
+    };
+    await cacheGenericResponse(req, data);
+    res.status(200).send(data);
   })
 );
 
@@ -128,32 +148,38 @@ router.post(
 router.get(
   "/following",
   errorPassthrough(requireAuth),
+  errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const reps = await representativesService.getFollowingReps(
       req.session.userId as string
     );
-    res.status(200).send({
+    const data = {
       data: {
         representatives: reps,
       },
-    });
+    };
+    await cacheUserSpecificResponse(req, data, req.session.userId as string);
+    res.status(200).send(data);
   })
 );
 
 router.get(
   "/local",
   errorPassthrough(requireAuth),
+  errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const reps = await representativesService.getLocalReps(
       req.session.userId as string
     );
-    res.status(200).send({
+    const data = {
       data: {
         representatives: reps,
       },
-    });
+    };
+    await cacheUserSpecificResponse(req, data, req.session.userId as string);
+    res.status(200).send(data);
   })
 );
 
@@ -162,30 +188,38 @@ router.get(
   [param("id").exists(), param("billId").exists()],
   errorPassthrough(handleValidationErrors),
   errorPassthrough(requireAuth),
+  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const vote = await representativesService.getRepVoteOnBill(
       req.params.id,
       req.params.billId
     );
-    res.status(200).send({
+
+    const data = {
       data: {
         vote,
       },
-    });
+    };
+    await cacheGenericResponse(req, data);
+    res.status(200).send(data);
   })
 );
 
 router.get(
   "/featured",
-  errorPassthrough(async (_: Request, res: Response) => {
+  errorPassthrough(genericCachedRequest),
+  errorPassthrough(async (request: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const reps = await representativesService.getFeaturedReps();
-    res.status(200).send({
+    const data = {
       data: {
         representatives: reps,
       },
-    });
+    };
+    await cacheGenericResponse(request, data);
+
+    res.status(200).send(data);
   })
 );
 
