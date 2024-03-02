@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
+import bcrypt from "bcryptjs";
 import session, { Session, SessionData } from "express-session";
 import connectRedis from "connect-redis";
 import { Result, ValidationError, validationResult } from "express-validator";
@@ -11,6 +12,7 @@ import {
 } from "./errors/index.js";
 import { Redis } from "ioredis";
 import morgan from "morgan";
+import CachingService from "../caching/service.js";
 
 // Base server headers
 export const headers = (req: Request, res: Response, next: NextFunction) => {
@@ -66,6 +68,65 @@ export const requireAuth = (req: Request, _: Response, next: NextFunction) => {
   } catch (err) {
     next(err);
   }
+};
+
+interface StructuredResponse {
+  data: any;
+}
+
+export const cacheGenericResponse = async (
+  req: Request,
+  data: StructuredResponse
+) => {
+  const requestKey = `${req.method}-${req.originalUrl}`;
+  const hashedKey = await bcrypt.hash(requestKey, 10);
+  // Cache response
+  const cacheService = new CachingService();
+  return await cacheService.set(hashedKey, JSON.stringify(data));
+};
+
+export const cacheUserSpecificResponse = async (
+  req: Request,
+  data: StructuredResponse,
+  userId: string
+) => {
+  const requestKey = `${req.method}-${req.originalUrl}-${userId}`;
+  const hashedKey = await bcrypt.hash(requestKey, 10);
+  // Cache response
+  const cacheService = new CachingService();
+  return await cacheService.set(hashedKey, JSON.stringify(data));
+};
+
+export const genericCachedRequest = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const requestKey = `${req.method}-${req.originalUrl}`;
+  const hashedKey = await bcrypt.hash(requestKey, 10);
+  // Get from cache
+  const cacheService = new CachingService();
+  const cachedResponse = await cacheService.getJson(hashedKey);
+  if (cachedResponse) {
+    return res.status(200).send(cachedResponse);
+  }
+  next();
+};
+
+export const userSpecificCachedRequest = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const requestKey = `${req.method}-${req.originalUrl}-${req.session.userId}`;
+  const hashedKey = bcrypt.hashSync(requestKey, 10);
+  // Get from cache
+  const cacheService = new CachingService();
+  const cachedResponse = cacheService.getJson(hashedKey);
+  if (cachedResponse) {
+    return res.status(200).send(cachedResponse);
+  }
+  next();
 };
 
 export const getDeviceId = (req: Request, _: Response, next: NextFunction) => {

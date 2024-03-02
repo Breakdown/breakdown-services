@@ -1,9 +1,13 @@
 import { Router, Request, Response } from "express";
 import { body, param } from "express-validator";
 import {
+  cacheGenericResponse,
+  cacheUserSpecificResponse,
   errorPassthrough,
+  genericCachedRequest,
   handleValidationErrors,
   requireAuth,
+  userSpecificCachedRequest,
 } from "../utils/express.js";
 import BillsService from "./service.js";
 
@@ -12,16 +16,23 @@ const router = Router();
 router.get(
   "/me",
   errorPassthrough(requireAuth),
+  errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
     const bills = await billsService.getBillsForUser(
       req.session.userId as string
     );
-    res.status(200).send({
+    const response = {
       data: {
         bills,
       },
-    });
+    };
+    await cacheUserSpecificResponse(
+      req,
+      response,
+      req.session.userId as string
+    );
+    res.status(200).send(response);
   })
 );
 
@@ -30,14 +41,18 @@ router.get(
   [param("id").exists()],
   // errorPassthrough(handleValidationErrors),
   // errorPassthrough(requireAuth),
+  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
     const bill = await billsService.getBillById(req.params.id);
-    res.status(200).send({
+    const response = {
       data: {
         bill,
       },
-    });
+    };
+
+    await cacheGenericResponse(req, response);
+    res.status(200).send(response);
   })
 );
 
@@ -46,14 +61,17 @@ router.get(
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
   // errorPassthrough(requireAuth),
+  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
     const sponsor = await billsService.getBillSponsor(req.params.id);
-    res.status(200).send({
+    const response = {
       data: {
         sponsor,
       },
-    });
+    };
+    await cacheGenericResponse(req, response);
+    res.status(200).send(response);
   })
 );
 
@@ -107,16 +125,23 @@ router.get(
   "/following",
   errorPassthrough(handleValidationErrors),
   errorPassthrough(requireAuth),
+  errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
     const bills = await billsService.getFollowingBills(
       req.session.userId as string
     );
-    res.status(200).send({
+    const response = {
       data: {
         bills,
       },
-    });
+    };
+    await cacheUserSpecificResponse(
+      req,
+      response,
+      req.session.userId as string
+    );
+    res.status(200).send(response);
   })
 );
 export default router;
