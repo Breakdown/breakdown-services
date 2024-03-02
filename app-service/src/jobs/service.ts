@@ -1,6 +1,6 @@
-import { Queue, ConnectionOptions, Worker } from "bullmq";
+import { Queue, Worker } from "bullmq";
 import dbClient from "../utils/prisma.js";
-import { Bill, BillVote, Prisma, Representative, User } from "@prisma/client";
+import { Bill, Prisma, User } from "@prisma/client";
 import PropublicaService from "../propublica/service.js";
 import { ProPublicaBill, PropublicaMember } from "../propublica/types.js";
 import InternalError from "../utils/errors/InternalError.js";
@@ -11,7 +11,7 @@ import NotificationService, {
   NotificationType,
 } from "../notifications/service.js";
 import MeilisearchService from "../meilisearch/service.js";
-import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { XMLParser } from "fast-xml-parser";
 
 enum HouseEnum {
   House,
@@ -27,63 +27,50 @@ const isArray = function (a: any) {
 const isObject = function (a: any) {
   return !!a && a.constructor === Object;
 };
-class JobService {
-  repsSyncScheduledQueue: Queue;
-  billsSyncScheduledQueue: Queue;
-  subjectsSyncQueue: Queue;
-  cosponsorsSyncQueue: Queue;
-  votesSyncQueue: Queue;
-  repVotesSyncQueue: Queue;
-  issuesAssociationQueue: Queue;
-  billFullTextQueue: Queue;
-  billAiSummaryQueue: Queue;
-  notificationQueue: Queue;
-  meilisearchSyncQueue: Queue;
-  redisConnection: ConnectionOptions;
-  constructor() {
-    this.redisConnection = {
-      host: process.env.REDIS_HOST || "redis",
-      port: parseInt(process.env.REDIS_PORT || "6379"),
-    };
-    this.repsSyncScheduledQueue = new Queue("reps-sync-queue", {
-      connection: this.redisConnection,
-    });
-    this.billsSyncScheduledQueue = new Queue("bills-sync-queue", {
-      connection: this.redisConnection,
-    });
-    this.subjectsSyncQueue = new Queue("subjects-sync-queue", {
-      connection: this.redisConnection,
-    });
-    this.cosponsorsSyncQueue = new Queue("cosponsors-for-bill-queue", {
-      connection: this.redisConnection,
-    });
-    this.votesSyncQueue = new Queue("votes-for-bill-queue", {
-      connection: this.redisConnection,
-    });
-    this.repVotesSyncQueue = new Queue("votes-for-rep-queue", {
-      connection: this.redisConnection,
-    });
-    this.issuesAssociationQueue = new Queue("issues-association-queue", {
-      connection: this.redisConnection,
-    });
-    this.billFullTextQueue = new Queue("bill-full-text-queue", {
-      connection: this.redisConnection,
-    });
-    this.billAiSummaryQueue = new Queue("bill-ai-summary-queue", {
-      connection: this.redisConnection,
-    });
-    this.notificationQueue = new Queue("notification-queue", {
-      connection: this.redisConnection,
-    });
-    this.meilisearchSyncQueue = new Queue("meilisearch-sync-queue", {
-      connection: this.redisConnection,
-    });
-  }
 
+const redisConnection = {
+  host: process.env.REDIS_HOST || "redis",
+  port: parseInt(process.env.REDIS_PORT || "6379"),
+};
+
+const repsSyncScheduledQueue = new Queue("reps-sync-queue", {
+  connection: redisConnection,
+});
+const billsSyncScheduledQueue = new Queue("bills-sync-queue", {
+  connection: redisConnection,
+});
+const subjectsSyncQueue = new Queue("subjects-sync-queue", {
+  connection: redisConnection,
+});
+const cosponsorsSyncQueue = new Queue("cosponsors-for-bill-queue", {
+  connection: redisConnection,
+});
+const votesSyncQueue = new Queue("votes-for-bill-queue", {
+  connection: redisConnection,
+});
+const repVotesSyncQueue = new Queue("votes-for-rep-queue", {
+  connection: redisConnection,
+});
+const issuesAssociationQueue = new Queue("issues-association-queue", {
+  connection: redisConnection,
+});
+const billFullTextQueue = new Queue("bill-full-text-queue", {
+  connection: redisConnection,
+});
+const billAiSummaryQueue = new Queue("bill-ai-summary-queue", {
+  connection: redisConnection,
+});
+const notificationQueue = new Queue("notification-queue", {
+  connection: redisConnection,
+});
+const meilisearchSyncQueue = new Queue("meilisearch-sync-queue", {
+  connection: redisConnection,
+});
+class JobService {
   async queueRepsSyncScheduled() {
     // Add repsSync job to queue
     // Repeat every 12 hours at 03:00 and 15:00
-    this.repsSyncScheduledQueue.add(
+    repsSyncScheduledQueue.add(
       "reps-sync-scheduled",
       {},
       { repeat: { pattern: "0 3,15 * * *" } }
@@ -93,7 +80,7 @@ class JobService {
   async queueBillsSyncScheduled() {
     // Add billsSync job to queue
     // Repeat every 12 hours at 06:00 and 18:00
-    this.billsSyncScheduledQueue.add(
+    billsSyncScheduledQueue.add(
       "bills-sync-scheduled",
       {},
       { repeat: { pattern: "0 6,18 * * *" } }
@@ -103,7 +90,7 @@ class JobService {
   async queueMeilisearchSyncScheduled() {
     // Add meilisearchSync job to queue
     // Repeat every 12 hours at 09:00 and 21:00
-    this.meilisearchSyncQueue.add(
+    meilisearchSyncQueue.add(
       "global-sync-meilisearch",
       {},
       { repeat: { pattern: "0 9,21 * * *" } }
@@ -161,7 +148,7 @@ class JobService {
     );
     // Trigger bill full text job for each bill
     for (const billCode of allBillCodes) {
-      this.billFullTextQueue.add("bill-full-text", {
+      billFullTextQueue.add("bill-full-text", {
         billCode,
       });
     }
@@ -420,7 +407,7 @@ class JobService {
         if (previousBill?.summary !== bill.summary) {
           // Queue notification job for every user
           for (const user of dedupedUsers) {
-            this.notificationQueue.add("notification", {
+            notificationQueue.add("notification", {
               userId: user.id,
               notificationType: NotificationType.BILL_SUMMARY_UPDATED,
               data: {
@@ -438,7 +425,7 @@ class JobService {
         );
         if (previousBill?.lastVote !== bill.lastVote) {
           for (const user of dedupedUsers) {
-            this.notificationQueue.add("notification", {
+            notificationQueue.add("notification", {
               userId: user.id,
               notificationType: NotificationType.BILL_VOTED_ON,
               data: {
@@ -456,25 +443,25 @@ class JobService {
 
     // Trigger subjects sync job for all bills
     for (const bill of allBillsDeduped) {
-      this.subjectsSyncQueue.add("subjects-sync", {
+      subjectsSyncQueue.add("subjects-sync", {
         billCode: bill.bill_slug,
       });
     }
     // Trigger cosponsors sync job for all bills
     for (const bill of allBillsDeduped) {
-      this.cosponsorsSyncQueue.add("cosponsors-for-bill", {
+      cosponsorsSyncQueue.add("cosponsors-for-bill", {
         billCode: bill.bill_slug,
       });
     }
     // Trigger votes sync job for this bill
     for (const bill of allBillsDeduped) {
-      this.votesSyncQueue.add("votes-for-bill", {
+      votesSyncQueue.add("votes-for-bill", {
         billCode: bill.bill_slug,
       });
     }
     // Trigger bill full text job for each bill
     for (const bill of allBillsDeduped) {
-      this.billFullTextQueue.add("bill-full-text", {
+      billFullTextQueue.add("bill-full-text", {
         billCode: bill.bill_slug,
       });
     }
@@ -558,7 +545,7 @@ class JobService {
         },
       },
     });
-    this.issuesAssociationQueue.add("issues-association", {
+    issuesAssociationQueue.add("issues-association", {
       propublicaId: bill.propublicaId,
     });
     return true;
@@ -617,7 +604,7 @@ class JobService {
     });
     // Queue repVotesSync for each vote
     for (const vote of allCompleteBillVotes) {
-      this.repVotesSyncQueue.add("votes-for-rep", {
+      repVotesSyncQueue.add("votes-for-rep", {
         billVoteId: vote.id,
       });
     }
@@ -763,7 +750,7 @@ class JobService {
         return true;
       } else {
         // Queue AI summary sync for bill
-        this.billAiSummaryQueue.add("bill-ai-summary", {
+        billAiSummaryQueue.add("bill-ai-summary", {
           billId: existingBill.id,
         });
       }
@@ -925,7 +912,7 @@ class JobService {
         await this.scheduledRepsSync();
       },
       {
-        connection: this.redisConnection,
+        connection: redisConnection,
       }
     );
     // billsSync worker
@@ -935,7 +922,7 @@ class JobService {
         await this.scheduledBillsSync();
       },
       {
-        connection: this.redisConnection,
+        connection: redisConnection,
       }
     );
     // billFullText worker
@@ -945,7 +932,7 @@ class JobService {
         await this.syncBillFullText(job.data.billCode as string);
       },
       {
-        connection: this.redisConnection,
+        connection: redisConnection,
         concurrency: 3,
       }
     );
@@ -956,7 +943,7 @@ class JobService {
         await this.syncBillSummary(job.data.billId as string);
       },
       {
-        connection: this.redisConnection,
+        connection: redisConnection,
         concurrency: 3,
       }
     );
@@ -969,7 +956,7 @@ class JobService {
         }
       },
       {
-        connection: this.redisConnection,
+        connection: redisConnection,
         concurrency: 3,
       }
     );
@@ -982,7 +969,7 @@ class JobService {
         }
       },
       {
-        connection: this.redisConnection,
+        connection: redisConnection,
         concurrency: 3,
       }
     );
@@ -995,7 +982,7 @@ class JobService {
         }
       },
       {
-        connection: this.redisConnection,
+        connection: redisConnection,
         concurrency: 3,
       }
     );
@@ -1009,7 +996,7 @@ class JobService {
         }
       },
       {
-        connection: this.redisConnection,
+        connection: redisConnection,
         concurrency: 3,
       }
     );
@@ -1020,7 +1007,7 @@ class JobService {
         await this.associateBillWithIssues(job.data.propublicaId as string);
       },
       {
-        connection: this.redisConnection,
+        connection: redisConnection,
         concurrency: 3,
       }
     );
@@ -1032,7 +1019,7 @@ class JobService {
         return;
       },
       {
-        connection: this.redisConnection,
+        connection: redisConnection,
         concurrency: 10,
       }
     );
@@ -1047,7 +1034,7 @@ class JobService {
         return;
       },
       {
-        connection: this.redisConnection,
+        connection: redisConnection,
         concurrency: 10,
       }
     );
