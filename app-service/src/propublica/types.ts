@@ -179,7 +179,7 @@ export interface PropublicaBillByIdResponse
 
 // Custom response - no array of results
 
-interface ProPublicaPosition {
+export interface ProPublicaPosition {
   member_id: string;
   name: string;
   party: string;

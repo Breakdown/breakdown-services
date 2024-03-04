@@ -3,7 +3,9 @@ import InternalError from "../utils/errors/InternalError.js";
 import {
   ProPublicaBill,
   ProPublicaCosponsor,
+  ProPublicaPosition,
   PropublicaBillByIdResponse,
+  PropublicaBillVote,
   PropublicaBillsResponse,
   PropublicaCosponsorsResponse,
   PropublicaMember,
@@ -173,10 +175,9 @@ class PropublicaService {
 
   async fetchVotesForBill(billCode: string) {
     const url = `${this.baseUrl}/118/bills/${billCode}.json`;
-    const cachedResponse = await this.cacheService.getData(
-      CacheDataKeys.PROPUBLICA_FETCH_VOTES_FOR_BILL,
-      { propublicaUrl: url }
-    );
+    const cachedResponse = await this.cacheService.getData<
+      PropublicaBillVote[]
+    >(CacheDataKeys.PROPUBLICA_FETCH_VOTES_FOR_BILL, { propublicaUrl: url });
     if (cachedResponse) {
       return cachedResponse;
     }
@@ -199,10 +200,11 @@ class PropublicaService {
 
   async fetchRepVotesForBillVote(voteUri: string) {
     const url = `${voteUri}`;
-    const cachedResponse = await this.cacheService.getData(
-      CacheDataKeys.PROPUBLICA_FETCH_REP_VOTES_FOR_BILL_VOTE,
-      { propublicaUrl: url }
-    );
+    const cachedResponse = await this.cacheService.getData<
+      ProPublicaPosition[]
+    >(CacheDataKeys.PROPUBLICA_FETCH_REP_VOTES_FOR_BILL_VOTE, {
+      propublicaUrl: url,
+    });
     if (cachedResponse) {
       return cachedResponse;
     }
