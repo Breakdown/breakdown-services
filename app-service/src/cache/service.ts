@@ -17,17 +17,17 @@ export enum CacheDataKeys {
   USER_FOLLOWING_REPS, // BUSTED - Bust when user follows or unfollows a rep
   USER_FOLLOWING_BILLS, // BUSTED - Bust when user follows or unfollows a bill
   // Non-user-related
-  BILL_SPONSOR, // Bust when bill sponsor changes - job
-  BILL_COSPONSORS, // Bust when bill cosponsors change - job
-  BILLS_FOR_ISSUE, // Bust when issue changes on bill - job
-  ALL_ISSUES, // No need to bust
+  BILL_SPONSOR, // TODO: Bust when bill sponsor changes - job
+  BILL_COSPONSORS, // TODO: Bust when bill cosponsors change - job
+  BILLS_FOR_ISSUE, // TODO: Bust when issue changes on bill - job
+  ALL_ISSUES, // TODO: Bust when issue is created or deleted
   USERS_INTERESTED_IN_BILL, // BUSTED - Bust when user follows or unfollows a bill, their reps change, their following reps change, following issues change
-  REP_STATS_BY_ID, // Bust when stats are updated - job
-  REP_VOTES_BY_ID, // Bust when rep votes are updated - job
-  SPONSORED_BILLS_BY_REP_ID, // Bust when sponsor changes on bill where sponsor ID is rep ID - job
-  COSPONSORED_BILLS_BY_REP_ID, // Bust when cosponsor changes on bill where cosponsor ID is rep ID - job
-  REPS_BY_STATE_AND_DISTRICT, // Bust when new reps are elected in state and district - job
-  REP_VOTE_ON_BILL, // Bust when rep vote on bill changes - job
+  REP_STATS_BY_ID, // BUSTED - Bust when stats are updated - job
+  REP_VOTES_BY_ID, // BUSTED - Bust when rep votes are updated - job
+  SPONSORED_BILLS_BY_REP_ID, // TODO: Bust when sponsor changes on bill where sponsor ID is rep ID - job
+  COSPONSORED_BILLS_BY_REP_ID, // TODO: Bust when cosponsor changes on bill where cosponsor ID is rep ID - job
+  REPS_BY_STATE_AND_DISTRICT, // TODO: Bust when new reps are elected in state and district - job
+  REP_VOTE_ON_BILL, // BUSTED - Bust when rep vote on bill changes - job
   FEATURED_REPS, // TODO: Bust when any featured rep status changes
 }
 

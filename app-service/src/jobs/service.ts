@@ -12,6 +12,7 @@ import NotificationService, {
 } from "../notifications/service.js";
 import MeilisearchService from "../meilisearch/service.js";
 import { XMLParser } from "fast-xml-parser";
+import CacheService, { CacheDataKeys } from "../cache/service.js";
 
 enum HouseEnum {
   House,
@@ -67,6 +68,10 @@ const meilisearchSyncQueue = new Queue("meilisearch-sync-queue", {
   connection: redisConnection,
 });
 class JobService {
+  cacheService: CacheService;
+  constructor() {
+    this.cacheService = new CacheService();
+  }
   async queueRepsSyncScheduled() {
     // Add repsSync job to queue
     // Repeat every 12 hours at 03:00 and 15:00
@@ -99,6 +104,7 @@ class JobService {
 
   async queueBillFullTextsScheduled() {
     const pivotDate = new Date(Date.now() - 72 * 60 * 60 * 1000);
+    // TODO: Factor out
     const allBillsWhereNecessary = await dbClient.bill.findMany({
       where: {
         OR: [
@@ -268,6 +274,7 @@ class JobService {
       offset: 0,
     });
     const allMembers = [...houseMembers, ...senateMembers];
+    const allRepsPrev = await dbClient.representative.findMany();
     await dbClient.$transaction(
       allMembers.map((propubMember) => {
         const transformedMember =
@@ -283,6 +290,28 @@ class JobService {
         });
       })
     );
+    const allReps = await dbClient.representative.findMany();
+
+    // Bust cache for all reps where their stats have been updated
+    for (const rep of allReps) {
+      const previousRep = allRepsPrev.find(
+        (prevRep) => prevRep.propublicaId === rep.propublicaId
+      );
+      if (
+        previousRep &&
+        (previousRep.totalVotes !== rep.totalVotes ||
+          previousRep.missedVotes !== rep.missedVotes ||
+          previousRep.totalPresent !== rep.totalPresent ||
+          previousRep.missedVotesPct !== rep.missedVotesPct ||
+          previousRep.votesWithPartyPct !== rep.votesWithPartyPct ||
+          previousRep.votesAgainstPartyPct !== rep.votesAgainstPartyPct)
+      ) {
+        // Bust cache for rep stats
+        await this.cacheService.bustCache(CacheDataKeys.REP_STATS_BY_ID, {
+          representativeId: rep.id,
+        });
+      }
+    }
   }
 
   async scheduledBillsSync() {
@@ -347,6 +376,7 @@ class JobService {
         },
       },
     });
+
     // Upsert all bills matching on propublica ID
     await dbClient.$transaction(
       allBillsDeduped.map((bill) =>
@@ -798,6 +828,7 @@ class JobService {
       return true;
     }
     let upsertInputs: Prisma.RepresentativeVoteUpsertArgs[] = [];
+    let repVotesBustIds = [];
     for (const repVote of repVotes) {
       const billId = billVote?.billId;
       const representative = await dbClient.representative.findUnique({
@@ -817,6 +848,7 @@ class JobService {
         date: billVote.dateTime,
       };
       if (representative) {
+        repVotesBustIds.push(representative.id);
         upsertInputs.push({
           where: {
             unique_representative_vote: {
@@ -835,6 +867,22 @@ class JobService {
     await dbClient.$transaction(
       upsertInputs.map((input) => dbClient.representativeVote.upsert(input))
     );
+    // Bust caches
+    const cacheBustPromises = [];
+    for (const repId of repVotesBustIds) {
+      cacheBustPromises.push(
+        this.cacheService.bustCache(CacheDataKeys.REP_VOTES_BY_ID, {
+          representativeId: repId,
+        })
+      );
+      cacheBustPromises.push(
+        this.cacheService.bustCache(CacheDataKeys.REP_VOTE_ON_BILL, {
+          representativeId: repId,
+          billId: billVote.billId,
+        })
+      );
+    }
+    await Promise.all(cacheBustPromises);
   }
 
   async associateBillWithIssues(propublicaId: string) {
