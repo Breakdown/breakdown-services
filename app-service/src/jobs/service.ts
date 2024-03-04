@@ -668,13 +668,12 @@ class JobService {
       throw new InternalError(`Bill not found for bill code ${billCode}`);
     }
 
-    // If bill already has full text and has been synced in the last week
-    // TODO: Re-enable this after testing
+    // If bill already has full text and has been synced in the last 3 days
     if (
       existingBill?.fullText &&
       existingBill?.jobData?.lastFullTextSync &&
       Date.now() - existingBill?.jobData?.lastFullTextSync.getTime() <
-        7 * 24 * 60 * 60 * 1000
+        72 * 60 * 60 * 1000
     ) {
       return true;
     }

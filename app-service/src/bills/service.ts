@@ -1,8 +1,12 @@
 import { Bill, Issue, Representative, User } from "@prisma/client";
 import dbClient from "../utils/prisma.js";
+import CacheService, { CacheDataKeys } from "../cache/service.js";
 
 class BillsService {
-  constructor() {}
+  cacheService: CacheService;
+  constructor() {
+    this.cacheService = new CacheService();
+  }
 
   async getBillById(id: string): Promise<Bill | null> {
     const dbResponse = await dbClient.bill.findUnique({
@@ -14,6 +18,15 @@ class BillsService {
   }
 
   async getBillSponsor(id: string): Promise<Representative | null | undefined> {
+    const cachedResponse = await this.cacheService.getData<Representative>(
+      CacheDataKeys.BILL_SPONSOR,
+      {
+        billId: id,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const dbResponse = await dbClient.bill.findUnique({
       where: {
         id,
@@ -22,10 +35,26 @@ class BillsService {
         sponsor: true,
       },
     });
-    return dbResponse?.sponsor;
+    const sponsor = dbResponse?.sponsor;
+    if (sponsor) {
+      await this.cacheService.setData(CacheDataKeys.BILL_SPONSOR, sponsor, {
+        billId: id,
+      });
+    }
+
+    return;
   }
 
   async getBillCosponsors(id: string): Promise<Representative[] | undefined> {
+    const cachedResponse = await this.cacheService.getData<Representative[]>(
+      CacheDataKeys.BILL_COSPONSORS,
+      {
+        billId: id,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const dbResponse = await dbClient.bill.findUnique({
       where: {
         id,
@@ -34,7 +63,17 @@ class BillsService {
         cosponsors: true,
       },
     });
-    return dbResponse?.cosponsors;
+    const cosponsors = dbResponse?.cosponsors;
+    if (cosponsors) {
+      await this.cacheService.setData(
+        CacheDataKeys.BILL_COSPONSORS,
+        dbResponse.cosponsors,
+        {
+          billId: id,
+        }
+      );
+    }
+    return cosponsors;
   }
 
   async billSeenByUser(billId: string, userId: string): Promise<void> {
@@ -98,7 +137,15 @@ class BillsService {
   }
 
   async getUsersInterestedInBill(id: string): Promise<User[]> {
-    // TODO: Caching
+    const cachedResponse = await this.cacheService.getData<User[]>(
+      CacheDataKeys.USERS_INTERESTED_IN_BILL,
+      {
+        billId: id,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const billWithIssues = await dbClient.bill.findUnique({
       where: {
         id,
@@ -187,11 +234,26 @@ class BillsService {
         ],
       },
     });
+    await this.cacheService.setData(
+      CacheDataKeys.USERS_INTERESTED_IN_BILL,
+      users,
+      {
+        billId: id,
+      }
+    );
     return users;
   }
 
   async getBillsForUser(userId: string): Promise<Bill[]> {
-    // TODO: Caching
+    const cachedResponse = await this.cacheService.getData<Bill[]>(
+      CacheDataKeys.BILLS_FOR_USER,
+      {
+        userId,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const user = await dbClient.user.findUnique({
       where: {
         id: userId,
@@ -254,6 +316,9 @@ class BillsService {
           },
         ],
       },
+    });
+    await this.cacheService.setData(CacheDataKeys.BILLS_FOR_USER, bills, {
+      userId,
     });
     return bills;
   }

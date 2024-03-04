@@ -14,6 +14,8 @@ export enum CacheDataKeys {
   BILLS_FOR_USER,
   LOCAL_REPS,
   // Non-user-related
+  BILL_SPONSOR,
+  BILL_COSPONSORS,
   USERS_INTERESTED_IN_BILL,
   REP_STATS_BY_ID,
   REP_VOTES_BY_ID,
@@ -88,6 +90,10 @@ class CacheService {
       case CacheDataKeys.LOCAL_REPS:
         return this.hashKey(`local_reps:${userId}`);
       // Non-user-related
+      case CacheDataKeys.BILL_SPONSOR:
+        return this.hashKey(`bill_sponsor:${billId}`);
+      case CacheDataKeys.BILL_COSPONSORS:
+        return this.hashKey(`bill_cosponsors:${billId}`);
       case CacheDataKeys.USERS_INTERESTED_IN_BILL:
         return this.hashKey(`users_interested_in_bill:${billId}`);
       case CacheDataKeys.REP_STATS_BY_ID:
@@ -130,6 +136,10 @@ class CacheService {
       case CacheDataKeys.LOCAL_REPS:
         return 60 * 60 * 24 * 7; // 1 week
       // Non-user-related
+      case CacheDataKeys.BILL_SPONSOR:
+        return 3600;
+      case CacheDataKeys.BILL_COSPONSORS:
+        return 3600;
       case CacheDataKeys.USERS_INTERESTED_IN_BILL:
         return 3600;
       case CacheDataKeys.REP_STATS_BY_ID:
