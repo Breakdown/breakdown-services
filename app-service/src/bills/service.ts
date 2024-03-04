@@ -105,6 +105,9 @@ class BillsService {
         },
       },
     });
+    await this.cacheService.bustCache(CacheDataKeys.USER_FOLLOWING_BILLS, {
+      userId,
+    });
     return;
   }
 
@@ -120,6 +123,9 @@ class BillsService {
           },
         },
       },
+    });
+    await this.cacheService.bustCache(CacheDataKeys.USER_FOLLOWING_BILLS, {
+      userId,
     });
     return;
   }

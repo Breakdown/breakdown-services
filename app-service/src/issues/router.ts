@@ -60,7 +60,7 @@ router.get(
       data: bills,
     };
     await cacheGenericResponse(req, response);
-    res.status(200).send();
+    res.status(200).send(response);
   })
 );
 
@@ -84,5 +84,27 @@ router.get(
     res.status(200).send(response);
   })
 );
+
+router.post(":id/follow", errorPassthrough(requireAuth), async (req, res) => {
+  const { id } = req.params;
+  const issuesService = new IssuesService();
+  await issuesService.followIssue(id, req.session.userId as string);
+  res.status(200).send({
+    data: {
+      success: true,
+    },
+  });
+});
+
+router.post(":id/unfollow", errorPassthrough(requireAuth), async (req, res) => {
+  const { id } = req.params;
+  const issuesService = new IssuesService();
+  await issuesService.unfollowIssue(id, req.session.userId as string);
+  res.status(200).send({
+    data: {
+      success: true,
+    },
+  });
+});
 
 export default router;

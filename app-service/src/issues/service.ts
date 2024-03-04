@@ -105,6 +105,46 @@ class IssuesService {
     });
     return dbResponse;
   }
+
+  async followIssue(issueId: string, userId: string): Promise<Issue[]> {
+    await dbClient.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        followingIssues: {
+          connect: {
+            id: issueId,
+          },
+        },
+      },
+    });
+    await this.cacheService.bustCache(CacheDataKeys.USER_FOLLOWING_ISSUES, {
+      userId,
+    });
+    const userIssues = await this.getFollowingIssuesFromUserId(userId);
+    return userIssues || [];
+  }
+
+  async unfollowIssue(issueId: string, userId: string): Promise<Issue[]> {
+    await dbClient.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        followingIssues: {
+          disconnect: {
+            id: issueId,
+          },
+        },
+      },
+    });
+    await this.cacheService.bustCache(CacheDataKeys.USER_FOLLOWING_ISSUES, {
+      userId,
+    });
+    const userIssues = await this.getFollowingIssuesFromUserId(userId);
+    return userIssues || [];
+  }
 }
 
 export default IssuesService;

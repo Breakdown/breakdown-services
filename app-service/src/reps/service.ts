@@ -144,6 +144,9 @@ class RepresentativesService {
         },
       },
     });
+    await this.cacheService.bustCache(CacheDataKeys.USER_FOLLOWING_REPS, {
+      userId,
+    });
   }
 
   async unfollowRep(repId: string, userId: string): Promise<void> {
@@ -158,6 +161,9 @@ class RepresentativesService {
           },
         },
       },
+    });
+    await this.cacheService.bustCache(CacheDataKeys.USER_FOLLOWING_REPS, {
+      userId,
     });
   }
 
