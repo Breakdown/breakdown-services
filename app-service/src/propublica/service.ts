@@ -3,7 +3,9 @@ import InternalError from "../utils/errors/InternalError.js";
 import {
   ProPublicaBill,
   ProPublicaCosponsor,
+  ProPublicaPosition,
   PropublicaBillByIdResponse,
+  PropublicaBillVote,
   PropublicaBillsResponse,
   PropublicaCosponsorsResponse,
   PropublicaMember,
@@ -11,16 +13,19 @@ import {
   PropublicaRollCallVoteByIdResponse,
   PropublicaSubjectsResponse,
 } from "./types.js";
+import CacheService, { CacheDataKeys } from "../cache/service.js";
 
 class PropublicaService {
   pageSize: number = 20;
   apiKey: string;
   baseUrl: string = "https://api.propublica.org/congress/v1";
+  cacheService: CacheService;
   constructor() {
     if (!process.env.PROPUBLICA_API_KEY) {
       throw new InternalError("Missing ProPublica API Key");
     }
     this.apiKey = process.env.PROPUBLICA_API_KEY;
+    this.cacheService = new CacheService();
   }
 
   async fetchMembers({
@@ -33,6 +38,13 @@ class PropublicaService {
     const url = `${this.baseUrl}/118/${chamber}/members.json${
       offset ? `?offset=${offset}` : ""
     }`;
+    const cachedResponse = await this.cacheService.getData<PropublicaMember[]>(
+      CacheDataKeys.PROPUBLICA_FETCH_MEMBERS,
+      { propublicaUrl: url }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const response = await axios.get<PropublicaMembersResponse>(url, {
       headers: {
         "X-API-Key": this.apiKey,
@@ -40,6 +52,13 @@ class PropublicaService {
     });
     const data = response.data;
     const members = data.results[0].members;
+    await this.cacheService.setData(
+      CacheDataKeys.PROPUBLICA_FETCH_MEMBERS,
+      members,
+      {
+        propublicaUrl: url,
+      }
+    );
     return members;
   }
 
@@ -55,6 +74,13 @@ class PropublicaService {
     const url = `${this.baseUrl}/118/${chamber ?? "both"}/bills/${type}.json${
       offset ? `?offset=${offset}` : ""
     }`;
+    const cachedResponse = await this.cacheService.getData<ProPublicaBill[]>(
+      CacheDataKeys.PROPUBLICA_FETCH_BILLS,
+      { propublicaUrl: url }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const response = await axios.get<PropublicaBillsResponse>(url, {
       headers: {
         "X-API-Key": this.apiKey,
@@ -62,6 +88,13 @@ class PropublicaService {
     });
     const data = response.data;
     const bills = data.results?.[0]?.bills;
+    await this.cacheService.setData(
+      CacheDataKeys.PROPUBLICA_FETCH_BILLS,
+      bills,
+      {
+        propublicaUrl: url,
+      }
+    );
     return bills;
   }
 
@@ -71,6 +104,13 @@ class PropublicaService {
     const url = `${this.baseUrl}/118/bills/${billId}/subjects.json?offset=${
       offset ?? 0
     }`;
+    const cachedResponse = await this.cacheService.getData<string[]>(
+      CacheDataKeys.PROPUBLICA_SUBJECTS_FOR_BILL,
+      { propublicaUrl: url }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const response = await axios.get<PropublicaSubjectsResponse>(url, {
       headers: {
         "X-API-Key": this.apiKey,
@@ -94,11 +134,27 @@ class PropublicaService {
       subjects = subjects.concat(bill.subjects.map((subject) => subject.name));
     }
 
+    await this.cacheService.setData(
+      CacheDataKeys.PROPUBLICA_SUBJECTS_FOR_BILL,
+      subjects,
+      {
+        propublicaUrl: url,
+      }
+    );
+
     return subjects;
   }
 
   async fetchCosponsorsForBill(billId: string): Promise<ProPublicaCosponsor[]> {
     const url = `${this.baseUrl}/118/bills/${billId}/cosponsors.json`;
+    const cachedResponse = await this.cacheService.getData<
+      ProPublicaCosponsor[]
+    >(CacheDataKeys.PROPUBLICA_FETCH_COSPONSORS_FOR_BILL, {
+      propublicaUrl: url,
+    });
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const response = await axios.get<PropublicaCosponsorsResponse>(url, {
       headers: {
         "X-API-Key": this.apiKey,
@@ -106,29 +162,67 @@ class PropublicaService {
     });
     const data = response.data;
     const members = data.results[0].cosponsors;
+
+    await this.cacheService.setData(
+      CacheDataKeys.PROPUBLICA_FETCH_COSPONSORS_FOR_BILL,
+      members,
+      {
+        propublicaUrl: url,
+      }
+    );
     return members;
   }
 
   async fetchVotesForBill(billCode: string) {
     const url = `${this.baseUrl}/118/bills/${billCode}.json`;
+    const cachedResponse = await this.cacheService.getData<
+      PropublicaBillVote[]
+    >(CacheDataKeys.PROPUBLICA_FETCH_VOTES_FOR_BILL, { propublicaUrl: url });
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const response = await axios.get<PropublicaBillByIdResponse>(url, {
       headers: {
         "X-API-Key": this.apiKey,
       },
     });
     const data = response.data;
-    return data.results?.[0]?.votes;
+    const votes = data.results?.[0]?.votes;
+    await this.cacheService.setData(
+      CacheDataKeys.PROPUBLICA_FETCH_VOTES_FOR_BILL,
+      votes,
+      {
+        propublicaUrl: url,
+      }
+    );
+    return votes;
   }
 
   async fetchRepVotesForBillVote(voteUri: string) {
     const url = `${voteUri}`;
+    const cachedResponse = await this.cacheService.getData<
+      ProPublicaPosition[]
+    >(CacheDataKeys.PROPUBLICA_FETCH_REP_VOTES_FOR_BILL_VOTE, {
+      propublicaUrl: url,
+    });
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const response = await axios.get<PropublicaRollCallVoteByIdResponse>(url, {
       headers: {
         "X-API-Key": this.apiKey,
       },
     });
     const data = response.data;
-    return data.results?.votes?.vote?.positions;
+    const positions = data.results?.votes?.vote?.positions;
+    await this.cacheService.setData(
+      CacheDataKeys.PROPUBLICA_FETCH_REP_VOTES_FOR_BILL_VOTE,
+      positions,
+      {
+        propublicaUrl: url,
+      }
+    );
+    return positions;
   }
 }
 

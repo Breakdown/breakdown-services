@@ -2,15 +2,18 @@ import dbClient from "../utils/prisma.js";
 import InternalError from "../utils/errors/InternalError.js";
 import axios from "axios";
 import UsersService from "../users/service.js";
+import CacheService, { CacheDataKeys } from "../cache/service.js";
 
 const GEOCODIO_BASE_API_URI = "https://api.geocod.io/v1.7/";
 class LocationService {
   geocodioApiKey: string;
+  cacheService: CacheService;
   constructor() {
     if (!process.env.GEOCODIO_API_KEY) {
       throw new InternalError("Missing Twilio environment variables");
     }
     this.geocodioApiKey = process.env.GEOCODIO_API_KEY;
+    this.cacheService = new CacheService();
   }
 
   async getDistrictAndStateFromAddress(

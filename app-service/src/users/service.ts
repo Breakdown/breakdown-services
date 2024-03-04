@@ -1,5 +1,6 @@
 import { User } from "@prisma/client";
 import dbClient from "../utils/prisma.js";
+import CacheService, { CacheDataKeys } from "../cache/service.js";
 
 interface PatchMeParams {
   receivePromotions?: boolean;
@@ -9,8 +10,10 @@ interface PatchMeParams {
 }
 class UsersService {
   userId: string;
+  cacheService: CacheService;
   constructor(userId: string) {
     this.userId = userId;
+    this.cacheService = new CacheService();
   }
 
   async getMe(): Promise<User | null> {
@@ -101,6 +104,16 @@ class UsersService {
           },
         },
       },
+    });
+
+    await this.cacheService.bustCache(CacheDataKeys.LOCAL_REPS, {
+      userId: this.userId,
+    });
+    await this.cacheService.bustCache(CacheDataKeys.BILLS_FOR_USER, {
+      userId: this.userId,
+    });
+    await this.cacheService.bustCache(CacheDataKeys.USERS_INTERESTED_IN_BILL, {
+      userId: this.userId,
     });
     return;
   }

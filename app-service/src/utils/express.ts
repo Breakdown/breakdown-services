@@ -78,7 +78,7 @@ export const cacheGenericResponse = async (
   req: Request,
   data: StructuredResponse
 ) => {
-  const requestKey = `${req.method}-${req.originalUrl}`;
+  const requestKey = `${req.method}:${req.originalUrl}`;
   const hashedKey = await bcrypt.hash(requestKey, 10);
   // Cache response
   const cacheService = new CacheService();
@@ -90,7 +90,7 @@ export const cacheUserSpecificResponse = async (
   data: StructuredResponse,
   userId: string
 ) => {
-  const requestKey = `${req.method}-${req.originalUrl}-${userId}`;
+  const requestKey = `${req.method}:${req.originalUrl}-${userId}`;
   const hashedKey = await bcrypt.hash(requestKey, 10);
   // Cache response
   const cacheService = new CacheService();
@@ -102,7 +102,7 @@ export const genericCachedRequest = async (
   res: Response,
   next: NextFunction
 ) => {
-  const requestKey = `${req.method}-${req.originalUrl}`;
+  const requestKey = `${req.method}:${req.originalUrl}`;
   const hashedKey = await bcrypt.hash(requestKey, 10);
   // Get from cache
   const cacheService = new CacheService();
@@ -118,7 +118,7 @@ export const userSpecificCachedRequest = async (
   res: Response,
   next: NextFunction
 ) => {
-  const requestKey = `${req.method}-${req.originalUrl}-${req.session.userId}`;
+  const requestKey = `${req.method}:${req.originalUrl}:${req.session.userId}`;
   const hashedKey = bcrypt.hashSync(requestKey, 10);
   // Get from cache
   const cacheService = new CacheService();
