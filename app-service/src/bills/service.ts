@@ -125,6 +125,15 @@ class BillsService {
   }
 
   async getFollowingBills(userId: string): Promise<Bill[] | undefined> {
+    const cachedResponse = await this.cacheService.getData<Bill[]>(
+      CacheDataKeys.USER_FOLLOWING_BILLS,
+      {
+        userId,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const dbResponse = await dbClient.user.findUnique({
       where: {
         id: userId,
@@ -133,7 +142,17 @@ class BillsService {
         followingBills: true,
       },
     });
-    return dbResponse?.followingBills;
+    const followingBills = dbResponse?.followingBills;
+    if (followingBills?.length) {
+      await this.cacheService.setData(
+        CacheDataKeys.USER_FOLLOWING_BILLS,
+        dbResponse?.followingBills,
+        {
+          userId,
+        }
+      );
+    }
+    return followingBills;
   }
 
   async getUsersInterestedInBill(id: string): Promise<User[]> {

@@ -4,30 +4,31 @@ import { redis } from "../utils/redis.js";
 import InternalError from "../utils/errors/InternalError.js";
 
 export enum CacheDataKeys {
-  PROPUBLICA_FETCH_BILLS,
-  PROPUBLICA_SUBJECTS_FOR_BILL,
-  PROPUBLICA_FETCH_COSPONSORS_FOR_BILL,
-  PROPUBLICA_FETCH_VOTES_FOR_BILL,
-  PROPUBLICA_FETCH_MEMBERS,
-  PROPUBLICA_FETCH_REP_VOTES_FOR_BILL_VOTE,
+  PROPUBLICA_FETCH_BILLS, // No need to bust
+  PROPUBLICA_SUBJECTS_FOR_BILL, // No need to bust
+  PROPUBLICA_FETCH_COSPONSORS_FOR_BILL, // No need to bust
+  PROPUBLICA_FETCH_VOTES_FOR_BILL, // No need to bust
+  PROPUBLICA_FETCH_MEMBERS, // No need to bust
+  PROPUBLICA_FETCH_REP_VOTES_FOR_BILL_VOTE, // No need to bust
   // User-related
-  BILLS_FOR_USER,
-  LOCAL_REPS,
-  USER_FOLLOWING_ISSUES,
-  USER_FOLLOWING_REPS,
+  BILLS_FOR_USER, // Bust when user follows or unfollows a bill, user follows a rep or issue, or changes location
+  LOCAL_REPS, // Bust when location changes
+  USER_FOLLOWING_ISSUES, // Bust when user follows or unfollows an issue
+  USER_FOLLOWING_REPS, // Bust when user follows or unfollows a rep
+  USER_FOLLOWING_BILLS, // Bust when user follows or unfollows a bill
   // Non-user-related
-  BILL_SPONSOR,
-  BILL_COSPONSORS,
-  BILLS_FOR_ISSUE,
-  ALL_ISSUES,
-  USERS_INTERESTED_IN_BILL,
-  REP_STATS_BY_ID,
-  REP_VOTES_BY_ID,
-  SPONSORED_BILLS_BY_REP_ID,
-  COSPONSORED_BILLS_BY_REP_ID,
-  REPS_BY_STATE_AND_DISTRICT,
-  REP_VOTE_ON_BILL,
-  FEATURED_REPS,
+  BILL_SPONSOR, // Bust when bill sponsor changes
+  BILL_COSPONSORS, // Bust when bill cosponsors change
+  BILLS_FOR_ISSUE, // Bust when issue changes on bill
+  ALL_ISSUES, // No need to bust
+  USERS_INTERESTED_IN_BILL, // Bust when user follows or unfollows a bill, their reps change, their following reps change, following issues change
+  REP_STATS_BY_ID, // Bust when stats are updated
+  REP_VOTES_BY_ID, // Bust when rep votes are updated
+  SPONSORED_BILLS_BY_REP_ID, // Bust when sponsor changes on bill where sponsor ID is rep ID
+  COSPONSORED_BILLS_BY_REP_ID, // Bust when cosponsor changes on bill where cosponsor ID is rep ID
+  REPS_BY_STATE_AND_DISTRICT, // Bust when new reps are elected in state and district
+  REP_VOTE_ON_BILL, // Bust when rep vote on bill changes
+  FEATURED_REPS, // TODO: Bust when any featured rep status changes
 }
 
 interface CacheKeyData {
@@ -99,6 +100,8 @@ class CacheService {
         return this.hashKey(`user_following_issues:${userId}`);
       case CacheDataKeys.USER_FOLLOWING_REPS:
         return this.hashKey(`user_following_reps:${userId}`);
+      case CacheDataKeys.USER_FOLLOWING_BILLS:
+        return this.hashKey(`user_following_bills:${userId}`);
       // Non-user-related
       case CacheDataKeys.ALL_ISSUES:
         return this.hashKey(`all_issues`);
@@ -152,6 +155,8 @@ class CacheService {
       case CacheDataKeys.USER_FOLLOWING_ISSUES:
         return 60 * 60 * 24 * 7; // 1 week
       case CacheDataKeys.USER_FOLLOWING_REPS:
+        return 60 * 60 * 24 * 7; // 1 week
+      case CacheDataKeys.USER_FOLLOWING_BILLS:
         return 60 * 60 * 24 * 7; // 1 week
       // Non-user-related
       case CacheDataKeys.ALL_ISSUES:
