@@ -1,6 +1,7 @@
 import { Bill, Representative, RepresentativeVote } from "@prisma/client";
 import dbClient from "../utils/prisma.js";
 import BadRequestError from "../utils/errors/BadRequestError.js";
+import CacheService, { CacheDataKeys } from "../cache/service.js";
 
 interface RepresentativeStats {
   votesWithPartyPercentage: number;
@@ -10,7 +11,10 @@ interface RepresentativeStats {
   billsCosponsored: number;
 }
 class RepresentativesService {
-  constructor() {}
+  cacheService: CacheService;
+  constructor() {
+    this.cacheService = new CacheService();
+  }
 
   async getRepById(id: string): Promise<Representative | null> {
     const dbResponse = await dbClient.representative.findUnique({
@@ -22,6 +26,15 @@ class RepresentativesService {
   }
 
   async getRepStatsById(id: string): Promise<RepresentativeStats | null> {
+    const cachedResponse = await this.cacheService.getData<RepresentativeStats>(
+      CacheDataKeys.REP_STATS_BY_ID,
+      {
+        representativeId: id,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const dbResponse = await dbClient.representative.findUnique({
       where: {
         id,
@@ -31,34 +44,74 @@ class RepresentativesService {
         cosponsoredBills: true,
       },
     });
-    return {
+    const repStats = {
       votesWithPartyPercentage: dbResponse?.votesWithPartyPct || 0,
       votesAgaintsPartyPercentage: dbResponse?.votesAgainstPartyPct || 0,
       missedVotesPercentage: dbResponse?.missedVotesPct || 0,
       billsSponsored: dbResponse?.sponsoredBills.length || 0,
       billsCosponsored: dbResponse?.cosponsoredBills.length || 0,
     };
+    await this.cacheService.setData(CacheDataKeys.REP_STATS_BY_ID, repStats, {
+      representativeId: id,
+    });
+    return repStats;
   }
 
   async getRepVotesById(id: string): Promise<RepresentativeVote[] | null> {
+    const cachedResponse = await this.cacheService.getData<
+      RepresentativeVote[]
+    >(CacheDataKeys.REP_VOTES_BY_ID, {
+      representativeId: id,
+    });
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const dbResponse = await dbClient.representativeVote.findMany({
       where: {
         representativeId: id,
       },
     });
+    await this.cacheService.setData(CacheDataKeys.REP_VOTES_BY_ID, dbResponse, {
+      representativeId: id,
+    });
     return dbResponse;
   }
 
   async getSponsoredBillsById(id: string): Promise<Bill[] | null> {
+    const cachedResponse = await this.cacheService.getData<Bill[]>(
+      CacheDataKeys.SPONSORED_BILLS_BY_REP_ID,
+      {
+        representativeId: id,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const dbResponse = await dbClient.bill.findMany({
       where: {
         sponsorId: id,
       },
     });
+    await this.cacheService.setData(
+      CacheDataKeys.SPONSORED_BILLS_BY_REP_ID,
+      dbResponse,
+      {
+        representativeId: id,
+      }
+    );
     return dbResponse;
   }
 
   async getCosponsoredBillsById(id: string): Promise<Bill[] | null> {
+    const cachedResponse = await this.cacheService.getData<Bill[]>(
+      CacheDataKeys.COSPONSORED_BILLS_BY_REP_ID,
+      {
+        representativeId: id,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const dbResponse = await dbClient.bill.findMany({
       where: {
         cosponsors: {
@@ -68,6 +121,13 @@ class RepresentativesService {
         },
       },
     });
+    await this.cacheService.setData(
+      CacheDataKeys.COSPONSORED_BILLS_BY_REP_ID,
+      dbResponse,
+      {
+        representativeId: id,
+      }
+    );
     return dbResponse;
   }
 
@@ -102,6 +162,15 @@ class RepresentativesService {
   }
 
   async getFollowingReps(userId: string): Promise<Representative[] | null> {
+    const cachedResponse = await this.cacheService.getData<Representative[]>(
+      CacheDataKeys.USER_FOLLOWING_REPS,
+      {
+        userId,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const dbResponse = await dbClient.user.findUnique({
       where: {
         id: userId,
@@ -110,13 +179,31 @@ class RepresentativesService {
         followingReps: true,
       },
     });
-    return dbResponse?.followingReps || null;
+    const response = dbResponse?.followingReps || null;
+    await this.cacheService.setData(
+      CacheDataKeys.USER_FOLLOWING_REPS,
+      response,
+      {
+        userId,
+      }
+    );
+    return response;
   }
 
   async getRepsByDistrictAndState(
     district: string,
     state: string
   ): Promise<Representative[] | null> {
+    const cachedResponse = await this.cacheService.getData<Representative[]>(
+      CacheDataKeys.REPS_BY_STATE_AND_DISTRICT,
+      {
+        district,
+        state,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     // Congressmen
     const congressman = await dbClient.representative.findMany({
       where: {
@@ -131,10 +218,27 @@ class RepresentativesService {
         house: "senate",
       },
     });
+    await this.cacheService.setData(
+      CacheDataKeys.REPS_BY_STATE_AND_DISTRICT,
+      congressman.concat(senators),
+      {
+        district,
+        state,
+      }
+    );
     return congressman.concat(senators);
   }
 
   async getLocalReps(userId: string): Promise<Representative[] | null> {
+    const cachedResponse = await this.cacheService.getData<Representative[]>(
+      CacheDataKeys.REPS_BY_STATE_AND_DISTRICT,
+      {
+        userId,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const dbResponse = await dbClient.user.findUnique({
       where: {
         id: userId,
@@ -148,24 +252,55 @@ class RepresentativesService {
     if (!state || !district) {
       throw new BadRequestError("User does not have location data");
     }
-    return await this.getRepsByDistrictAndState(district, state);
+    const reps = await this.getRepsByDistrictAndState(district, state);
+    await this.cacheService.setData(
+      CacheDataKeys.REPS_BY_STATE_AND_DISTRICT,
+      reps,
+      {
+        userId,
+      }
+    );
+    return reps;
   }
 
   async getRepVoteOnBill(
     repId: string,
     billId: string
   ): Promise<RepresentativeVote | null> {
+    const cachedResponse = await this.cacheService.getData<RepresentativeVote>(
+      CacheDataKeys.REP_VOTE_ON_BILL,
+      {
+        representativeId: repId,
+        billId,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const dbResponse = await dbClient.representativeVote.findFirst({
       where: {
         representativeId: repId,
         billId,
       },
     });
+    await this.cacheService.setData(
+      CacheDataKeys.REP_VOTE_ON_BILL,
+      dbResponse,
+      {
+        representativeId: repId,
+        billId,
+      }
+    );
     return dbResponse;
   }
 
   async getFeaturedReps(): Promise<Representative[] | null> {
-    // TODO: Caching
+    const cachedResponse = await this.cacheService.getData<Representative[]>(
+      CacheDataKeys.FEATURED_REPS
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
     const reps = await dbClient.representative.findMany({
       where: {
         OR: [
@@ -222,6 +357,7 @@ class RepresentativesService {
         ],
       },
     });
+    await this.cacheService.setData(CacheDataKeys.FEATURED_REPS, reps);
     return reps;
   }
 }

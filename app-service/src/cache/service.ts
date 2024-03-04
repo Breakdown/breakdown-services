@@ -13,9 +13,13 @@ export enum CacheDataKeys {
   // User-related
   BILLS_FOR_USER,
   LOCAL_REPS,
+  USER_FOLLOWING_ISSUES,
+  USER_FOLLOWING_REPS,
   // Non-user-related
   BILL_SPONSOR,
   BILL_COSPONSORS,
+  BILLS_FOR_ISSUE,
+  ALL_ISSUES,
   USERS_INTERESTED_IN_BILL,
   REP_STATS_BY_ID,
   REP_VOTES_BY_ID,
@@ -29,6 +33,7 @@ export enum CacheDataKeys {
 interface CacheKeyData {
   billId?: string;
   userId?: string;
+  issueId?: string;
   propublicaUrl?: string;
   representativeId?: string;
   district?: string;
@@ -60,6 +65,7 @@ class CacheService {
     {
       userId,
       billId,
+      issueId,
       propublicaUrl,
       representativeId,
       district,
@@ -89,11 +95,19 @@ class CacheService {
         return this.hashKey(`bills_for_user:${userId}`);
       case CacheDataKeys.LOCAL_REPS:
         return this.hashKey(`local_reps:${userId}`);
+      case CacheDataKeys.USER_FOLLOWING_ISSUES:
+        return this.hashKey(`user_following_issues:${userId}`);
+      case CacheDataKeys.USER_FOLLOWING_REPS:
+        return this.hashKey(`user_following_reps:${userId}`);
       // Non-user-related
+      case CacheDataKeys.ALL_ISSUES:
+        return this.hashKey(`all_issues`);
       case CacheDataKeys.BILL_SPONSOR:
         return this.hashKey(`bill_sponsor:${billId}`);
       case CacheDataKeys.BILL_COSPONSORS:
         return this.hashKey(`bill_cosponsors:${billId}`);
+      case CacheDataKeys.BILLS_FOR_ISSUE:
+        return this.hashKey(`bills_for_issue:${issueId}`);
       case CacheDataKeys.USERS_INTERESTED_IN_BILL:
         return this.hashKey(`users_interested_in_bill:${billId}`);
       case CacheDataKeys.REP_STATS_BY_ID:
@@ -135,10 +149,18 @@ class CacheService {
         return 60 * 60 * 24; // 1 day
       case CacheDataKeys.LOCAL_REPS:
         return 60 * 60 * 24 * 7; // 1 week
+      case CacheDataKeys.USER_FOLLOWING_ISSUES:
+        return 60 * 60 * 24 * 7; // 1 week
+      case CacheDataKeys.USER_FOLLOWING_REPS:
+        return 60 * 60 * 24 * 7; // 1 week
       // Non-user-related
+      case CacheDataKeys.ALL_ISSUES:
+        return 60 * 60 * 24 * 7; // 1 Week
       case CacheDataKeys.BILL_SPONSOR:
         return 3600;
       case CacheDataKeys.BILL_COSPONSORS:
+        return 3600;
+      case CacheDataKeys.BILLS_FOR_ISSUE:
         return 3600;
       case CacheDataKeys.USERS_INTERESTED_IN_BILL:
         return 3600;
@@ -151,7 +173,7 @@ class CacheService {
       case CacheDataKeys.COSPONSORED_BILLS_BY_REP_ID:
         return 3600;
       case CacheDataKeys.REPS_BY_STATE_AND_DISTRICT:
-        return 3600;
+        return 60 * 60 * 24 * 7; // 1 week
       case CacheDataKeys.REP_VOTE_ON_BILL:
         return 3600;
       case CacheDataKeys.FEATURED_REPS:
