@@ -109,6 +109,12 @@ class UsersService {
     await this.cacheService.bustCache(CacheDataKeys.LOCAL_REPS, {
       userId: this.userId,
     });
+    await this.cacheService.bustCache(CacheDataKeys.BILLS_FOR_USER, {
+      userId: this.userId,
+    });
+    await this.cacheService.bustCache(CacheDataKeys.USERS_INTERESTED_IN_BILL, {
+      userId: this.userId,
+    });
     return;
   }
 }

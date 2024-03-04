@@ -108,6 +108,12 @@ class BillsService {
     await this.cacheService.bustCache(CacheDataKeys.USER_FOLLOWING_BILLS, {
       userId,
     });
+    await this.cacheService.bustCache(CacheDataKeys.BILLS_FOR_USER, {
+      userId,
+    });
+    await this.cacheService.bustCache(CacheDataKeys.USERS_INTERESTED_IN_BILL, {
+      userId,
+    });
     return;
   }
 
@@ -125,6 +131,12 @@ class BillsService {
       },
     });
     await this.cacheService.bustCache(CacheDataKeys.USER_FOLLOWING_BILLS, {
+      userId,
+    });
+    await this.cacheService.bustCache(CacheDataKeys.BILLS_FOR_USER, {
+      userId,
+    });
+    await this.cacheService.bustCache(CacheDataKeys.USERS_INTERESTED_IN_BILL, {
       userId,
     });
     return;

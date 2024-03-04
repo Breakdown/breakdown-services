@@ -122,6 +122,9 @@ class IssuesService {
     await this.cacheService.bustCache(CacheDataKeys.USER_FOLLOWING_ISSUES, {
       userId,
     });
+    await this.cacheService.bustCache(CacheDataKeys.USERS_INTERESTED_IN_BILL, {
+      userId,
+    });
     const userIssues = await this.getFollowingIssuesFromUserId(userId);
     return userIssues || [];
   }
@@ -140,6 +143,9 @@ class IssuesService {
       },
     });
     await this.cacheService.bustCache(CacheDataKeys.USER_FOLLOWING_ISSUES, {
+      userId,
+    });
+    await this.cacheService.bustCache(CacheDataKeys.USERS_INTERESTED_IN_BILL, {
       userId,
     });
     const userIssues = await this.getFollowingIssuesFromUserId(userId);

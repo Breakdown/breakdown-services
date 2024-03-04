@@ -11,7 +11,7 @@ export enum CacheDataKeys {
   PROPUBLICA_FETCH_MEMBERS, // No need to bust
   PROPUBLICA_FETCH_REP_VOTES_FOR_BILL_VOTE, // No need to bust
   // User-related
-  BILLS_FOR_USER, // Bust when user follows or unfollows a bill, user follows a rep or issue, or changes location
+  BILLS_FOR_USER, // BUSTED - Bust when user follows or unfollows a bill, user follows a rep or issue, or changes location
   LOCAL_REPS, // BUSTED - Bust when location changes
   USER_FOLLOWING_ISSUES, // BUSTED - Bust when user follows or unfollows an issue
   USER_FOLLOWING_REPS, // BUSTED - Bust when user follows or unfollows a rep
@@ -21,7 +21,7 @@ export enum CacheDataKeys {
   BILL_COSPONSORS, // Bust when bill cosponsors change - job
   BILLS_FOR_ISSUE, // Bust when issue changes on bill - job
   ALL_ISSUES, // No need to bust
-  USERS_INTERESTED_IN_BILL, // Bust when user follows or unfollows a bill, their reps change, their following reps change, following issues change
+  USERS_INTERESTED_IN_BILL, // BUSTED - Bust when user follows or unfollows a bill, their reps change, their following reps change, following issues change
   REP_STATS_BY_ID, // Bust when stats are updated - job
   REP_VOTES_BY_ID, // Bust when rep votes are updated - job
   SPONSORED_BILLS_BY_REP_ID, // Bust when sponsor changes on bill where sponsor ID is rep ID - job
