@@ -123,7 +123,6 @@ router.post(
 
 router.get(
   "/following",
-  errorPassthrough(handleValidationErrors),
   errorPassthrough(requireAuth),
   errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
@@ -144,4 +143,23 @@ router.get(
     res.status(200).send(response);
   })
 );
+
+router.get(
+  "/upcoming",
+  errorPassthrough(genericCachedRequest),
+  errorPassthrough(requireAuth),
+  errorPassthrough(genericCachedRequest),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const billsService = new BillsService();
+    const bills = await billsService.getUpcomingBills();
+    const response = {
+      data: {
+        bills,
+      },
+    };
+    await cacheGenericResponse(req, response);
+    res.status(200).send(response);
+  })
+);
+
 export default router;

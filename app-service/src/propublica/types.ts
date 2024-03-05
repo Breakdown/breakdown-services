@@ -18,12 +18,35 @@ interface ProPublicaSingleBillResult {
   votes: PropublicaBillVote[];
 }
 
+interface PropublicaUpcomingBillsResult {
+  bills: PropublicaUpcomingBill[];
+}
+
 export interface PropublicaSubject {
   url_name: string;
   name: string;
 }
 interface PropublicaSubjectsResult {
   subjects: PropublicaSubject[];
+}
+
+export interface PropublicaUpcomingBill {
+  congress: string;
+  chamber: string;
+  bill_id: string;
+  bill_slug: string;
+  bill_type: string;
+  bill_number: string;
+  api_uri: string;
+  legislative_day: string;
+  scheduled_at: string;
+  range: string;
+  context?: string;
+  description: string;
+  bill_url: string;
+  consideration: string;
+  source_type: string;
+  url: string;
 }
 
 interface CosponsorsByParty {
@@ -177,7 +200,8 @@ export interface PropublicaCosponsorsResponse
 export interface PropublicaBillByIdResponse
   extends ProPublicaResponse<ProPublicaSingleBillResult> {}
 
-// Custom response - no array of results
+export interface PropublicaUpcomingBillsResponse
+  extends ProPublicaResponse<PropublicaUpcomingBillsResult> {}
 
 export interface ProPublicaPosition {
   member_id: string;

@@ -67,6 +67,10 @@ const notificationQueue = new Queue("notification-queue", {
 const meilisearchSyncQueue = new Queue("meilisearch-sync-queue", {
   connection: redisConnection,
 });
+const upcomingBillsSyncQueue = new Queue("upcoming-bills-sync-queue", {
+  connection: redisConnection,
+});
+
 class JobService {
   cacheService: CacheService;
   constructor() {
@@ -99,6 +103,16 @@ class JobService {
       "global-sync-meilisearch",
       {},
       { repeat: { pattern: "0 9,21 * * *" } }
+    );
+  }
+
+  async queueUpcomingBillsSyncScheduled() {
+    // Add upcomingBillsSync job to queue
+    // Repeat every 12 hours at 12:00 and 00:00
+    upcomingBillsSyncQueue.add(
+      "upcoming-bills-sync-scheduled",
+      {},
+      { repeat: { pattern: "0 0,12 * * *" } }
     );
   }
 
@@ -528,6 +542,52 @@ class JobService {
     return true;
   }
 
+  async scheduledUpcomingBillsSync() {
+    // Fetch upcoming bills from the API
+    const propubService = new PropublicaService();
+    const upcomingBillsHouse = await propubService.fetchUpcomingBills({
+      chamber: "house",
+    });
+    const upcomingBillsSenate = await propubService.fetchUpcomingBills({
+      chamber: "senate",
+    });
+    const upcomingBills = [...upcomingBillsHouse, ...upcomingBillsSenate];
+
+    let upcomingBillUpdatesFormatted: Prisma.BillUpdateArgs[] = [];
+    // 40 bills at this point
+    for (const bill of upcomingBills) {
+      const existingBill = await dbClient.bill.findUnique({
+        where: {
+          propublicaId: bill.bill_id,
+        },
+      });
+      if (!existingBill) {
+        continue;
+      }
+      upcomingBillUpdatesFormatted.push({
+        where: {
+          propublicaId: bill.bill_id,
+        },
+        data: {
+          scheduledAt: new Date(bill.scheduled_at),
+          legislativeDay: bill.legislative_day,
+          scheduledAtRange: bill.range,
+          nextConsideration: bill.consideration,
+        },
+      });
+    }
+
+    if (!upcomingBillUpdatesFormatted.length) {
+      return true;
+    }
+
+    // Upsert all upcoming bills
+    await dbClient.$transaction(
+      upcomingBillUpdatesFormatted.map((args) => dbClient.bill.update(args))
+    );
+    return true;
+  }
+
   async syncCosponsorsForBill(billCode: string) {
     // Fetch cosponsors for bill from API
     const propubService = new PropublicaService();
@@ -750,34 +810,45 @@ class JobService {
 
     if (fullText) {
       // Upsert full text
-      await dbClient.billFullText.upsert({
-        where: {
-          billId: existingBill.id,
-        },
-        update: {
-          fullText,
-        },
-        create: {
-          fullText,
-          billId: existingBill.id,
-        },
-      });
-      await dbClient.billJobData.upsert({
-        where: {
-          billId: existingBill.id,
-        },
-        update: {
-          lastFullTextSync: new Date(),
-        },
-        create: {
-          lastFullTextSync: new Date(),
-          billId: existingBill.id,
-        },
-      });
-
       if (existingBill.fullText?.fullText === fullText) {
+        await dbClient.billJobData.upsert({
+          where: {
+            billId: existingBill.id,
+          },
+          update: {
+            lastFullTextSync: new Date(),
+          },
+          create: {
+            lastFullTextSync: new Date(),
+            billId: existingBill.id,
+          },
+        });
         return true;
       } else {
+        await dbClient.billFullText.upsert({
+          where: {
+            billId: existingBill.id,
+          },
+          update: {
+            fullText,
+          },
+          create: {
+            fullText,
+            billId: existingBill.id,
+          },
+        });
+        await dbClient.billJobData.upsert({
+          where: {
+            billId: existingBill.id,
+          },
+          update: {
+            lastFullTextSync: new Date(),
+          },
+          create: {
+            lastFullTextSync: new Date(),
+            billId: existingBill.id,
+          },
+        });
         // Queue AI summary sync for bill
         billAiSummaryQueue.add("bill-ai-summary", {
           billId: existingBill.id,
@@ -1086,6 +1157,17 @@ class JobService {
       }
     );
 
+    const upcomingBillsSyncWorker = new Worker(
+      "upcoming-bills-sync-queue",
+      async () => {
+        await this.scheduledUpcomingBillsSync();
+      },
+      {
+        connection: redisConnection,
+        concurrency: 1,
+      }
+    );
+
     const allWorkers = [
       repsWorker,
       billsWorker,
@@ -1098,6 +1180,7 @@ class JobService {
       billAiSummaryWorker,
       notificationsWorker,
       meilisearchSyncWorker,
+      upcomingBillsSyncWorker,
     ];
 
     for (const worker of allWorkers) {
@@ -1125,7 +1208,7 @@ class JobService {
     }
   }
 
-  async startScheduledJobRunners() {
+  async start() {
     // Create workers
     await this.createWorkers();
     // Schedule repsSync and billsSync
@@ -1134,6 +1217,7 @@ class JobService {
     // Schedule billFullText runs
     await this.queueBillFullTextsScheduled();
     await this.queueMeilisearchSyncScheduled();
+    await this.queueUpcomingBillsSyncScheduled();
   }
 }
 
