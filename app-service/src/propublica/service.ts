@@ -12,6 +12,8 @@ import {
   PropublicaMembersResponse,
   PropublicaRollCallVoteByIdResponse,
   PropublicaSubjectsResponse,
+  PropublicaUpcomingBill,
+  PropublicaUpcomingBillsResponse,
 } from "./types.js";
 import CacheService, { CacheDataKeys } from "../cache/service.js";
 
@@ -223,6 +225,27 @@ class PropublicaService {
       }
     );
     return positions;
+  }
+
+  async fetchUpcomingBills({
+    chamber,
+    offset = 0,
+  }: {
+    chamber: "house" | "senate";
+    offset?: number;
+  }): Promise<PropublicaUpcomingBill[]> {
+    const url = `${this.baseUrl}/bills/upcoming/${chamber}.json${
+      offset ? `?offset=${offset}` : ""
+    }`;
+    // Caching? Why?
+    const response = await axios.get<PropublicaUpcomingBillsResponse>(url, {
+      headers: {
+        "X-API-Key": this.apiKey,
+      },
+    });
+    const data = response.data;
+    const bills = data.results?.[0]?.bills;
+    return bills;
   }
 }
 

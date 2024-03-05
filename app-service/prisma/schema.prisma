@@ -92,6 +92,10 @@ model Bill {
   aiShortTitle          String?   @map("ai_short_title")
   humanShortTitle       String?   @map("human_short_title")
   importance            Int?
+  scheduledAt           DateTime? @map("scheduled_at")
+  legislativeDay        String?   @map("legislative_day")
+  scheduledAtRange      String?   @map("scheduled_at_range")
+  nextConsideration     String?   @map("next_consideration")
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime? @updatedAt @map("updated_at")
 
@@ -107,7 +111,7 @@ model Bill {
   votes               BillVote[]
   userBillVotes       UserBillVote[]
 
-  @@index([primaryIssueId, sponsorId, id, housePassage, senatePassage, importance, propublicaId])
+  @@index([primaryIssueId, sponsorId, id, propublicaId, scheduledAt])
   @@map("bills")
 }
 
