@@ -357,16 +357,16 @@ class BillsService {
     await this.cacheService.setData(CacheDataKeys.BILLS_FOR_USER, bills, {
       userId,
     });
-    return bills;
+    return [...bills, ...(user?.followingBills || [])];
   }
 
   async getUpcomingBills(): Promise<Bill[]> {
     const bills = await dbClient.bill.findMany({
       where: {
-        // scheduledAt is in the next week
+        // scheduledAt is in the next month
         scheduledAt: {
           gte: new Date(),
-          lt: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
+          lt: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
         },
       },
     });

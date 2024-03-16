@@ -8,14 +8,6 @@ import {
 } from "react-native";
 import BillCard from "../components/BillCard";
 import Text, { TextVariant } from "../components/Text";
-import {
-  getBills,
-  getYourIssues,
-  getYourReps,
-  QUERY_GET_BILLS,
-  QUERY_GET_YOUR_ISSUES,
-  QUERY_GET_YOUR_REPS,
-} from "../data/queries";
 import RepsCarousel from "../components/RepsCarousel";
 import useAuth from "../hooks/useAuth";
 import IssuesOnboarding from "../components/IssuesOnboarding";

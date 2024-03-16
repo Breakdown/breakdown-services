@@ -1,24 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
 import { StyleSheet, View } from "react-native";
-import { getBillById, QUERY_GET_BILL } from "../data/queries";
 import Text, { TextVariant } from "../components/Text";
 import PageContainer from "../components/hoc/PageContainer";
 import VoteOnBill from "../components/VoteOnBill";
-import { BreakdownBill } from "../types/api";
+import { Bill } from "../data/types";
+import { GET_BILL_BY_ID } from "../data/appService";
+import useAppService from "../hooks/useAppService";
 
-export const getBillSummary = (bill: BreakdownBill) => {
-  if (bill?.human_summary) {
-    return bill.human_summary;
+export const getBillSummary = (bill: Bill) => {
+  if (bill?.aiSummary) {
+    return bill.aiSummary;
   }
   return bill?.summary;
 };
 
-export const getBillShortSummary = (bill: BreakdownBill) => {
-  if (bill?.human_short_summary) {
-    return bill.human_short_summary;
+export const getBillShortSummary = (bill: Bill) => {
+  if (bill?.humanShortSummary) {
+    return bill.humanShortSummary;
   }
-  if (bill?.summary_short) {
-    return bill.summary_short;
+  if (bill?.summaryShort) {
+    return bill.summaryShort;
   }
   if (bill?.summary) {
     return bill.summary.slice(0, 100) + "...";
@@ -30,10 +31,15 @@ const Bill = ({ navigation, route }) => {
   const {
     bill: { id },
   } = route.params;
+  const appService = useAppService();
 
-  const { data, error, isLoading } = useQuery({
-    queryKey: [QUERY_GET_BILL, id],
-    queryFn: () => getBillById(id),
+  const {
+    data: { data },
+    error,
+    isLoading,
+  } = useQuery({
+    queryKey: [GET_BILL_BY_ID, id],
+    queryFn: () => appService.getBillById(id),
   });
 
   return (

@@ -48,7 +48,7 @@ export default function useAuth({
   // logout();
   useEffect(() => {
     if (data) {
-      setUser(data);
+      setUser(data.data);
       setAuthenticated(true);
     }
   }, [data]);
