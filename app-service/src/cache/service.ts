@@ -182,7 +182,7 @@ class CacheService {
       case CacheDataKeys.REP_VOTE_ON_BILL:
         return 3600;
       case CacheDataKeys.FEATURED_REPS:
-        return 3600;
+        return 60 * 60 * 24 * 7; // 1 week
       default:
         throw new InternalError("Invalid cache key");
     }

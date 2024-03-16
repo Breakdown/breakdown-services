@@ -246,6 +246,13 @@ class AppService {
       method: "GET",
     });
   }
+  // Get user rep sponsored bills
+  async getUserRepSponsoredBills(): Promise<AppServiceResponse<Bill[]>> {
+    return this.fetch({
+      url: `/bills/rep-sponsored`,
+      method: "GET",
+    });
+  }
 
   // Issues Module
 
