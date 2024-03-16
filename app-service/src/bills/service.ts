@@ -372,6 +372,46 @@ class BillsService {
     });
     return bills;
   }
+
+  async getUserRelevantSponsoredBills(userId: string): Promise<Bill[]> {
+    const user = await dbClient.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        myReps: true,
+        followingReps: true,
+      },
+    });
+
+    const repIds = (
+      user?.followingReps?.map((rep: Representative) => rep.id) || []
+    ).concat(user?.myReps?.map((rep: Representative) => rep.id) || []);
+
+    const bills = await dbClient.bill.findMany({
+      where: {
+        OR: [
+          {
+            sponsor: {
+              id: {
+                in: repIds,
+              },
+            },
+          },
+          {
+            cosponsors: {
+              some: {
+                id: {
+                  in: repIds,
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+    return bills;
+  }
 }
 
 export default BillsService;

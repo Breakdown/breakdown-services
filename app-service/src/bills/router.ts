@@ -146,7 +146,6 @@ router.get(
 
 router.get(
   "/upcoming",
-  errorPassthrough(genericCachedRequest),
   errorPassthrough(requireAuth),
   errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
@@ -158,6 +157,29 @@ router.get(
       },
     };
     await cacheGenericResponse(req, response);
+    res.status(200).send(response);
+  })
+);
+
+router.get(
+  "/rep-sponsored",
+  errorPassthrough(requireAuth),
+  errorPassthrough(userSpecificCachedRequest),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const billsService = new BillsService();
+    const bills = await billsService.getUserRelevantSponsoredBills(
+      req.session.userId as string
+    );
+    const response = {
+      data: {
+        bills,
+      },
+    };
+    await cacheUserSpecificResponse(
+      req,
+      response,
+      req.session.userId as string
+    );
     res.status(200).send(response);
   })
 );
