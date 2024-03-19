@@ -112,6 +112,7 @@ class IssuesService {
         id: userId,
       },
       data: {
+        onboardedIssues: true,
         followingIssues: {
           connect: {
             id: issueId,

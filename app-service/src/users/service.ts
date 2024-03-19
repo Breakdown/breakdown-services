@@ -85,6 +85,7 @@ class UsersService {
         myReps: {
           set: representatives,
         },
+        onboardedLocation: true,
         locationData: {
           upsert: {
             create: {

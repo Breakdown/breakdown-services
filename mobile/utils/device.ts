@@ -9,6 +9,6 @@ export const getDeviceId = async () => {
   if (fetchUUID) {
     uuid = fetchUUID;
   }
-  await SecureStore.setItemAsync("secure_deviceid", JSON.stringify(uuid));
+  await SecureStore.setItemAsync("secure_deviceid", uuid);
   return uuid;
 };

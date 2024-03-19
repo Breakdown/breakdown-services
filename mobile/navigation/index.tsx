@@ -162,5 +162,7 @@ const UnauthenticatedStack = () => {
 
 function RootNavigator() {
   const { authenticated } = useAuth({ allowUnauth: true });
+  console.log("authed", authenticated);
+  // return <UnauthenticatedStack />;
   return authenticated ? <AuthenticatedStack /> : <UnauthenticatedStack />;
 }

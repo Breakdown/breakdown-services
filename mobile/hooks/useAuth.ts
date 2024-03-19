@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigation } from "@react-navigation/native";
 import { User } from "../data/types";
-import AppService, { GET_ME } from "../data/appService";
+import { GET_ME, getMe } from "../data/appService";
 
 interface UseAuthExport {
   authenticated: boolean;
@@ -19,29 +18,29 @@ export default function useAuth({
 } = {}): UseAuthExport {
   const [user, setUser] = useState<User | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const [appService] = useState(() => new AppService());
 
-  useEffect(() => {
-    (async () => {
-      const sessionToken = await SecureStore.getItemAsync("session");
-      setSessionToken(sessionToken);
-    })();
-  }, [authenticated]);
-
-  const { data, error, refetch } = useQuery([GET_ME], {
-    queryFn: appService.getMe,
-    refetchInterval: 1000 * 60 * 15, // 15 minutes
+  const { data, error, refetch, isError } = useQuery([GET_ME], {
+    queryFn: getMe,
+    refetchInterval: authenticated ? 1000 * 60 * 15 : 30000, // 15 minutes or 30 sec
     refetchOnWindowFocus: false,
     retry: false,
-    enabled: !!sessionToken,
   });
 
   const logout = useCallback(async () => {
     await SecureStore.deleteItemAsync("session");
     setAuthenticated(false);
+    setUser(null);
     refetch();
   }, [setAuthenticated, refetch]);
+
+  // useEffect(() => {
+  //   logout();
+  // }, [logout]);
+  // useEffect(() => {
+  //   if (isError) {
+  //     logout();
+  //   }
+  // }, [isError, logout]);
 
   // Obviously remove - this is for manually logging out
   // Until the functionality is built into the app

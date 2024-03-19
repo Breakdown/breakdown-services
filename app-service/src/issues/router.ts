@@ -64,27 +64,6 @@ router.get(
   })
 );
 
-router.get(
-  "/following",
-  errorPassthrough(requireAuth),
-  errorPassthrough(userSpecificCachedRequest),
-  errorPassthrough(async (req, res) => {
-    const issuesService = new IssuesService();
-    const issues = await issuesService.getFollowingIssuesFromUserId(
-      req.session.userId as string
-    );
-    const response = {
-      data: issues,
-    };
-    await cacheUserSpecificResponse(
-      req,
-      response,
-      req.session.userId as string
-    );
-    res.status(200).send(response);
-  })
-);
-
 router.post(":id/follow", errorPassthrough(requireAuth), async (req, res) => {
   const { id } = req.params;
   const issuesService = new IssuesService();
@@ -106,5 +85,26 @@ router.post(":id/unfollow", errorPassthrough(requireAuth), async (req, res) => {
     },
   });
 });
+
+router.get(
+  "/following",
+  errorPassthrough(requireAuth),
+  errorPassthrough(userSpecificCachedRequest),
+  errorPassthrough(async (req, res) => {
+    const issuesService = new IssuesService();
+    const issues = await issuesService.getFollowingIssuesFromUserId(
+      req.session.userId as string
+    );
+    const response = {
+      data: issues,
+    };
+    await cacheUserSpecificResponse(
+      req,
+      response,
+      req.session.userId as string
+    );
+    res.status(200).send(response);
+  })
+);
 
 export default router;

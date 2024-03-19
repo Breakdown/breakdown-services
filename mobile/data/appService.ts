@@ -27,6 +27,8 @@ export const GET_BILL_SPONSOR = "GET_BILL_SPONSOR";
 export const GET_FOLLOWING_BILLS = "GET_FOLLOWING_BILLS";
 export const GET_ISSUES = "GET_ISSUES";
 export const GET_ISSUE_BY_ID = "GET_ISSUE_BY_ID";
+export const GET_UPCOMING_BILLS = "GET_UPCOMING_BILLS";
+export const GET_USER_REP_SPONSORED_BILLS = "GET_USER_REP_SPONSORED_BILLS";
 export const GET_BILLS_FOR_ISSUE_ID = "GET_BILLS_FOR_ISSUE_ID";
 export const GET_FOLLOWING_ISSUES = "GET_FOLLOWING_ISSUES";
 export const GET_REP_BY_ID = "GET_REP_BY_ID";
@@ -51,422 +53,433 @@ interface AppServiceResponse<T> {
   data: T;
 }
 
-class AppService {
-  apiUrl: string;
-  sessionCookie: string | null = null;
-  constructor() {
-    const env = getEnv();
-    this.apiUrl = (() => {
-      if (env === Environment.Production) {
-        // TODO: Production URL
-        return "https://api.example.com";
-      }
-      return `http://${Constants.expoGoConfig.debuggerHost
-        .split(":")
-        .shift()}:8080`;
-    })();
-  }
+const API_URL =
+  process.env.NODE_ENV === Environment.Production
+    ? ""
+    : `http://${Constants.expoGoConfig.debuggerHost.split(":").shift()}:8080`;
 
-  async initialize() {
-    this.sessionCookie = await SecureStore.getItemAsync("session");
-  }
+const getSessionCookie = async () => {
+  return await SecureStore.getItemAsync("session");
+};
 
-  async fetch<T>({
-    url,
-    method,
-    headers,
-    body,
-    deviceId,
-  }: BaseFetchOptions): Promise<T> {
-    try {
-      // Get cookie in async storage
-      // If we're doing an auth request, don't include the cookie - no need to fetch
-      // Should be stashed in this.sessionCookie
-      // If not, get it from async storage and set it to this.sessionCookie for next request
-      const cookieInAsyncStorage = await (async () => {
-        if (url.includes("/auth") && !url.includes("/signout")) {
-          return null;
-        }
-        return (
-          this.sessionCookie ||
-          // Set if not defined already, since we're doing the request anyway
-          (await (async () => {
-            this.sessionCookie = await SecureStore.getItemAsync("session");
-            return this.sessionCookie;
-          })())
-        );
-      })();
+const fetch = async <T>({
+  url,
+  method,
+  headers,
+  body,
+  deviceId,
+}: BaseFetchOptions): Promise<T> => {
+  try {
+    // Get cookie in async storage
+    // If we're doing an auth request, don't include the cookie - no need to fetch
+    const sessionCookie = await getSessionCookie();
 
-      if (!deviceId && !cookieInAsyncStorage) {
-        const newDeviceId = await getDeviceId();
-        deviceId = newDeviceId;
-      }
-
-      const response = await axios(`${this.apiUrl}${url}`, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          ...(cookieInAsyncStorage && { Cookie: cookieInAsyncStorage }),
-          ...(deviceId && { "X-Device-Id": deviceId }),
-          ...headers,
-        },
-        data: JSON.stringify(body),
-      }).catch((err) => {
-        throw new Error(err);
-      });
-      // Set cookies if they exist
-      // TODO: Remove from async storage when a user is logged out
-      if (response.headers["set-cookie"]?.[0]) {
-        // TODO: Find correct cookie, not just first
-        const cookie = response.headers["set-cookie"]?.[0];
-        await SecureStore.setItemAsync("session", cookie);
-      }
-      return response.data;
-    } catch (err) {
-      console.error(`error fetching url ${this.apiUrl}${url}`, err);
-      throw new Error(err);
+    console.log("sessionCookie in async storage", sessionCookie);
+    if (!deviceId) {
+      const newDeviceId = await getDeviceId();
+      deviceId = newDeviceId;
     }
-  }
 
-  // Auth Module
+    const response = await axios(`${API_URL}${url}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(sessionCookie && { Cookie: sessionCookie }),
+        ...(deviceId && { "x-device-id": deviceId }),
+        ...headers,
+      },
+      withCredentials: true,
+      data: JSON.stringify(body),
+    }).catch((err) => {
+      // TODO: Display error here?
+      throw new Error(err);
+    });
+    // Set cookies if they exist
+    // TODO: Remove from async storage when a user is logged out
+    // console.log("response", response);
+    // console.log("header", response.headers["set-cookie"]);
+    if (response.headers["set-cookie"]?.length) {
+      // TODO: Find correct cookie, not just first
+      const cookie = response.headers["set-cookie"]?.[0];
+      console.log("setting cookie in store", cookie);
+      await SecureStore.setItemAsync("session", cookie);
+    }
+    return response.data;
+  } catch (err) {
+    console.error(`error fetching url ${API_URL}${url}`, err);
+    throw new Error(err);
+  }
+};
 
-  // Email Signup
-  async emailSignup({
-    email,
-    password,
-    receivePromotions,
-  }: {
-    email: string;
-    password: string;
-    receivePromotions: boolean;
-  }) {
-    return this.fetch<GenericSuccessBoolResponse>({
-      url: "/auth/email/signup",
-      method: "POST",
-      body: { email, password, receivePromotions },
-    });
-  }
-  // Email Signin
-  async emailSignin({ email, password }: { email: string; password: string }) {
-    return this.fetch<GenericSuccessBoolResponse>({
-      url: "/auth/email/signin",
-      method: "POST",
-      body: { email, password },
-    });
-  }
-  // SMS Signin
-  async smsSignin({ phone }: { phone: string }) {
-    return this.fetch<GenericSuccessBoolResponse>({
-      url: "/auth/sms/signin",
-      method: "POST",
-      body: { phone },
-    });
-  }
-  // SMS Signup
-  async smsSignup({ phone }: { phone: string }) {
-    return this.fetch<GenericSuccessBoolResponse>({
-      url: "/auth/sms/signup",
-      method: "POST",
-      body: { phone },
-    });
-  }
-  // SMS Signin Verify
-  async smsSignupVerify({ code }: { code: string }) {
-    return this.fetch<GenericSuccessBoolResponse>({
-      url: "/auth/sms/signup/verify",
-      method: "POST",
-      body: { code },
-    });
-  }
-  // SMS Signup Verify
-  async smsSigninVerify({ code }: { code: string }) {
-    return this.fetch<GenericSuccessBoolResponse>({
-      url: "/auth/sms/signin/verify",
-      method: "POST",
-      body: { code },
-    });
-  }
-  // Signout
-  async signout() {
-    return this.fetch<GenericSuccessBoolResponse>({
-      url: "/auth/signout",
-      method: "POST",
-    });
-  }
+// Auth Module
 
-  // Bills Module
+// Email Signup
+export const emailSignup = async ({
+  email,
+  password,
+  receivePromotions,
+}: {
+  email: string;
+  password: string;
+  receivePromotions: boolean;
+}) => {
+  return fetch<GenericSuccessBoolResponse>({
+    url: "/auth/email/signup",
+    method: "POST",
+    body: { email, password, receivePromotions },
+  });
+};
+// Email Signin
+export const emailSignin = async ({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) => {
+  return fetch<GenericSuccessBoolResponse>({
+    url: "/auth/email/signin",
+    method: "POST",
+    body: { email, password },
+  });
+};
+// SMS Signin
+export const smsSignin = async ({ phone }: { phone: string }) => {
+  return fetch<GenericSuccessBoolResponse>({
+    url: "/auth/sms/signin",
+    method: "POST",
+    body: { phone },
+  });
+};
+// SMS Signup
+export const smsSignup = async ({ phone }: { phone: string }) => {
+  return fetch<GenericSuccessBoolResponse>({
+    url: "/auth/sms/signup",
+    method: "POST",
+    body: { phone },
+  });
+};
+// SMS Signin Verify
+export const smsSignupVerify = async ({ code }: { code: string }) => {
+  return fetch<GenericSuccessBoolResponse>({
+    url: "/auth/sms/signup/verify",
+    method: "POST",
+    body: { code },
+  });
+};
+// SMS Signup Verify
+export const smsSigninVerify = async ({ code }: { code: string }) => {
+  return fetch<GenericSuccessBoolResponse>({
+    url: "/auth/sms/signin/verify",
+    method: "POST",
+    body: { code },
+  });
+};
+// Signout
+export const signout = async () => {
+  return fetch<GenericSuccessBoolResponse>({
+    url: "/auth/signout",
+    method: "POST",
+  });
+};
 
-  // Get Bill by ID
-  async getBillById({ id }: { id: string }): Promise<AppServiceResponse<Bill>> {
-    return this.fetch({
-      url: `/bills/${id}`,
-      method: "GET",
-    });
-  }
-  // Get bill sponsor by bill ID
-  async getBillSponsor({
-    id,
-  }: {
-    id: string;
-  }): Promise<AppServiceResponse<Representative>> {
-    return this.fetch({
-      url: `/bills/${id}/sponsor`,
-      method: "GET",
-    });
-  }
-  // Mark bill as seen by user
-  async markBillAsSeen({
-    id,
-  }: {
-    id: string;
-  }): Promise<GenericSuccessBoolResponse> {
-    return this.fetch({
-      url: `/bills/${id}/seen`,
-      method: "POST",
-    });
-  }
-  // Following bill
-  async setFollowingBill({
-    id,
-    following,
-  }: {
-    id: string;
-    following: boolean;
-  }): Promise<GenericSuccessBoolResponse> {
-    return this.fetch({
-      url: `/bills/${id}/follow`,
-      method: "POST",
-      body: { following },
-    });
-  }
-  // Get following bills
-  async getFollowingBills(): Promise<AppServiceResponse<Bill[]>> {
-    return this.fetch({
-      url: `/bills/following`,
-      method: "GET",
-    });
-  }
-  // Get user rep sponsored bills
-  async getUserRepSponsoredBills(): Promise<AppServiceResponse<Bill[]>> {
-    return this.fetch({
-      url: `/bills/rep-sponsored`,
-      method: "GET",
-    });
-  }
+// Bills Module
 
-  // Issues Module
+// Get Bill by ID
+export const getBillById = async ({
+  id,
+}: {
+  id: string;
+}): Promise<AppServiceResponse<Bill>> => {
+  return fetch({
+    url: `/bills/${id}`,
+    method: "GET",
+  });
+};
+// Get bill sponsor by bill ID
+export const getBillSponsor = async ({
+  id,
+}: {
+  id: string;
+}): Promise<AppServiceResponse<Representative>> => {
+  return fetch({
+    url: `/bills/${id}/sponsor`,
+    method: "GET",
+  });
+};
+// Mark bill as seen by user
+export const markBillAsSeen = async ({
+  id,
+}: {
+  id: string;
+}): Promise<GenericSuccessBoolResponse> => {
+  return fetch({
+    url: `/bills/${id}/seen`,
+    method: "POST",
+  });
+};
+// Following bill
+export const setFollowingBill = async ({
+  id,
+  following,
+}: {
+  id: string;
+  following: boolean;
+}): Promise<GenericSuccessBoolResponse> => {
+  return fetch({
+    url: `/bills/${id}/follow`,
+    method: "POST",
+    body: { following },
+  });
+};
+// Get following bills
+export const getFollowingBills = async (): Promise<
+  AppServiceResponse<Bill[]>
+> => {
+  return fetch({
+    url: `/bills/following`,
+    method: "GET",
+  });
+};
+// Get user rep sponsored bills
+export const getUserRepSponsoredBills = async (): Promise<
+  AppServiceResponse<Bill[]>
+> => {
+  return fetch({
+    url: `/bills/rep-sponsored`,
+    method: "GET",
+  });
+};
+// Get upcoming bills
+export const getUpcomingBills = async (): Promise<
+  AppServiceResponse<Bill[]>
+> => {
+  return fetch({
+    url: `/bills/upcoming`,
+    method: "GET",
+  });
+};
 
-  // Get issues
-  async getIssues(): Promise<AppServiceResponse<Issue[]>> {
-    return this.fetch({
-      url: "/issues",
-      method: "GET",
-    });
-  }
-  // Get issue by ID
-  async getIssueById({
-    id,
-  }: {
-    id: string;
-  }): Promise<AppServiceResponse<Issue>> {
-    return this.fetch({
-      url: `/issues/${id}`,
-      method: "GET",
-    });
-  }
-  // Get bills for issue by ID
-  async getBillsForIssueId({
-    id,
-  }: {
-    id: string;
-  }): Promise<AppServiceResponse<Bill[]>> {
-    return this.fetch({
-      url: `/issues/${id}/bills`,
-      method: "GET",
-    });
-  }
-  // Get following issues
-  async getFollowingIssues(): Promise<AppServiceResponse<Issue[]>> {
-    return this.fetch({
-      url: "/issues/following",
-      method: "GET",
-    });
-  }
+// Issues Module
 
-  // Location module
+// Get issues
+export const getIssues = async (): Promise<AppServiceResponse<Issue[]>> => {
+  return fetch({
+    url: "/issues",
+    method: "GET",
+  });
+};
+// Get issue by ID
+export const getIssueById = async ({
+  id,
+}: {
+  id: string;
+}): Promise<AppServiceResponse<Issue>> => {
+  return fetch({
+    url: `/issues/${id}`,
+    method: "GET",
+  });
+};
+// Get bills for issue by ID
+export const getBillsForIssueId = async ({
+  id,
+}: {
+  id: string;
+}): Promise<AppServiceResponse<Bill[]>> => {
+  return fetch({
+    url: `/issues/${id}/bills`,
+    method: "GET",
+  });
+};
+// Get following issues
+export const getFollowingIssues = async (): Promise<
+  AppServiceResponse<Issue[]>
+> => {
+  return fetch({
+    url: "/issues/following",
+    method: "GET",
+  });
+};
 
-  // Submit user location lat lon
-  async submitUserLocationLatLon({
-    lat,
-    lon,
-  }: {
-    lat: number;
-    lon: number;
-  }): Promise<GenericSuccessBoolResponse> {
-    return this.fetch({
-      url: "/location/latlon",
-      method: "POST",
-      body: { lat, lon },
-    });
-  }
-  // Submit user location address
-  async submitUserLocationAddress({
-    address,
-  }: {
-    address: string;
-  }): Promise<GenericSuccessBoolResponse> {
-    return this.fetch({
-      url: "/location/address",
-      method: "POST",
-      body: { address },
-    });
-  }
+// Location module
 
-  // Reps Module
+// Submit user location lat lon
+export const submitUserLocationLatLon = async ({
+  lat,
+  lon,
+}: {
+  lat: number;
+  lon: number;
+}): Promise<GenericSuccessBoolResponse> => {
+  return fetch({
+    url: "/location/latlon",
+    method: "POST",
+    body: { lat, lon },
+  });
+};
+// Submit user location address
+export const submitUserLocationAddress = async ({
+  address,
+}: {
+  address: string;
+}): Promise<GenericSuccessBoolResponse> => {
+  return fetch({
+    url: "/location/address",
+    method: "POST",
+    body: { address },
+  });
+};
 
-  // Get rep by ID
-  async getRepById({
-    id,
-  }: {
-    id: string;
-  }): Promise<AppServiceResponse<Representative>> {
-    return this.fetch({
-      url: `/reps/${id}`,
-      method: "GET",
-    });
-  }
-  // Get rep stats by ID
-  async getRepStatsById({
-    id,
-  }: {
-    id: string;
-  }): Promise<AppServiceResponse<RepresentativeStats>> {
-    return this.fetch({
-      url: `/reps/${id}/stats`,
-      method: "GET",
-    });
-  }
-  // Get rep votes by ID
-  async getRepVotesById({
-    id,
-  }: {
-    id: string;
-  }): Promise<AppServiceResponse<RepresentativeVote[]>> {
-    return this.fetch({
-      url: `/reps/${id}/votes`,
-      method: "GET",
-    });
-  }
-  // Get rep bills sponsored by ID
-  async getRepBillsSponsored({
-    id,
-  }: {
-    id: string;
-  }): Promise<AppServiceResponse<Bill[]>> {
-    return this.fetch({
-      url: `/reps/${id}/bills/sponsored`,
-      method: "GET",
-    });
-  }
-  // Get rep bills cosponsored by ID
-  async getRepBillsCosponsored({
-    id,
-  }: {
-    id: string;
-  }): Promise<AppServiceResponse<Bill[]>> {
-    return this.fetch({
-      url: `/reps/${id}/bills/cosponsored`,
-      method: "GET",
-    });
-  }
-  // Following rep
-  async setFollowingRep({
-    id,
-    following,
-  }: {
-    id: string;
-    following: boolean;
-  }): Promise<GenericSuccessBoolResponse> {
-    return this.fetch({
-      url: `/reps/${id}/follow`,
-      method: "POST",
-      body: { following },
-    });
-  }
-  // Get following reps
-  async getFollowingReps(): Promise<AppServiceResponse<Representative[]>> {
-    return this.fetch({
-      url: "/reps/following",
-      method: "GET",
-    });
-  }
-  // Get local reps
-  async getLocalReps(): Promise<AppServiceResponse<Representative[]>> {
-    return this.fetch({
-      url: "/reps/local",
-      method: "GET",
-    });
-  }
-  // Get rep vote on bill
-  async getRepVoteOnBill({
-    id,
-    billId,
-  }: {
-    id: string;
-    billId: string;
-  }): Promise<AppServiceResponse<RepresentativeVote | null>> {
-    return this.fetch({
-      url: `/reps/${id}/bills/${billId}/vote`,
-      method: "GET",
-    });
-  }
+// Reps Module
 
-  // Users Module
+// Get rep by ID
+export const getRepById = async ({
+  id,
+}: {
+  id: string;
+}): Promise<AppServiceResponse<Representative>> => {
+  return fetch({
+    url: `/reps/${id}`,
+    method: "GET",
+  });
+};
+// Get rep stats by ID
+export const getRepStatsById = async ({
+  id,
+}: {
+  id: string;
+}): Promise<AppServiceResponse<RepresentativeStats>> => {
+  return fetch({
+    url: `/reps/${id}/stats`,
+    method: "GET",
+  });
+};
+// Get rep votes by ID
+export const getRepVotesById = async ({
+  id,
+}: {
+  id: string;
+}): Promise<AppServiceResponse<RepresentativeVote[]>> => {
+  return fetch({
+    url: `/reps/${id}/votes`,
+    method: "GET",
+  });
+};
+// Get rep bills sponsored by ID
+export const getRepBillsSponsored = async ({
+  id,
+}: {
+  id: string;
+}): Promise<AppServiceResponse<Bill[]>> => {
+  return fetch({
+    url: `/reps/${id}/bills/sponsored`,
+    method: "GET",
+  });
+};
+// Get rep bills cosponsored by ID
+export const getRepBillsCosponsored = async ({
+  id,
+}: {
+  id: string;
+}): Promise<AppServiceResponse<Bill[]>> => {
+  return fetch({
+    url: `/reps/${id}/bills/cosponsored`,
+    method: "GET",
+  });
+};
+// Following rep
+export const setFollowingRep = async ({
+  id,
+  following,
+}: {
+  id: string;
+  following: boolean;
+}): Promise<GenericSuccessBoolResponse> => {
+  return fetch({
+    url: `/reps/${id}/follow`,
+    method: "POST",
+    body: { following },
+  });
+};
+// Get following reps
+export const getFollowingReps = async (): Promise<
+  AppServiceResponse<Representative[]>
+> => {
+  return fetch({
+    url: "/reps/following",
+    method: "GET",
+  });
+};
+// Get local reps
+export const getLocalReps = async (): Promise<
+  AppServiceResponse<Representative[]>
+> => {
+  return fetch({
+    url: "/reps/local",
+    method: "GET",
+  });
+};
+// Get rep vote on bill
+export const getRepVoteOnBill = async ({
+  id,
+  billId,
+}: {
+  id: string;
+  billId: string;
+}): Promise<AppServiceResponse<RepresentativeVote | null>> => {
+  return fetch({
+    url: `/reps/${id}/bills/${billId}/vote`,
+    method: "GET",
+  });
+};
 
-  // Get me
-  async getMe(): Promise<AppServiceResponse<User>> {
-    return this.fetch({
-      url: "/users/me",
-      method: "GET",
-    });
-  }
-  // Patch me
-  async patchMe({ name }: { name: string }): Promise<AppServiceResponse<User>> {
-    return this.fetch({
-      url: "/users/me",
-      method: "PATCH",
-      body: { name },
-    });
-  }
+// Users Module
 
-  // Votes Module
+// Get me
+export const getMe = async (): Promise<AppServiceResponse<User>> => {
+  return fetch({
+    url: "/users/me",
+    method: "GET",
+  });
+};
+// Patch me
+export const patchMe = async ({
+  name,
+}: {
+  name: string;
+}): Promise<AppServiceResponse<User>> => {
+  return fetch({
+    url: "/users/me",
+    method: "PATCH",
+    body: { name },
+  });
+};
 
-  // Vote on bill
-  async voteOnBill({
-    billId,
-    position,
-  }: {
-    billId: string;
-    position: boolean;
-  }): Promise<AppServiceResponse<UserBillVote>> {
-    return this.fetch({
-      url: `/votes/${billId}`,
-      method: "POST",
-      body: { position },
-    });
-  }
+// Votes Module
 
-  // Get my vote on bill
-  async getMyVoteOnBill({
-    billId,
-  }: {
-    billId: string;
-  }): Promise<AppServiceResponse<UserBillVote>> {
-    return this.fetch({
-      url: `/votes/${billId}/me`,
-      method: "GET",
-    });
-  }
-}
+// Vote on bill
+export const voteOnBill = async ({
+  billId,
+  position,
+}: {
+  billId: string;
+  position: boolean;
+}): Promise<AppServiceResponse<UserBillVote>> => {
+  return fetch({
+    url: `/votes/${billId}`,
+    method: "POST",
+    body: { position },
+  });
+};
 
-export default AppService;
+// Get my vote on bill
+export const getMyVoteOnBill = async ({
+  billId,
+}: {
+  billId: string;
+}): Promise<AppServiceResponse<UserBillVote>> => {
+  return fetch({
+    url: `/votes/${billId}/me`,
+    method: "GET",
+  });
+};
