@@ -1,8 +1,5 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import Button, { ButtonType } from "../../components/Button";
-import Text from "../../components/Text";
-import Divider from "../../components/Divider";
 import { titleText } from "../../styles/text";
 
 const Onboarding = () => {

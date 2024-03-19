@@ -15,9 +15,8 @@ interface RedisPhoneVerificationResponse {
   type: MessageType;
 }
 class AuthService {
-  session: BreakdownSession;
-  constructor(session: BreakdownSession) {
-    this.session = session;
+  constructor() {
+    // this.session = session;
   }
 
   async emailSignup({
@@ -28,7 +27,7 @@ class AuthService {
     email: string;
     password: string;
     receivePromotions: boolean;
-  }): Promise<User> {
+  }): Promise<string> {
     email = email.trim().toLowerCase();
 
     // Verify email and password requirements
@@ -63,9 +62,7 @@ class AuthService {
       },
     });
 
-    this.session.userId = newUser.id;
-
-    return newUser;
+    return newUser.id;
   }
 
   async emailSignin({
@@ -74,7 +71,7 @@ class AuthService {
   }: {
     email: string;
     password: string;
-  }): Promise<User> {
+  }): Promise<string> {
     email = email.trim().toLowerCase();
 
     // Find user
@@ -95,7 +92,7 @@ class AuthService {
       throw new UnauthorizedError("Invalid email or password");
     }
 
-    return user;
+    return user.id;
   }
 
   async smsSignup({
@@ -122,11 +119,17 @@ class AuthService {
 
     // Send signup verification code
     const smsService = new SmsService();
-    return await smsService.sendVerificationCodeSms({
+
+    const success = await smsService.sendVerificationCodeSms({
       phone,
       deviceId,
       type: MessageType.Signup,
     });
+    if (success) {
+      return true;
+    } else {
+      throw new InternalError("Error sending SMS");
+    }
   }
 
   async smsSignin({
@@ -163,17 +166,18 @@ class AuthService {
   }: {
     code: number;
     deviceId: string;
-  }): Promise<boolean> {
+  }): Promise<string> {
     // Get code from redis for this deviceId
     const response = await redis.get(deviceId);
     if (!response) {
       throw new InternalError("Code expired, please try again");
     }
     const redisData: RedisPhoneVerificationResponse = JSON.parse(response);
+    // console.log(redisData);
     if (!(redisData.type === MessageType.Signup)) {
-      throw new InternalError("Invalid code, please try again");
+      throw new InternalError("Invalid code type, please try again");
     }
-    if (code === redisData.code) {
+    if (Number(code) === Number(redisData.code)) {
       // Signup user
       const newUser = await dbClient.user.create({
         data: {
@@ -181,8 +185,11 @@ class AuthService {
           phone: redisData.phone,
         },
       });
-      this.session.userId = newUser.id;
-      return true;
+      if (!newUser) {
+        throw new InternalError("User not found");
+      }
+      // this.session.userId = user?.id;
+      return newUser.id;
     } else {
       throw new InternalError("Invalid code, please try again");
     }
@@ -194,7 +201,7 @@ class AuthService {
   }: {
     code: number;
     deviceId: string;
-  }): Promise<boolean> {
+  }): Promise<string> {
     // Get code from redis for this deviceId
     const response = await redis.get(deviceId);
     if (!response) {
@@ -202,17 +209,20 @@ class AuthService {
     }
     const redisData: RedisPhoneVerificationResponse = JSON.parse(response);
     if (!(redisData.type === MessageType.Signin)) {
-      throw new InternalError("Invalid code, please try again");
+      throw new InternalError("Invalid code type, please try again");
     }
-    if (code === redisData.code) {
+    if (Number(code) === Number(redisData.code)) {
       // Signin user
       const user = await dbClient.user.findFirst({
         where: {
           phone: redisData.phone,
         },
       });
-      this.session.userId = user?.id;
-      return true;
+      if (!user) {
+        throw new InternalError("User not found");
+      }
+      // this.session.userId = user?.id;
+      return user.id;
     } else {
       throw new InternalError("Invalid code, please try again");
     }

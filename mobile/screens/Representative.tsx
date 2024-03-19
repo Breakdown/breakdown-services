@@ -1,25 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { ScrollView, StyleSheet, View } from "react-native";
-import {
-  getBillById,
-  getRepById,
-  QUERY_GET_BILL,
-  QUERY_GET_REP,
-} from "../data/queries";
 import Text from "../components/Text";
+import { GET_REP_BY_ID, getRepById } from "../data/appService";
 
 const Representative = ({ navigation, route }) => {
   const {
     representative: { id },
   } = route.params;
   const { data, error, isLoading } = useQuery({
-    queryKey: [QUERY_GET_REP, id],
+    queryKey: [GET_REP_BY_ID, id],
     queryFn: () => getRepById(id),
   });
   return (
     <View style={styles.container}>
       <Text>
-        {data?.first_name} {data?.last_name}
+        {data?.data?.firstName} {data?.data?.lastName}
       </Text>
     </View>
   );

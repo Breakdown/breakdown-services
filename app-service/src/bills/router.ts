@@ -37,6 +37,69 @@ router.get(
 );
 
 router.get(
+  "/following",
+  errorPassthrough(requireAuth),
+  errorPassthrough(userSpecificCachedRequest),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const billsService = new BillsService();
+    const bills = await billsService.getFollowingBills(
+      req.session.userId as string
+    );
+    const response = {
+      data: {
+        bills,
+      },
+    };
+    await cacheUserSpecificResponse(
+      req,
+      response,
+      req.session.userId as string
+    );
+    res.status(200).send(response);
+  })
+);
+
+router.get(
+  "/upcoming",
+  errorPassthrough(requireAuth),
+  errorPassthrough(genericCachedRequest),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const billsService = new BillsService();
+    const bills = await billsService.getUpcomingBills();
+    const response = {
+      data: {
+        bills,
+      },
+    };
+    await cacheGenericResponse(req, response);
+    res.status(200).send(response);
+  })
+);
+
+router.get(
+  "/rep-sponsored",
+  errorPassthrough(requireAuth),
+  errorPassthrough(userSpecificCachedRequest),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const billsService = new BillsService();
+    const bills = await billsService.getUserRelevantSponsoredBills(
+      req.session.userId as string
+    );
+    const response = {
+      data: {
+        bills,
+      },
+    };
+    await cacheUserSpecificResponse(
+      req,
+      response,
+      req.session.userId as string
+    );
+    res.status(200).send(response);
+  })
+);
+
+router.get(
   "/:id",
   [param("id").exists()],
   // errorPassthrough(handleValidationErrors),
@@ -118,69 +181,6 @@ router.post(
         success: true,
       },
     });
-  })
-);
-
-router.get(
-  "/following",
-  errorPassthrough(requireAuth),
-  errorPassthrough(userSpecificCachedRequest),
-  errorPassthrough(async (req: Request, res: Response) => {
-    const billsService = new BillsService();
-    const bills = await billsService.getFollowingBills(
-      req.session.userId as string
-    );
-    const response = {
-      data: {
-        bills,
-      },
-    };
-    await cacheUserSpecificResponse(
-      req,
-      response,
-      req.session.userId as string
-    );
-    res.status(200).send(response);
-  })
-);
-
-router.get(
-  "/upcoming",
-  errorPassthrough(requireAuth),
-  errorPassthrough(genericCachedRequest),
-  errorPassthrough(async (req: Request, res: Response) => {
-    const billsService = new BillsService();
-    const bills = await billsService.getUpcomingBills();
-    const response = {
-      data: {
-        bills,
-      },
-    };
-    await cacheGenericResponse(req, response);
-    res.status(200).send(response);
-  })
-);
-
-router.get(
-  "/rep-sponsored",
-  errorPassthrough(requireAuth),
-  errorPassthrough(userSpecificCachedRequest),
-  errorPassthrough(async (req: Request, res: Response) => {
-    const billsService = new BillsService();
-    const bills = await billsService.getUserRelevantSponsoredBills(
-      req.session.userId as string
-    );
-    const response = {
-      data: {
-        bills,
-      },
-    };
-    await cacheUserSpecificResponse(
-      req,
-      response,
-      req.session.userId as string
-    );
-    res.status(200).send(response);
   })
 );
 

@@ -1,6 +1,10 @@
 import { Request, Response, Router } from "express";
 import { body } from "express-validator";
-import { errorPassthrough, handleValidationErrors } from "../utils/express.js";
+import {
+  errorPassthrough,
+  getDeviceId,
+  handleValidationErrors,
+} from "../utils/express.js";
 import AuthService from "./service.js";
 import UnauthorizedError from "../utils/errors/UnauthorizedError.js";
 
@@ -18,13 +22,13 @@ router.post(
   ],
   errorPassthrough(handleValidationErrors),
   errorPassthrough(async (req: Request, res: Response) => {
-    const authService = new AuthService(req.session);
-    await authService.emailSignup({
+    const authService = new AuthService();
+    const userId = await authService.emailSignup({
       email: req.body.email,
       password: req.body.password,
       receivePromotions: req.body.receivePromotions,
     });
-    req.session = authService.session;
+    req.session.userId = userId;
     req.session.save();
     res.status(201).send({
       data: {
@@ -39,13 +43,15 @@ router.post(
   [body("email").exists().isEmail(), body("password").isString().exists()],
   errorPassthrough(handleValidationErrors),
   errorPassthrough(async (req: Request, res: Response) => {
-    const authService = new AuthService(req.session);
-    await authService.emailSignin({
+    const authService = new AuthService();
+    const userId = await authService.emailSignin({
       email: req.body.email,
       password: req.body.password,
     });
-    req.session = authService.session;
+    console.log("setting userId", userId);
+    req.session.userId = userId;
     req.session.save();
+    console.log("session after", req.session);
     res.status(201).send({
       data: {
         success: true,
@@ -57,9 +63,10 @@ router.post(
 router.post(
   "/sms/signup",
   [body("phone").exists()],
+  getDeviceId,
   errorPassthrough(handleValidationErrors),
   errorPassthrough(async (req: Request, res: Response) => {
-    const authService = new AuthService(req.session);
+    const authService = new AuthService();
     if (!req.deviceId) {
       throw new UnauthorizedError("DeviceId not found");
     }
@@ -67,8 +74,6 @@ router.post(
       phone: req.body.phone,
       deviceId: req.deviceId,
     });
-    req.session = authService.session;
-    req.session.save();
     res.status(201).send({
       data: {
         success: true,
@@ -80,9 +85,10 @@ router.post(
 router.post(
   "/sms/signin",
   [body("phone").exists()],
+  getDeviceId,
   errorPassthrough(handleValidationErrors),
   errorPassthrough(async (req: Request, res: Response) => {
-    const authService = new AuthService(req.session);
+    const authService = new AuthService();
     if (!req.deviceId) {
       throw new UnauthorizedError("DeviceId not found");
     }
@@ -90,8 +96,6 @@ router.post(
       phone: req.body.phone,
       deviceId: req.deviceId,
     });
-    req.session = authService.session;
-    req.session.save();
     res.status(201).send({
       data: {
         success: true,
@@ -103,17 +107,18 @@ router.post(
 router.post(
   "/sms/signup/verify",
   [body("code").exists()],
+  getDeviceId,
   errorPassthrough(handleValidationErrors),
   errorPassthrough(async (req: Request, res: Response) => {
-    const authService = new AuthService(req.session);
+    const authService = new AuthService();
     if (!req.deviceId) {
       throw new UnauthorizedError("DeviceId not found");
     }
-    await authService.verifySmsSignup({
+    const userId = await authService.verifySmsSignup({
       deviceId: req.deviceId,
       code: req.body.code,
     });
-    req.session = authService.session;
+    req.session.userId = userId;
     req.session.save();
     res.status(201).send({
       data: {
@@ -126,17 +131,18 @@ router.post(
 router.post(
   "/sms/signin/verify",
   [body("code").exists()],
+  getDeviceId,
   errorPassthrough(handleValidationErrors),
   errorPassthrough(async (req: Request, res: Response) => {
-    const authService = new AuthService(req.session);
+    const authService = new AuthService();
     if (!req.deviceId) {
       throw new UnauthorizedError("DeviceId not found");
     }
-    await authService.verifySmsSignin({
+    const userId = await authService.verifySmsSignin({
       deviceId: req.deviceId,
       code: req.body.code,
     });
-    req.session = authService.session;
+    req.session.userId = userId;
     req.session.save();
     res.status(201).send({
       data: {

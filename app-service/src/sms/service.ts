@@ -9,18 +9,23 @@ export enum MessageType {
 class SmsService {
   twilioClient?: twilio.Twilio;
   constructor() {
-    if (
-      !process.env.TWILIO_ACCOUNT_ID ||
-      !process.env.TWILIO_AUTH_TOKEN ||
-      !process.env.TWILIO_PHONE_NUMBER
-    ) {
-      throw new InternalError("Missing Twilio environment variables");
+    try {
+      if (
+        !process.env.TWILIO_ACCOUNT_ID ||
+        !process.env.TWILIO_AUTH_TOKEN ||
+        !process.env.TWILIO_PHONE_NUMBER
+      ) {
+        throw new InternalError("Missing Twilio environment variables");
+      }
+      const newTwilioClient = twilio(
+        process.env.TWILIO_ACCOUNT_ID,
+        process.env.TWILIO_AUTH_TOKEN
+      );
+      this.twilioClient = newTwilioClient;
+    } catch (err) {
+      console.error(err);
+      throw new InternalError("Error initializing Twilio client", 500);
     }
-    const newTwilioClient = twilio(
-      process.env.TWILIO_ACCOUNT_ID,
-      process.env.TWILIO_AUTH_TOKEN
-    );
-    this.twilioClient = newTwilioClient;
   }
 
   async sendVerificationCodeSms({
@@ -32,35 +37,45 @@ class SmsService {
     deviceId: string;
     type: MessageType;
   }): Promise<boolean> {
-    // Create and set verification code in Redis
-    const randomCode = Math.floor(100000 + Math.random() * 900000);
-    await redis.set(
-      deviceId,
-      JSON.stringify({
-        code: randomCode,
-        phone,
-        type,
-      })
-    );
-    // Determine text of message based on message type
-    let messageText = "";
-    switch (type) {
-      case MessageType.Signin:
-        messageText = `Your Breakdown verification code is: ${randomCode}. This code will expire in 10 minutes.`;
-        break;
-      case MessageType.Signup:
-        messageText = `Welcome to Breakdown! Your verification code is: ${randomCode}. This code will expire in 10 minutes.`;
-        break;
-      default:
-        messageText = `Your Breakdown verification code is: ${randomCode}. This code will expire in 10 minutes.`;
-        break;
+    try {
+      // Create and set verification code in Redis
+      const randomCode = Math.floor(100000 + Math.random() * 900000);
+      await redis.set(
+        deviceId,
+        JSON.stringify({
+          code: randomCode,
+          phone,
+          type,
+        })
+      );
+      // Determine text of message based on message type
+      let messageText = "";
+      switch (type) {
+        case MessageType.Signin:
+          messageText = `Your Breakdown verification code is: ${randomCode}. This code will expire in 10 minutes.`;
+          break;
+        case MessageType.Signup:
+          messageText = `Welcome to Breakdown! Your verification code is: ${randomCode}. This code will expire in 10 minutes.`;
+          break;
+        default:
+          messageText = `Your Breakdown verification code is: ${randomCode}. This code will expire in 10 minutes.`;
+          break;
+      }
+      this.twilioClient?.messages
+        .create({
+          body: messageText,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to: phone,
+        })
+        .catch((err) => {
+          console.error(err);
+          return false;
+        });
+      return true;
+    } catch (err) {
+      console.error(err);
+      throw err;
     }
-    this.twilioClient?.messages.create({
-      body: messageText,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: phone,
-    });
-    return true;
   }
 }
 

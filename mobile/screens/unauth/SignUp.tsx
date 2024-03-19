@@ -1,4 +1,3 @@
-import { useNavigation } from "@react-navigation/native";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -6,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import Button, { ButtonType } from "../../components/Button";
@@ -15,12 +13,8 @@ import PhoneInput from "../../components/PhoneInput";
 import TextInput from "../../components/TextInput";
 import useAuth from "../../hooks/useAuth";
 import BasePhoneInput from "react-native-phone-number-input";
-import {
-  signUpEmailPassword,
-  signUpSMS,
-  verifyCodeSMS,
-} from "../../data/mutations";
 import { titleText } from "../../styles/text";
+import { emailSignup, smsSignup, smsSignupVerify } from "../../data/appService";
 
 export default function SignUp() {
   const { refetch } = useAuth({ allowUnauth: true });
@@ -29,38 +23,40 @@ export default function SignUp() {
   const [verifyPassword, setVerifyPassword] = useState(null);
   const [phone, setPhone] = useState(null);
   const [formattedPhone, setFormattedPhone] = useState(null);
+  const [receivePromotions, setReceivePromotions] = useState(false);
   const phoneInput = useRef<BasePhoneInput>(null);
   const [displayVerificationField, setDisplayVerificationField] =
     useState(false);
 
   const signUpEmailPassMutation = useMutation({
-    mutationFn: signUpEmailPassword,
+    mutationFn: emailSignup,
     onSuccess: () => {
       refetch();
     },
   });
 
   const signUpSmsMutation = useMutation({
-    mutationFn: signUpSMS,
+    mutationFn: smsSignup,
     onSuccess: () => {
       setDisplayVerificationField(true);
     },
   });
 
   const verifyCodeSMSMutation = useMutation({
-    mutationFn: verifyCodeSMS,
+    mutationFn: smsSignupVerify,
     onSuccess: () => {
       refetch();
     },
   });
 
   const onSubmitEmailPass = async () => {
-    // TODO: More validation - move to backend if errors are able to be parsed into messages
+    // TODO: More validation - move to backend
     if (email && password?.length >= 6 && verifyPassword.length >= 6) {
       if (password === verifyPassword) {
         await signUpEmailPassMutation.mutateAsync({
           email: email.toLowerCase(),
           password,
+          receivePromotions,
         });
       } else {
         alert("Passwords do not match");
@@ -69,9 +65,9 @@ export default function SignUp() {
   };
 
   const onSubmitSms = async () => {
-    // TODO: More validation - move to backend if errors are able to be parsed into messages
+    // TODO: More validation - move to backend
     if (phoneInput.current?.isValidNumber(phone)) {
-      await signUpSmsMutation.mutateAsync({ phoneNumber: formattedPhone });
+      await signUpSmsMutation.mutateAsync({ phone: formattedPhone });
     }
   };
 
@@ -86,11 +82,11 @@ export default function SignUp() {
   useEffect(() => {
     if (verificationCode?.length === 6) {
       verifyCodeSMSMutation.mutate({
-        phoneNumber: formattedPhone,
-        verificationCode,
+        code: verificationCode,
       });
     }
   }, [verificationCode]);
+
   return (
     <View style={styles.pageContainer}>
       <KeyboardAvoidingView behavior="padding" style={styles.pageContainer}>
@@ -138,6 +134,14 @@ export default function SignUp() {
             {displayVerificationField ? (
               <TextInput
                 value={verificationCode}
+                onSubmitEditing={() => {
+                  if (verificationCode?.length === 6) {
+                    verifyCodeSMSMutation.mutate({
+                      code: verificationCode,
+                    });
+                  }
+                }}
+                returnKeyType="done"
                 onChangeText={handleVerificationFieldInput}
                 textContentType={"oneTimeCode"}
                 placeholder={"123456"}

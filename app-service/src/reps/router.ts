@@ -14,6 +14,61 @@ import RepresentativesService from "./service.js";
 const router = Router();
 
 router.get(
+  "/featured",
+  errorPassthrough(genericCachedRequest),
+  errorPassthrough(async (request: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    const reps = await representativesService.getFeaturedReps();
+    const data = {
+      data: {
+        representatives: reps,
+      },
+    };
+    await cacheGenericResponse(request, data);
+
+    res.status(200).send(data);
+  })
+);
+
+router.get(
+  "/following",
+  errorPassthrough(requireAuth),
+  errorPassthrough(userSpecificCachedRequest),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    const reps = await representativesService.getFollowingReps(
+      req.session.userId as string
+    );
+    const data = {
+      data: {
+        representatives: reps,
+      },
+    };
+    await cacheUserSpecificResponse(req, data, req.session.userId as string);
+    res.status(200).send(data);
+  })
+);
+
+router.get(
+  "/local",
+  errorPassthrough(requireAuth),
+  errorPassthrough(userSpecificCachedRequest),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    const reps = await representativesService.getLocalReps(
+      req.session.userId as string
+    );
+    const data = {
+      data: {
+        representatives: reps,
+      },
+    };
+    await cacheUserSpecificResponse(req, data, req.session.userId as string);
+    res.status(200).send(data);
+  })
+);
+
+router.get(
   "/:id",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
@@ -146,44 +201,6 @@ router.post(
 );
 
 router.get(
-  "/following",
-  errorPassthrough(requireAuth),
-  errorPassthrough(userSpecificCachedRequest),
-  errorPassthrough(async (req: Request, res: Response) => {
-    const representativesService = new RepresentativesService();
-    const reps = await representativesService.getFollowingReps(
-      req.session.userId as string
-    );
-    const data = {
-      data: {
-        representatives: reps,
-      },
-    };
-    await cacheUserSpecificResponse(req, data, req.session.userId as string);
-    res.status(200).send(data);
-  })
-);
-
-router.get(
-  "/local",
-  errorPassthrough(requireAuth),
-  errorPassthrough(userSpecificCachedRequest),
-  errorPassthrough(async (req: Request, res: Response) => {
-    const representativesService = new RepresentativesService();
-    const reps = await representativesService.getLocalReps(
-      req.session.userId as string
-    );
-    const data = {
-      data: {
-        representatives: reps,
-      },
-    };
-    await cacheUserSpecificResponse(req, data, req.session.userId as string);
-    res.status(200).send(data);
-  })
-);
-
-router.get(
   "/:id/bills/:billId/vote",
   [param("id").exists(), param("billId").exists()],
   errorPassthrough(handleValidationErrors),
@@ -202,23 +219,6 @@ router.get(
       },
     };
     await cacheGenericResponse(req, data);
-    res.status(200).send(data);
-  })
-);
-
-router.get(
-  "/featured",
-  errorPassthrough(genericCachedRequest),
-  errorPassthrough(async (request: Request, res: Response) => {
-    const representativesService = new RepresentativesService();
-    const reps = await representativesService.getFeaturedReps();
-    const data = {
-      data: {
-        representatives: reps,
-      },
-    };
-    await cacheGenericResponse(request, data);
-
     res.status(200).send(data);
   })
 );

@@ -7,25 +7,26 @@ import Toast from "react-native-toast-message";
 import { StyleSheet, View } from "react-native";
 import Text, { TextVariant } from "./Text";
 import Button, { ButtonType } from "./Button";
-import AppService, {
+import {
   GET_FOLLOWING_ISSUES,
   GET_ISSUES,
+  getFollowingIssues,
+  getIssues,
 } from "../data/appService";
 import { Issue } from "../data/types";
 
 const IssuesOnboarding = () => {
   const { user } = useAuth();
-  const [appService] = useState(() => new AppService());
   const yourIssuesQueryResult = useQuery({
     queryKey: [GET_FOLLOWING_ISSUES, user?.id],
-    queryFn: appService.getFollowingIssues,
+    queryFn: getFollowingIssues,
     enabled: false,
   });
   const sheetRef = useRef<BottomSheet>(null);
 
   const { data } = useQuery({
     queryKey: [GET_ISSUES],
-    queryFn: appService.getIssues,
+    queryFn: getIssues,
     staleTime: 6000 * 60 * 24,
   });
 
@@ -85,7 +86,7 @@ const IssuesOnboarding = () => {
         </Text>
       </View>
       <BottomSheetFlatList
-        data={data}
+        data={data?.data || []}
         keyExtractor={(i) => i.id}
         renderItem={renderItem}
         contentContainerStyle={styles.contentContainer}

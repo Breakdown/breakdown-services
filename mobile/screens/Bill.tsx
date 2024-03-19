@@ -4,8 +4,7 @@ import Text, { TextVariant } from "../components/Text";
 import PageContainer from "../components/hoc/PageContainer";
 import VoteOnBill from "../components/VoteOnBill";
 import { Bill } from "../data/types";
-import { GET_BILL_BY_ID } from "../data/appService";
-import useAppService from "../hooks/useAppService";
+import { GET_BILL_BY_ID, getBillById } from "../data/appService";
 
 export const getBillSummary = (bill: Bill) => {
   if (bill?.aiSummary) {
@@ -27,11 +26,10 @@ export const getBillShortSummary = (bill: Bill) => {
   return undefined;
 };
 
-const Bill = ({ navigation, route }) => {
+const BillScreen = ({ navigation, route }) => {
   const {
     bill: { id },
   } = route.params;
-  const appService = useAppService();
 
   const {
     data: { data },
@@ -39,7 +37,7 @@ const Bill = ({ navigation, route }) => {
     isLoading,
   } = useQuery({
     queryKey: [GET_BILL_BY_ID, id],
-    queryFn: () => appService.getBillById(id),
+    queryFn: () => getBillById(id),
   });
 
   return (
@@ -89,4 +87,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Bill;
+export default BillScreen;

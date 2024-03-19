@@ -20,6 +20,7 @@ export const headers = (req: Request, res: Response, next: NextFunction) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept, Credentials, Set-Cookie, Cookie, Cookies, Cross-Origin, Access-Control-Allow-Credentials, Authorization, Access-Control-Allow-Origin"
   );
+  console.log("origin", req.headers.origin);
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Credentials", "true");
   res.header(
@@ -60,6 +61,9 @@ export const errorPassthrough =
   };
 
 export const requireAuth = (req: Request, _: Response, next: NextFunction) => {
+  // console.log("requireAuth");
+  // console.log(req.headers);
+  console.log(req.session);
   try {
     if (!req.session?.userId) {
       throw new UnauthorizedError("Not authorized");
@@ -78,11 +82,11 @@ export const cacheGenericResponse = async (
   req: Request,
   data: StructuredResponse
 ) => {
+  console.log("caching", req.method, req.originalUrl);
   const requestKey = `${req.method}:${req.originalUrl}`;
-  const hashedKey = await bcrypt.hash(requestKey, 10);
   // Cache response
   const cacheService = new CacheService();
-  return await cacheService.set(hashedKey, JSON.stringify(data));
+  return await cacheService.set(requestKey, JSON.stringify(data));
 };
 
 export const cacheUserSpecificResponse = async (
@@ -91,10 +95,9 @@ export const cacheUserSpecificResponse = async (
   userId: string
 ) => {
   const requestKey = `${req.method}:${req.originalUrl}-${userId}`;
-  const hashedKey = await bcrypt.hash(requestKey, 10);
   // Cache response
   const cacheService = new CacheService();
-  return await cacheService.set(hashedKey, JSON.stringify(data));
+  return await cacheService.set(requestKey, JSON.stringify(data));
 };
 
 export const genericCachedRequest = async (
@@ -102,11 +105,12 @@ export const genericCachedRequest = async (
   res: Response,
   next: NextFunction
 ) => {
+  console.log("hitting cache", req.method, req.originalUrl);
   const requestKey = `${req.method}:${req.originalUrl}`;
-  const hashedKey = await bcrypt.hash(requestKey, 10);
   // Get from cache
   const cacheService = new CacheService();
-  const cachedResponse = await cacheService.getJson(hashedKey);
+  const cachedResponse = await cacheService.getJson(requestKey);
+  console.log(cachedResponse);
   if (cachedResponse) {
     return res.status(200).send(cachedResponse);
   }
@@ -119,10 +123,9 @@ export const userSpecificCachedRequest = async (
   next: NextFunction
 ) => {
   const requestKey = `${req.method}:${req.originalUrl}:${req.session.userId}`;
-  const hashedKey = bcrypt.hashSync(requestKey, 10);
   // Get from cache
   const cacheService = new CacheService();
-  const cachedResponse = cacheService.getJson(hashedKey);
+  const cachedResponse = cacheService.getJson(requestKey);
   if (cachedResponse) {
     return res.status(200).send(cachedResponse);
   }
@@ -130,7 +133,7 @@ export const userSpecificCachedRequest = async (
 };
 
 export const getDeviceId = (req: Request, _: Response, next: NextFunction) => {
-  const deviceId = req.headers["X-Device-Id"] || "";
+  const deviceId = req.headers["x-device-id"] || "";
   // Set on request object
   if (typeof deviceId === "string" && deviceId.length > 0) {
     req.deviceId = deviceId;
@@ -175,17 +178,17 @@ export const sessionStore = new RedisStore({ client: redisClient });
 export const sessionLayer = () =>
   session({
     unset: "destroy",
-    rolling: true,
     name: "breakdown_sid",
     store: sessionStore,
     secret: process.env.SESSION_SECRET || "secret",
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
       secure: false, // isProduction() || isSandbox(), // if true only transmit cookie over https
-      httpOnly: false, // if true prevent client side JS from reading the cookie
+      httpOnly: true, // if true prevent client side JS from reading the cookie
       maxAge: 1000 * 60 * 60 * 24 * 30, // session max age in milliseconds - 30d - expire after 30d inactivity
       path: "/",
+      sameSite: "none",
     },
   });
 

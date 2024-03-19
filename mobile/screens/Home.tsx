@@ -1,54 +1,60 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  Dimensions,
-  FlatList,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
-import BillCard from "../components/BillCard";
-import Text, { TextVariant } from "../components/Text";
-import RepsCarousel from "../components/RepsCarousel";
+import { Dimensions, ScrollView, StyleSheet } from "react-native";
 import useAuth from "../hooks/useAuth";
 import IssuesOnboarding from "../components/IssuesOnboarding";
 import LocationBottomSheet from "../components/LocationBottomSheet";
-import YourIssues from "../components/YourIssues";
 import { useMemo } from "react";
+import {
+  GET_FOLLOWING_ISSUES,
+  GET_FOLLOWING_REPS,
+  GET_LOCAL_REPS,
+  GET_UPCOMING_BILLS,
+  getFollowingIssues,
+  getFollowingReps,
+  getLocalReps,
+  getUpcomingBills,
+} from "../data/appService";
 
 const Home = ({ navigation }) => {
   const { user } = useAuth();
-  const yourBillsQueryResult = useQuery({
-    queryKey: [QUERY_GET_BILLS, user?.id],
-    queryFn: getBills,
+
+  const upcomingBillsQueryResult = useQuery({
+    queryKey: [GET_UPCOMING_BILLS],
+    queryFn: getUpcomingBills,
   });
 
   const yourRepsQueryResult = useQuery({
-    queryKey: [QUERY_GET_YOUR_REPS, user?.id],
-    queryFn: getYourReps,
+    queryKey: [GET_LOCAL_REPS, user?.id],
+    queryFn: getLocalReps,
+  });
+
+  const followingRepsQueryResult = useQuery({
+    queryKey: [GET_FOLLOWING_REPS, user?.id],
+    queryFn: getFollowingReps,
   });
 
   const yourIssuesQueryResult = useQuery({
-    queryKey: [QUERY_GET_YOUR_ISSUES, user?.id],
-    queryFn: getYourIssues,
+    queryKey: [GET_FOLLOWING_ISSUES, user?.id],
+    queryFn: getFollowingIssues,
   });
 
-  const yourBills = yourBillsQueryResult.data?.data?.data;
+  const upcomingBills = upcomingBillsQueryResult.data || [];
   const yourReps = useMemo(() => {
     if (!yourRepsQueryResult.data) return [];
     return [
-      ...yourRepsQueryResult.data?.local,
-      ...yourRepsQueryResult.data?.following,
+      ...yourRepsQueryResult.data?.data,
+      ...followingRepsQueryResult.data?.data,
     ];
-  }, [yourRepsQueryResult.data]);
+  }, [yourRepsQueryResult.data, followingRepsQueryResult.data]);
 
-  const shouldOnboardIssues = !yourIssuesQueryResult?.data?.length;
+  const shouldOnboardIssues = user?.onboardedIssues;
 
-  const shouldOnboardLocation = !user?.lat_lon && !user?.address;
+  const shouldOnboardLocation = user?.onboardedLocation;
 
   return (
     <>
       <ScrollView style={styles.container}>
-        <View style={styles.yourBillsContainer}>
+        {/* <View style={styles.yourBillsContainer}>
           <Text
             variant={TextVariant.SECTION_TITLE}
             style={styles.sectionHeader}
@@ -72,7 +78,7 @@ const Home = ({ navigation }) => {
         <Text variant={TextVariant.SECTION_TITLE} style={styles.sectionHeader}>
           Your Issues
         </Text>
-        <YourIssues />
+        <YourIssues /> */}
       </ScrollView>
       {shouldOnboardIssues ? <IssuesOnboarding /> : null}
       {shouldOnboardLocation && !shouldOnboardIssues ? (

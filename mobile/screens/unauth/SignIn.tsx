@@ -16,13 +16,9 @@ import KeyboardAvoidView from "../../components/hoc/KeyboardAvoidView";
 import BasePhoneInput from "react-native-phone-number-input";
 import PhoneInput from "../../components/PhoneInput";
 import TextInput from "../../components/TextInput";
-import {
-  signInEmailPassword,
-  signInSMS,
-  verifyCodeSMS,
-} from "../../data/mutations";
 import useAuth from "../../hooks/useAuth";
 import { titleText } from "../../styles/text";
+import { emailSignin, smsSignin, smsSigninVerify } from "../../data/appService";
 
 export default function SignIn() {
   const navigation = useNavigation();
@@ -36,42 +32,35 @@ export default function SignIn() {
     useState(false);
 
   const signInEmailPassMutation = useMutation({
-    mutationFn: signInEmailPassword,
+    mutationFn: emailSignin,
     onSuccess: () => {
       refetch();
     },
   });
 
   const signInSmsMutation = useMutation({
-    mutationFn: signInSMS,
+    mutationFn: smsSignin,
     onSuccess: () => {
       setDisplayVerificationField(true);
     },
   });
 
   const verifyCodeSMSMutation = useMutation({
-    mutationFn: verifyCodeSMS,
+    mutationFn: smsSigninVerify,
     onSuccess: () => {
       refetch();
     },
   });
 
   const onSubmitEmailPass = async () => {
-    // TODO: More validation - move to backend if errors are able to be parsed into messages
-    if (email && password?.length >= 6) {
-      await signInEmailPassMutation.mutateAsync({
-        email: email.toLowerCase(),
-        password,
-      });
-    }
+    await signInEmailPassMutation.mutateAsync({
+      email: email.toLowerCase(),
+      password,
+    });
   };
 
   const onSubmitSms = async () => {
-    // TODO: More validation - move to backend if errors are able to be parsed into messages
-    if (phoneInput.current?.isValidNumber(phone)) {
-      await signInSmsMutation.mutateAsync({ phoneNumber: formattedPhone });
-    } else {
-    }
+    await signInSmsMutation.mutateAsync({ phone: formattedPhone });
   };
 
   const [verificationCode, setVerificationCode] = useState(null);
@@ -85,8 +74,7 @@ export default function SignIn() {
   useEffect(() => {
     if (verificationCode?.length === 6) {
       verifyCodeSMSMutation.mutate({
-        phoneNumber: formattedPhone,
-        verificationCode,
+        code: verificationCode,
       });
     }
   }, [verificationCode]);
