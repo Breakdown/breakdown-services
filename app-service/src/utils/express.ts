@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
+import jwt from "jsonwebtoken";
+import { SignedJWT } from "./jwt.js";
 import bcrypt from "bcryptjs";
 import session, { Session, SessionData } from "express-session";
 import connectRedis from "connect-redis";
@@ -13,6 +15,8 @@ import {
 import { Redis } from "ioredis";
 import morgan from "morgan";
 import CacheService from "../cache/service.js";
+
+const JWT_SECRET = process.env.JWT_SECRET || "secret";
 
 // Base server headers
 export const headers = (req: Request, res: Response, next: NextFunction) => {
@@ -203,6 +207,7 @@ declare global {
   namespace Express {
     export interface Request {
       deviceId?: string;
+      userId?: string;
     }
   }
 }
@@ -214,3 +219,23 @@ export const morganLogger = () =>
   });
 
 export type BreakdownSession = Session & Partial<SessionData>;
+
+export const verifyToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const token = req.headers["x-access-token"];
+
+  if (!token) {
+    throw new UnauthorizedError("No token provided", 403);
+  }
+
+  try {
+    const decoded = jwt.verify(token as string, JWT_SECRET);
+    req.userId = (decoded as SignedJWT)?.id;
+    next();
+  } catch (err) {
+    throw new UnauthorizedError("Invalid JWT", 401);
+  }
+};
