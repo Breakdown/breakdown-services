@@ -99,10 +99,15 @@ const fetch = async <T>({
     // console.log("response", response);
     // console.log("header", response.headers["set-cookie"]);
     if (response.headers["set-cookie"]?.length) {
-      // TODO: Find correct cookie, not just first
-      const cookie = response.headers["set-cookie"]?.[0];
-      console.log("setting cookie in store", cookie);
-      await SecureStore.setItemAsync("session", cookie);
+      const cookie = response.headers["set-cookie"]?.find((c: string) =>
+        c.includes("breakdown_sid")
+      );
+      if (cookie) {
+        const formattedCookie = cookie.split(";")[0];
+        console.log("setting cookie", formattedCookie);
+        await SecureStore.setItemAsync("session", formattedCookie);
+        // Fuck RN cookies
+      }
     }
     return response.data;
   } catch (err) {
