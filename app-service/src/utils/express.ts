@@ -63,7 +63,7 @@ export const errorPassthrough =
 export const requireAuth = (req: Request, _: Response, next: NextFunction) => {
   // console.log("requireAuth");
   // console.log(req.headers);
-  console.log(req.session);
+  console.log("request headers", req.headers);
   try {
     if (!req.session?.userId) {
       throw new UnauthorizedError("Not authorized");

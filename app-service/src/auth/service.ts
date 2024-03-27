@@ -9,6 +9,17 @@ import { redis } from "../utils/redis.js";
 import InternalError from "../utils/errors/InternalError.js";
 import { User } from "@prisma/client";
 
+const SIGN_IN_WITH_APPLE_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
+MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgPJ94XSOYgbBEGB3T
+gJ5AlrtNoxQG+2XuscYYVdqNIwGgCgYIKoZIzj0DAQehRANCAAS8yQtGGZe0KQ+6
+Q/3ZrtWNebT7dcjPeWBpC4lCHIjQ+sFyzi+C8WHeIu8zXUnkIHl+ADXlcPsM8XTB
+Ch6kytTZ
+-----END PRIVATE KEY-----`;
+
+const APPLE_SIGNIN_KEY_ID = "557P37XZZ8";
+const APPLE_TEAM_ID = "W2FY86TDM8";
+const APPLE_CLIENT_ID = "us.breakdown.Breakdown";
+
 interface RedisPhoneVerificationResponse {
   phone: string;
   code: number;
@@ -18,6 +29,10 @@ class AuthService {
   constructor() {
     // this.session = session;
   }
+
+  // async appleSignin({}): string {
+
+  // }
 
   async emailSignup({
     email,

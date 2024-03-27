@@ -7,7 +7,7 @@ run-backend:
 
 .PHONY: run-app
 run-app:
-	cd mobile-v2; npx expo start
+	cd mobile; npx expo start
 
 .PHONY: run
 run: run-backend run-app

@@ -12,6 +12,7 @@ import {
   User,
   UserBillVote,
 } from "./types";
+import CookieManager from "@react-native-cookies/cookies";
 
 interface BaseFetchOptions {
   url: string;
@@ -74,18 +75,18 @@ const fetch = async <T>({
     // If we're doing an auth request, don't include the cookie - no need to fetch
     const sessionCookie = await getSessionCookie();
 
-    console.log("sessionCookie in async storage", sessionCookie);
     if (!deviceId) {
       const newDeviceId = await getDeviceId();
       deviceId = newDeviceId;
     }
 
+    console.log("sessionCookie in request", sessionCookie);
     const response = await axios(`${API_URL}${url}`, {
       method,
       headers: {
         "Content-Type": "application/json",
-        ...(sessionCookie && { Cookie: sessionCookie }),
-        ...(deviceId && { "x-device-id": deviceId }),
+        ...(sessionCookie ? { Cookie: sessionCookie } : {}),
+        ...(deviceId ? { "x-device-id": deviceId } : {}),
         ...headers,
       },
       withCredentials: true,
@@ -100,9 +101,16 @@ const fetch = async <T>({
     // console.log("header", response.headers["set-cookie"]);
     if (response.headers["set-cookie"]?.length) {
       // TODO: Find correct cookie, not just first
-      const cookie = response.headers["set-cookie"]?.[0];
-      console.log("setting cookie in store", cookie);
-      await SecureStore.setItemAsync("session", cookie);
+      const cookie = response.headers["set-cookie"]?.find((c: string) =>
+        c.includes("breakdown_sid")
+      );
+      if (cookie) {
+        const formattedCookie = cookie.split(";")[0];
+        console.log("setting cookie", formattedCookie);
+        await SecureStore.setItemAsync("session", formattedCookie);
+        // Fuck RN cookies
+        await CookieManager.clearAll();
+      }
     }
     return response.data;
   } catch (err) {
