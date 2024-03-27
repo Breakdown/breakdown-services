@@ -19,6 +19,10 @@ class AuthService {
     // this.session = session;
   }
 
+  // async appleSignin({}): string {
+
+  // }
+
   async emailSignup({
     email,
     password,

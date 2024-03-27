@@ -12,7 +12,6 @@ import {
   User,
   UserBillVote,
 } from "./types";
-import CookieManager from "@react-native-cookies/cookies";
 
 interface BaseFetchOptions {
   url: string;
@@ -75,21 +74,19 @@ const fetch = async <T>({
     // If we're doing an auth request, don't include the cookie - no need to fetch
     const sessionCookie = await getSessionCookie();
 
+    console.log("sessionCookie in async storage", sessionCookie);
     if (!deviceId) {
       const newDeviceId = await getDeviceId();
       deviceId = newDeviceId;
     }
 
-    console.log("sessionCookie in request", sessionCookie);
     const response = await axios(`${API_URL}${url}`, {
       method,
       headers: {
         "Content-Type": "application/json",
-        ...(sessionCookie ? { Cookie: sessionCookie } : {}),
-        ...(deviceId ? { "x-device-id": deviceId } : {}),
+        ...(deviceId && { "x-device-id": deviceId }),
         ...headers,
       },
-      withCredentials: true,
       data: JSON.stringify(body),
     }).catch((err) => {
       // TODO: Display error here?
@@ -106,20 +103,41 @@ const fetch = async <T>({
       );
       if (cookie) {
         const formattedCookie = cookie.split(";")[0];
-        console.log("setting cookie", formattedCookie);
         await SecureStore.setItemAsync("session", formattedCookie);
-        // Fuck RN cookies
-        await CookieManager.clearAll();
       }
     }
     return response.data;
-  } catch (err) {
+  } catch (err: any) {
     console.error(`error fetching url ${API_URL}${url}`, err);
     throw new Error(err);
   }
 };
 
 // Auth Module
+
+// Sign In with Apple
+export const signInWithApple = async ({
+  email,
+  familyName,
+  givenName,
+  identityToken,
+  realUserStatus,
+  userId,
+  authorizationCode,
+}: {
+  email?: string;
+  familyName?: string;
+  givenName?: string;
+  identityToken: string;
+  realUserStatus: number;
+  userId: string;
+  authorizationCode: string;
+}) => {
+  return fetch<GenericSuccessBoolResponse>({
+    url: "/auth/apple/signin",
+    method: "POST",
+  });
+};
 
 // Email Signup
 export const emailSignup = async ({

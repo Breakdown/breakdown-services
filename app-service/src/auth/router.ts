@@ -10,6 +10,36 @@ import UnauthorizedError from "../utils/errors/UnauthorizedError.js";
 
 const router = Router();
 
+// router.post(
+//   "/apple/signin",
+//   [
+//     body("email").optional(),
+//     body("identityToken").exists(),
+//     body("authorizationCode").exists(),
+//     body("familyName").optional(),
+//     body("givenName").optional(),
+//     body("realUserStatus").isInt().optional(),
+//   ],
+//   errorPassthrough(handleValidationErrors),
+//   errorPassthrough(async (req: Request, res: Response) => {
+//     const authService = new AuthService();
+//     const userId = await authService.appleSignin({
+//       email: req.body.email,
+//       identityToken: req.body.identityToken,
+//       authorizationCode: req.body.authorizationCode,
+//       familyName: req.body.familyName,
+//       givenName: req.body.givenName,
+//       realUserStatus: req.body.realUserStatus,
+//     });
+//     req.session.userId = userId;
+//     req.session.save();
+//     res.status(201).send({
+//       data: {
+//         success: true,
+//       },
+//     });
+//   })
+// );
 router.post(
   "/email/signup",
   [
