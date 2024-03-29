@@ -93,7 +93,6 @@ const fetch = async <T>({
       // TODO: Display error here?
       throw new Error(err);
     });
-    console.log("headers", response.headers);
     if (response.data?.data?.accessToken) {
       await SecureStore.setItemAsync("jwt", response.data.data.accessToken);
     }

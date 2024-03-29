@@ -24,7 +24,6 @@ export const headers = (req: Request, res: Response, next: NextFunction) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept, Credentials, Set-Cookie, Cookie, Cookies, Cross-Origin, Access-Control-Allow-Credentials, Authorization, Access-Control-Allow-Origin"
   );
-  console.log("origin", req.headers.origin);
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Credentials", "true");
   res.header(
@@ -72,7 +71,6 @@ export const cacheGenericResponse = async (
   req: Request,
   data: StructuredResponse
 ) => {
-  console.log("caching", req.method, req.originalUrl);
   const requestKey = `${req.method}:${req.originalUrl}`;
   // Cache response
   const cacheService = new CacheService();
@@ -95,12 +93,10 @@ export const genericCachedRequest = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log("hitting cache", req.method, req.originalUrl);
   const requestKey = `${req.method}:${req.originalUrl}`;
   // Get from cache
   const cacheService = new CacheService();
   const cachedResponse = await cacheService.getJson(requestKey);
-  console.log(cachedResponse);
   if (cachedResponse) {
     return res.status(200).send(cachedResponse);
   }
@@ -158,37 +154,7 @@ export const errorHandler = (
   return res.status(error.code || 404).send(response);
 };
 
-// Session Layer
-const RedisStore = connectRedis(session);
-const redisClient = new Redis({
-  port: parseInt(process.env.REDIS_PORT || "6379"),
-  host: process.env.REDIS_HOST || "localhost",
-});
-export const sessionStore = new RedisStore({ client: redisClient });
-export const sessionLayer = () =>
-  session({
-    unset: "destroy",
-    name: "breakdown_sid",
-    store: sessionStore,
-    secret: process.env.SESSION_SECRET || "secret",
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      secure: false, // isProduction() || isSandbox(), // if true only transmit cookie over https
-      httpOnly: true, // if true prevent client side JS from reading the cookie
-      maxAge: 1000 * 60 * 60 * 24 * 30, // session max age in milliseconds - 30d - expire after 30d inactivity
-      path: "/",
-      sameSite: "none",
-    },
-  });
-
-// Extend express session type
-declare module "express-session" {
-  interface SessionData {
-    userId: string;
-  }
-}
-
+// Extend Express Request type
 declare global {
   namespace Express {
     export interface Request {

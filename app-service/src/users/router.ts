@@ -16,9 +16,6 @@ router.get(
   errorPassthrough(verifyToken),
   // errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
-    console.log("GET /me");
-    console.log("req.userId", req.userId);
-
     const usersService = new UsersService(req.userId as string);
     const me = await usersService.getMe();
     const data = {
@@ -26,8 +23,7 @@ router.get(
         user: me,
       },
     };
-    // await cacheUserSpecificResponse(req, data, req.userId as string);
-    console.log("data", data);
+    await cacheUserSpecificResponse(req, data, req.userId as string);
     res.status(200).send(data);
   })
 );
