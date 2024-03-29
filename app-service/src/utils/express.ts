@@ -22,7 +22,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "secret";
 export const headers = (req: Request, res: Response, next: NextFunction) => {
   res.header(
     "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Credentials, Set-Cookie, Cookie, Cookies, Cross-Origin, Access-Control-Allow-Credentials, Authorization, Access-Control-Allow-Origin"
+    "Origin, X-Requested-With, Content-Type, Accept, Credentials, Cross-Origin, Access-Control-Allow-Credentials, Authorization, Access-Control-Allow-Origin, x-access-token"
   );
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Credentials", "true");
