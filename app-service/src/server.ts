@@ -19,7 +19,7 @@ app.use(headers);
 app.use(helmet());
 app.use(cookieParser());
 app.use(morganLogger());
-app.use(sessionLayer());
+// app.use(sessionLayer());
 
 // Routes
 app.use(

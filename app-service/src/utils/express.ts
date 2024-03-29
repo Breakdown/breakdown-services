@@ -64,20 +64,6 @@ export const errorPassthrough =
     }
   };
 
-export const requireAuth = (req: Request, _: Response, next: NextFunction) => {
-  // console.log("requireAuth");
-  // console.log(req.headers);
-  console.log(req.session);
-  try {
-    if (!req.session?.userId) {
-      throw new UnauthorizedError("Not authorized");
-    }
-    next();
-  } catch (err) {
-    next(err);
-  }
-};
-
 interface StructuredResponse {
   data: any;
 }
@@ -126,7 +112,7 @@ export const userSpecificCachedRequest = async (
   res: Response,
   next: NextFunction
 ) => {
-  const requestKey = `${req.method}:${req.originalUrl}:${req.session.userId}`;
+  const requestKey = `${req.method}:${req.originalUrl}:${req.userId}`;
   // Get from cache
   const cacheService = new CacheService();
   const cachedResponse = cacheService.getJson(requestKey);

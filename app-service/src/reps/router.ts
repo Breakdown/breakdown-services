@@ -6,7 +6,7 @@ import {
   errorPassthrough,
   genericCachedRequest,
   handleValidationErrors,
-  requireAuth,
+  verifyToken,
   userSpecificCachedRequest,
 } from "../utils/express.js";
 import RepresentativesService from "./service.js";
@@ -32,38 +32,38 @@ router.get(
 
 router.get(
   "/following",
-  errorPassthrough(requireAuth),
+  errorPassthrough(verifyToken),
   errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const reps = await representativesService.getFollowingReps(
-      req.session.userId as string
+      req.userId as string
     );
     const data = {
       data: {
         representatives: reps,
       },
     };
-    await cacheUserSpecificResponse(req, data, req.session.userId as string);
+    await cacheUserSpecificResponse(req, data, req.userId as string);
     res.status(200).send(data);
   })
 );
 
 router.get(
   "/local",
-  errorPassthrough(requireAuth),
+  errorPassthrough(verifyToken),
   errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     const reps = await representativesService.getLocalReps(
-      req.session.userId as string
+      req.userId as string
     );
     const data = {
       data: {
         representatives: reps,
       },
     };
-    await cacheUserSpecificResponse(req, data, req.session.userId as string);
+    await cacheUserSpecificResponse(req, data, req.userId as string);
     res.status(200).send(data);
   })
 );
@@ -72,7 +72,7 @@ router.get(
   "/:id",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
-  // errorPassthrough(requireAuth),
+  // errorPassthrough(verifyToken),
   errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
@@ -91,7 +91,7 @@ router.get(
   "/:id/stats",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
-  // errorPassthrough(requireAuth),
+  // errorPassthrough(verifyToken),
   errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
@@ -112,7 +112,7 @@ router.get(
   "/:id/votes",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
+  errorPassthrough(verifyToken),
   errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
@@ -133,7 +133,7 @@ router.get(
   "/:id/bills/sponsored",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
+  errorPassthrough(verifyToken),
   errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
@@ -155,7 +155,7 @@ router.get(
   "/:id/bills/cosponsored",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
+  errorPassthrough(verifyToken),
   errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
@@ -176,19 +176,19 @@ router.post(
   "/:id/following",
   [param("id").exists(), body("following").isBoolean()],
   errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
+  errorPassthrough(verifyToken),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();
     if (req.body.following) {
       await representativesService.followRep(
         req.params.id,
-        req.session.userId as string
+        req.userId as string
       );
     }
     if (req.body.following === false) {
       await representativesService.unfollowRep(
         req.params.id,
-        req.session.userId as string
+        req.userId as string
       );
     }
 
@@ -204,7 +204,7 @@ router.get(
   "/:id/bills/:billId/vote",
   [param("id").exists(), param("billId").exists()],
   errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
+  errorPassthrough(verifyToken),
   errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const representativesService = new RepresentativesService();

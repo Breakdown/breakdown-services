@@ -6,7 +6,7 @@ import {
   errorPassthrough,
   genericCachedRequest,
   handleValidationErrors,
-  requireAuth,
+  verifyToken,
   userSpecificCachedRequest,
 } from "../utils/express.js";
 import { param } from "express-validator";
@@ -15,7 +15,7 @@ const router = Router();
 
 router.get(
   "/",
-  errorPassthrough(requireAuth),
+  errorPassthrough(verifyToken),
   errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const issuesService = new IssuesService();
@@ -33,7 +33,7 @@ router.get(
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
   errorPassthrough(genericCachedRequest),
-  // errorPassthrough(requireAuth),
+  // errorPassthrough(verifyToken),
   errorPassthrough(async (req: Request, res: Response) => {
     const { id } = req.params;
     const issuesService = new IssuesService();
@@ -50,7 +50,7 @@ router.get(
   "/:id/bills",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
-  // errorPassthrough(requireAuth),
+  // errorPassthrough(verifyToken),
   errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -64,10 +64,10 @@ router.get(
   })
 );
 
-router.post(":id/follow", errorPassthrough(requireAuth), async (req, res) => {
+router.post(":id/follow", errorPassthrough(verifyToken), async (req, res) => {
   const { id } = req.params;
   const issuesService = new IssuesService();
-  await issuesService.followIssue(id, req.session.userId as string);
+  await issuesService.followIssue(id, req.userId as string);
   res.status(200).send({
     data: {
       success: true,
@@ -75,10 +75,10 @@ router.post(":id/follow", errorPassthrough(requireAuth), async (req, res) => {
   });
 });
 
-router.post(":id/unfollow", errorPassthrough(requireAuth), async (req, res) => {
+router.post(":id/unfollow", errorPassthrough(verifyToken), async (req, res) => {
   const { id } = req.params;
   const issuesService = new IssuesService();
-  await issuesService.unfollowIssue(id, req.session.userId as string);
+  await issuesService.unfollowIssue(id, req.userId as string);
   res.status(200).send({
     data: {
       success: true,
@@ -88,21 +88,17 @@ router.post(":id/unfollow", errorPassthrough(requireAuth), async (req, res) => {
 
 router.get(
   "/following",
-  errorPassthrough(requireAuth),
+  errorPassthrough(verifyToken),
   errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req, res) => {
     const issuesService = new IssuesService();
     const issues = await issuesService.getFollowingIssuesFromUserId(
-      req.session.userId as string
+      req.userId as string
     );
     const response = {
       data: issues,
     };
-    await cacheUserSpecificResponse(
-      req,
-      response,
-      req.session.userId as string
-    );
+    await cacheUserSpecificResponse(req, response, req.userId as string);
     res.status(200).send(response);
   })
 );
