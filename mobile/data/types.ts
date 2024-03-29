@@ -228,3 +228,7 @@ export interface UserBillVote {
   user?: User;
   bill?: Bill;
 }
+
+export interface AccessTokenResponse {
+  accessToken: string;
+}

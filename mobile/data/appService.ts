@@ -4,6 +4,7 @@ import axios from "axios";
 import { Environment, getEnv } from "../utils/env";
 import { getDeviceId } from "../utils/device";
 import {
+  AccessTokenResponse,
   Bill,
   Issue,
   Representative,
@@ -58,8 +59,8 @@ const API_URL =
     ? ""
     : `http://${Constants.expoGoConfig.debuggerHost.split(":").shift()}:8080`;
 
-const getSessionCookie = async () => {
-  return await SecureStore.getItemAsync("session");
+const getJWT = async () => {
+  return await SecureStore.getItemAsync("jwt");
 };
 
 const fetch = async <T>({
@@ -72,9 +73,8 @@ const fetch = async <T>({
   try {
     // Get cookie in async storage
     // If we're doing an auth request, don't include the cookie - no need to fetch
-    const sessionCookie = await getSessionCookie();
+    const jwt = await getJWT();
 
-    console.log("sessionCookie in async storage", sessionCookie);
     if (!deviceId) {
       const newDeviceId = await getDeviceId();
       deviceId = newDeviceId;
@@ -84,25 +84,17 @@ const fetch = async <T>({
       method,
       headers: {
         "Content-Type": "application/json",
-        ...(sessionCookie && { Cookie: sessionCookie }),
+        ...(jwt && { "x-access-token": jwt }),
         ...(deviceId && { "x-device-id": deviceId }),
         ...headers,
       },
-      withCredentials: true,
       data: JSON.stringify(body),
     }).catch((err) => {
       // TODO: Display error here?
       throw new Error(err);
     });
-    // Set cookies if they exist
-    // TODO: Remove from async storage when a user is logged out
-    // console.log("response", response);
-    // console.log("header", response.headers["set-cookie"]);
-    if (response.headers["set-cookie"]?.length) {
-      // TODO: Find correct cookie, not just first
-      const cookie = response.headers["set-cookie"]?.[0];
-      console.log("setting cookie in store", cookie);
-      await SecureStore.setItemAsync("session", cookie);
+    if (response.data?.data?.accessToken) {
+      await SecureStore.setItemAsync("jwt", response.data.data.accessToken);
     }
     return response.data;
   } catch (err) {
@@ -123,7 +115,7 @@ export const emailSignup = async ({
   password: string;
   receivePromotions: boolean;
 }) => {
-  return fetch<GenericSuccessBoolResponse>({
+  return fetch<AccessTokenResponse>({
     url: "/auth/email/signup",
     method: "POST",
     body: { email, password, receivePromotions },
@@ -137,7 +129,7 @@ export const emailSignin = async ({
   email: string;
   password: string;
 }) => {
-  return fetch<GenericSuccessBoolResponse>({
+  return fetch<AccessTokenResponse>({
     url: "/auth/email/signin",
     method: "POST",
     body: { email, password },
@@ -161,7 +153,7 @@ export const smsSignup = async ({ phone }: { phone: string }) => {
 };
 // SMS Signin Verify
 export const smsSignupVerify = async ({ code }: { code: string }) => {
-  return fetch<GenericSuccessBoolResponse>({
+  return fetch<AccessTokenResponse>({
     url: "/auth/sms/signup/verify",
     method: "POST",
     body: { code },
@@ -169,7 +161,7 @@ export const smsSignupVerify = async ({ code }: { code: string }) => {
 };
 // SMS Signup Verify
 export const smsSigninVerify = async ({ code }: { code: string }) => {
-  return fetch<GenericSuccessBoolResponse>({
+  return fetch<AccessTokenResponse>({
     url: "/auth/sms/signin/verify",
     method: "POST",
     body: { code },

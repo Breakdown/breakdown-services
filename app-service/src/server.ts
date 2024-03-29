@@ -9,7 +9,6 @@ import {
   getDeviceId,
   headers,
   morganLogger,
-  sessionLayer,
 } from "./utils/express.js";
 
 const app = express();
@@ -19,7 +18,6 @@ app.use(headers);
 app.use(helmet());
 app.use(cookieParser());
 app.use(morganLogger());
-app.use(sessionLayer());
 
 // Routes
 app.use(

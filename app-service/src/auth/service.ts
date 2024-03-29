@@ -173,7 +173,6 @@ class AuthService {
       throw new InternalError("Code expired, please try again");
     }
     const redisData: RedisPhoneVerificationResponse = JSON.parse(response);
-    // console.log(redisData);
     if (!(redisData.type === MessageType.Signup)) {
       throw new InternalError("Invalid code type, please try again");
     }

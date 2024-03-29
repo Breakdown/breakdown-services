@@ -4,9 +4,11 @@ import {
   errorPassthrough,
   getDeviceId,
   handleValidationErrors,
+  verifyToken,
 } from "../utils/express.js";
 import AuthService from "./service.js";
 import UnauthorizedError from "../utils/errors/UnauthorizedError.js";
+import { generateJwt } from "../utils/jwt.js";
 
 const router = Router();
 
@@ -28,11 +30,9 @@ router.post(
       password: req.body.password,
       receivePromotions: req.body.receivePromotions,
     });
-    req.session.userId = userId;
-    req.session.save();
     res.status(201).send({
       data: {
-        success: true,
+        accessToken: generateJwt(userId),
       },
     });
   })
@@ -48,13 +48,9 @@ router.post(
       email: req.body.email,
       password: req.body.password,
     });
-    console.log("setting userId", userId);
-    req.session.userId = userId;
-    req.session.save();
-    console.log("session after", req.session);
     res.status(201).send({
       data: {
-        success: true,
+        accessToken: generateJwt(userId),
       },
     });
   })
@@ -118,11 +114,9 @@ router.post(
       deviceId: req.deviceId,
       code: req.body.code,
     });
-    req.session.userId = userId;
-    req.session.save();
     res.status(201).send({
       data: {
-        success: true,
+        accessToken: generateJwt(userId),
       },
     });
   })
@@ -142,11 +136,9 @@ router.post(
       deviceId: req.deviceId,
       code: req.body.code,
     });
-    req.session.userId = userId;
-    req.session.save();
     res.status(201).send({
       data: {
-        success: true,
+        accessToken: generateJwt(userId),
       },
     });
   })

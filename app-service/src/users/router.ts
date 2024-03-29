@@ -3,7 +3,7 @@ import {
   cacheUserSpecificResponse,
   errorPassthrough,
   handleValidationErrors,
-  requireAuth,
+  verifyToken,
   userSpecificCachedRequest,
 } from "../utils/express.js";
 import UsersService from "./service.js";
@@ -13,21 +13,17 @@ const router = Router();
 router.get(
   "/me",
   errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
+  errorPassthrough(verifyToken),
   // errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
-    console.log("GET /me");
-    console.log("req.session.userId", req.session.userId);
-
-    const usersService = new UsersService(req.session.userId as string);
+    const usersService = new UsersService(req.userId as string);
     const me = await usersService.getMe();
     const data = {
       data: {
         user: me,
       },
     };
-    // await cacheUserSpecificResponse(req, data, req.session.userId as string);
-    console.log("data", data);
+    await cacheUserSpecificResponse(req, data, req.userId as string);
     res.status(200).send(data);
   })
 );
@@ -35,9 +31,9 @@ router.get(
 router.patch(
   "/me",
   errorPassthrough(handleValidationErrors),
-  errorPassthrough(requireAuth),
+  errorPassthrough(verifyToken),
   errorPassthrough(async (req: Request, res: Response) => {
-    const usersService = new UsersService(req.session.userId as string);
+    const usersService = new UsersService(req.userId as string);
     const me = await usersService.patchMe(req.body);
     res.status(201).send({
       data: {
