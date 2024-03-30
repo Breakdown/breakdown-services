@@ -10,6 +10,10 @@ import useAuth from "../hooks/useAuth";
 import WelcomeScreen from "../screens/Welcome";
 import SignInScreen from "../screens/SignIn";
 import SignUpScreen from "../screens/SignUp";
+import HomeScreen from "../screens/Home";
+import BillScreen from "../screens/Bill";
+import RepresentativeScreen from "../screens/Representative";
+import IssueScreen from "../screens/Issue";
 
 const Stack = createNativeStackNavigator();
 
@@ -29,7 +33,19 @@ const UnauthenticatedStack = () => {
 };
 
 export const AuthenticatedStack = () => {
-  return <></>;
+  return (
+    <Stack.Navigator
+      initialRouteName="Home"
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="Bill" component={BillScreen} />
+      <Stack.Screen name="Representative" component={RepresentativeScreen} />
+      <Stack.Screen name="Issue" component={IssueScreen} />
+    </Stack.Navigator>
+  );
 };
 
 const RootNavigator = () => {

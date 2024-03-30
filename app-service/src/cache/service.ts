@@ -29,6 +29,8 @@ export enum CacheDataKeys {
   REPS_BY_STATE_AND_DISTRICT, // TODO: Bust when new reps are elected in state and district - job
   REP_VOTE_ON_BILL, // BUSTED - Bust when rep vote on bill changes - job
   FEATURED_REPS, // TODO: Bust when any featured rep status changes
+  BILLS_SPONSORED_BY_MY_REPS,
+  FEATURED_ISSUES,
 }
 
 interface CacheKeyData {

@@ -35,6 +35,14 @@ class VotesService {
       },
     });
   }
+
+  async getVotesForUser(userId: string): Promise<UserBillVote[]> {
+    return dbClient.userBillVote.findMany({
+      where: {
+        userId,
+      },
+    });
+  }
 }
 
 export default VotesService;

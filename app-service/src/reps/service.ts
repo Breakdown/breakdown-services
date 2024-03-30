@@ -131,6 +131,43 @@ class RepresentativesService {
     return dbResponse;
   }
 
+  async getMyRepsSponsoredBills(userId: string): Promise<Bill[] | null> {
+    const cachedResponse = await this.cacheService.getData<Bill[]>(
+      CacheDataKeys.BILLS_SPONSORED_BY_MY_REPS,
+      {
+        userId,
+      }
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    const representatives = await dbClient.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        myReps: true,
+      },
+    });
+    const dbResponse = await dbClient.bill.findMany({
+      where: {
+        sponsor: {
+          id: {
+            in: representatives?.myReps.map((rep) => rep.id),
+          },
+        },
+      },
+    });
+    await this.cacheService.setData(
+      CacheDataKeys.BILLS_SPONSORED_BY_MY_REPS,
+      dbResponse,
+      {
+        userId,
+      }
+    );
+    return dbResponse;
+  }
+
   async followRep(repId: string, userId: string): Promise<void> {
     await dbClient.user.update({
       where: {

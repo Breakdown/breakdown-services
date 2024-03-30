@@ -20,6 +20,29 @@ class IssuesService {
     return dbResponse;
   }
 
+  async getFeaturedIssues() {
+    const cachedResponse = await this.cacheService.getData<Issue[]>(
+      CacheDataKeys.FEATURED_ISSUES
+    );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    const dbResponse = await dbClient.issue.findMany({
+      where: {
+        // Has bill that has been updated this week
+        bills: {
+          some: {
+            updatedAt: {
+              gte: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
+            },
+          },
+        },
+      },
+    });
+    await this.cacheService.setData(CacheDataKeys.FEATURED_ISSUES, dbResponse);
+    return dbResponse;
+  }
+
   async getIssueById(
     id: string
   ): Promise<
@@ -27,6 +50,7 @@ class IssuesService {
     | null
     | undefined
   > {
+    // TODO: Caching
     const dbResponse = await dbClient.issue.findUnique({
       where: {
         id: id,

@@ -29,6 +29,20 @@ router.get(
 );
 
 router.get(
+  "/featured",
+  errorPassthrough(genericCachedRequest),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const issuesService = new IssuesService();
+    const issues = await issuesService.getFeaturedIssues();
+    const response = {
+      data: issues,
+    };
+    await cacheGenericResponse(req, response);
+    res.status(200).send(response);
+  })
+);
+
+router.get(
   "/:id",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),

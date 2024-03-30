@@ -28,11 +28,14 @@ export const GET_BILL_SPONSOR = "GET_BILL_SPONSOR";
 export const GET_FOLLOWING_BILLS = "GET_FOLLOWING_BILLS";
 export const GET_ISSUES = "GET_ISSUES";
 export const GET_ISSUE_BY_ID = "GET_ISSUE_BY_ID";
+export const GET_FEATURED_ISSUES = "GET_FEATURED_ISSUES";
 export const GET_UPCOMING_BILLS = "GET_UPCOMING_BILLS";
 export const GET_USER_REP_SPONSORED_BILLS = "GET_USER_REP_SPONSORED_BILLS";
 export const GET_BILLS_FOR_ISSUE_ID = "GET_BILLS_FOR_ISSUE_ID";
 export const GET_FOLLOWING_ISSUES = "GET_FOLLOWING_ISSUES";
 export const GET_REP_BY_ID = "GET_REP_BY_ID";
+export const GET_FEATURED_REPS = "GET_FEATURED_REPS";
+export const GET_YOUR_REPS_SPONSORED_BILLS = "GET_YOUR_REPS_SPONSORED_BILLS";
 export const GET_REP_STATS_BY_ID = "GET_REP_STATS_BY_ID";
 export const GET_REP_VOTES_BY_ID = "GET_REP_VOTES_BY_ID";
 export const GET_REP_BILLS_SPONSORED = "GET_REP_BILLS_SPONSORED";
@@ -41,6 +44,7 @@ export const GET_FOLLOWING_REPS = "GET_FOLLOWING_REPS";
 export const GET_LOCAL_REPS = "GET_LOCAL_REPS";
 export const GET_REP_VOTE_ON_BILL = "GET_REP_VOTE_ON_BILL";
 export const GET_MY_VOTE_ON_BILL = "GET_MY_VOTE_ON_BILL";
+export const GET_MY_VOTES = "GET_MY_VOTES";
 export const GET_ME = "GET_ME";
 
 // Response interfaces
@@ -260,6 +264,16 @@ export const getIssues = async (): Promise<AppServiceResponse<Issue[]>> => {
     method: "GET",
   });
 };
+// Get featured issues
+export const getFeaturedIssues = async (): Promise<
+  AppServiceResponse<Issue[]>
+> => {
+  return fetch({
+    url: "/issues/featured",
+    method: "GET",
+  });
+};
+
 // Get issue by ID
 export const getIssueById = async ({
   id,
@@ -331,6 +345,24 @@ export const getRepById = async ({
 }): Promise<AppServiceResponse<Representative>> => {
   return fetch({
     url: `/reps/${id}`,
+    method: "GET",
+  });
+};
+// Get featured reps
+export const getFeaturedReps = async (): Promise<
+  AppServiceResponse<Representative[]>
+> => {
+  return fetch({
+    url: "/reps/featured",
+    method: "GET",
+  });
+};
+// Get bills sponsored by your reps
+export const getYourRepsSponsoredBills = async (): Promise<
+  AppServiceResponse<Bill[]>
+> => {
+  return fetch({
+    url: "/reps/me/bills/sponsored",
     method: "GET",
   });
 };
@@ -462,7 +494,6 @@ export const voteOnBill = async ({
     body: { position },
   });
 };
-
 // Get my vote on bill
 export const getMyVoteOnBill = async ({
   billId,
@@ -471,6 +502,15 @@ export const getMyVoteOnBill = async ({
 }): Promise<AppServiceResponse<UserBillVote>> => {
   return fetch({
     url: `/votes/${billId}/me`,
+    method: "GET",
+  });
+};
+// Get my votes
+export const getMyVotes = async (): Promise<
+  AppServiceResponse<UserBillVote[]>
+> => {
+  return fetch({
+    url: "/votes/me",
     method: "GET",
   });
 };

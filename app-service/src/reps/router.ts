@@ -50,6 +50,25 @@ router.get(
 );
 
 router.get(
+  "/me/bills/sponsored",
+  errorPassthrough(verifyToken),
+  errorPassthrough(userSpecificCachedRequest),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    const bills = await representativesService.getMyRepsSponsoredBills(
+      req.userId as string
+    );
+    const data = {
+      data: {
+        bills,
+      },
+    };
+    await cacheUserSpecificResponse(req, data, req.userId as string);
+    res.status(200).send(data);
+  })
+);
+
+router.get(
   "/local",
   errorPassthrough(verifyToken),
   errorPassthrough(userSpecificCachedRequest),
