@@ -372,7 +372,7 @@ class JobService {
     // Get sponsor DB ID for introduced bills
     const introducedBillPropubIdToSponsorDbIdMap: { [key: string]: string } =
       {};
-    for (const bill of allIntroducedBills) {
+    for (const bill of allBills) {
       const sponsor = await dbClient.representative.findUnique({
         where: {
           propublicaId: bill.sponsor_id,
