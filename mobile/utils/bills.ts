@@ -1,20 +1,24 @@
-import { BreakdownBill } from "../types/api";
+import { Bill } from "../data/types";
 
-export const getBillTitle = (bill: BreakdownBill): string => {
+export const getBillTitle = (bill: Bill): string => {
   return (
-    bill.human_short_title ||
-    bill.human_title ||
-    bill.short_title ||
+    bill.humanShortTitle ||
+    bill.humanTitle ||
+    bill.aiTitle ||
+    bill.aiShortTitle ||
+    bill.shortTitle ||
     bill.title ||
     ""
   );
 };
 
-export const getBillSummary = (bill: BreakdownBill): string => {
+export const getBillSummary = (bill: Bill): string => {
   return (
-    bill.human_short_summary ||
-    bill.human_summary ||
-    bill.summary_short ||
+    bill.humanShortSummary ||
+    bill.humanSummary ||
+    bill.aiSummary ||
+    bill.aiShortSummary ||
+    bill.summaryShort ||
     bill.summary ||
     ""
   );

@@ -49,6 +49,7 @@ interface GenericSuccessBoolResponse {
     success: boolean;
   };
 }
+
 interface AppServiceResponse<T> {
   data: T;
 }
@@ -96,7 +97,7 @@ const fetch = async <T>({
       await SecureStore.setItemAsync("jwt", response.data.data.accessToken);
     }
     return response.data;
-  } catch (err: any) {
+  } catch (err) {
     console.error(`error fetching url ${API_URL}${url}`, err);
     throw new Error(err);
   }

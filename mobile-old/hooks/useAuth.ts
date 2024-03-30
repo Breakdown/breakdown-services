@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import * as SecureStore from "expo-secure-store";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { User } from "../data/types";
 import { GET_ME, getMe } from "../data/appService";
 
@@ -19,7 +19,7 @@ export default function useAuth({
   const [user, setUser] = useState<User | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
 
-  const { data, error, refetch, isError } = useQuery([GET_ME], {
+  const { data, error, refetch } = useQuery([GET_ME], {
     queryFn: getMe,
     refetchInterval: authenticated ? 1000 * 60 * 15 : 30000, // 15 minutes or 30 sec
     refetchOnWindowFocus: false,
@@ -27,30 +27,18 @@ export default function useAuth({
   });
 
   const logout = useCallback(async () => {
-    await SecureStore.deleteItemAsync("session");
+    await SecureStore.deleteItemAsync("jwt");
     setAuthenticated(false);
     setUser(null);
     refetch();
-  }, [setAuthenticated, refetch]);
+  }, [setAuthenticated, refetch, setUser]);
 
-  // useEffect(() => {
-  //   logout();
-  // }, [logout]);
-  // useEffect(() => {
-  //   if (isError) {
-  //     logout();
-  //   }
-  // }, [isError, logout]);
-
-  // Obviously remove - this is for manually logging out
-  // Until the functionality is built into the app
-  // logout();
   useEffect(() => {
     if (data) {
       setUser(data.data);
       setAuthenticated(true);
     }
-  }, [data]);
+  }, [data, setAuthenticated, setUser]);
 
   useEffect(() => {
     if (error) {
@@ -60,7 +48,7 @@ export default function useAuth({
         logout();
       }
     }
-  }, [error, allowUnauth]);
+  }, [error, allowUnauth, logout, setAuthenticated, setUser]);
 
   return { user, authenticated, refetch, logout };
 }
