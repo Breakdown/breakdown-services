@@ -8,6 +8,8 @@ import { ColorSchemeName } from "react-native";
 import LinkingConfiguration from "./LinkingConfiguration";
 import useAuth from "../hooks/useAuth";
 import WelcomeScreen from "../screens/Welcome";
+import SignInScreen from "../screens/SignIn";
+import SignUpScreen from "../screens/SignUp";
 
 const Stack = createNativeStackNavigator();
 
@@ -20,6 +22,8 @@ const UnauthenticatedStack = () => {
       }}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="SignIn" component={SignInScreen} />
+      <Stack.Screen name="SignUp" component={SignUpScreen} />
     </Stack.Navigator>
   );
 };

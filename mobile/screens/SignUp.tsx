@@ -2,26 +2,12 @@ import { useNavigation } from "@react-navigation/native";
 import { StyleSheet, Text, View } from "react-native";
 import { Button } from "tamagui";
 
-export default function WelcomeScreen() {
+export default function SignUpScreen() {
   const navigation = useNavigation();
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
-        <Text style={styles.title}>Welcome to Breakdown</Text>
-        <Button
-          width="100%"
-          margin="$3"
-          onPress={() => navigation.navigate("SignIn")}
-        >
-          Sign In
-        </Button>
-        <Button
-          width="100%"
-          margin="$3"
-          onPress={() => navigation.navigate("SignUp")}
-        >
-          Sign Up
-        </Button>
+        <Text style={styles.title}>Sign Up</Text>
       </View>
     </View>
   );
