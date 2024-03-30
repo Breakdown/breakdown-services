@@ -14,7 +14,7 @@ router.get(
   "/me",
   errorPassthrough(handleValidationErrors),
   errorPassthrough(verifyToken),
-  // errorPassthrough(userSpecificCachedRequest),
+  errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const usersService = new UsersService(req.userId as string);
     const me = await usersService.getMe();
