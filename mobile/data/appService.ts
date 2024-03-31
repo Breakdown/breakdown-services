@@ -94,13 +94,18 @@ const fetch = async <T>({
       data: JSON.stringify(body),
     }).catch((err) => {
       // TODO: Display error here?
-      throw new Error(err);
+      if (err.response?.data?.error?.message) {
+        throw new Error(err.response.data.error.message);
+      } else {
+        throw new Error(err);
+      }
     });
     if (response.data?.data?.accessToken) {
       await SecureStore.setItemAsync("jwt", response.data.data.accessToken);
     }
     return response.data;
   } catch (err: any) {
+    console.log(err);
     console.error(`error fetching url ${API_URL}${url}`, err);
     throw new Error(err);
   }

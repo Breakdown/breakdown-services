@@ -1,8 +1,10 @@
-import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View, useColorScheme } from "react-native";
 import { QueryClient } from "@tanstack/query-core";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Navigation } from "./navigation";
+import { DripsyProvider } from "dripsy";
+import dripsyTheme from "./utils/theme";
+import { RootSiblingParent } from "react-native-root-siblings";
 
 export default function App() {
   const queryClient = new QueryClient({
@@ -10,9 +12,13 @@ export default function App() {
   });
   const colorScheme = useColorScheme();
   return (
-    <QueryClientProvider client={queryClient}>
-      <Navigation colorScheme={colorScheme} />
-    </QueryClientProvider>
+    <RootSiblingParent>
+      <QueryClientProvider client={queryClient}>
+        <DripsyProvider theme={dripsyTheme}>
+          <Navigation colorScheme={colorScheme} />
+        </DripsyProvider>
+      </QueryClientProvider>
+    </RootSiblingParent>
   );
 }
 

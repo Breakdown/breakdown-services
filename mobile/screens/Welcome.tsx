@@ -1,5 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { Text } from "dripsy";
+import { StyleSheet, View, TouchableOpacity } from "react-native";
 
 export default function WelcomeScreen() {
   const navigation = useNavigation();
@@ -13,7 +14,7 @@ export default function WelcomeScreen() {
           }}
           onPress={() => navigation.navigate("SignIn")}
         >
-          Sign In
+          <Text>Sign In</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={{
@@ -21,7 +22,7 @@ export default function WelcomeScreen() {
           }}
           onPress={() => navigation.navigate("SignUp")}
         >
-          Sign Up
+          <Text>Sign Up</Text>
         </TouchableOpacity>
       </View>
     </View>

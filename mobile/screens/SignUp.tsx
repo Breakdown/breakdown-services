@@ -1,12 +1,73 @@
 import { useNavigation } from "@react-navigation/native";
-import { StyleSheet, Text, View } from "react-native";
+import { useMutation } from "@tanstack/react-query";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { emailSignin, emailSignup } from "../data/appService";
+import { useState } from "react";
+import ErrorToast from "../components/ErrorToast";
+import { TextInput } from "dripsy";
 
 export default function SignUpScreen() {
+  const [email, setEmail] = useState<string | undefined>(undefined);
+  const [password, setPassword] = useState<string | undefined>(undefined);
   const navigation = useNavigation();
+  const [errorVisible, setErrorVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(
+    undefined
+  );
+  const [receivePromotions, setReceivePromotions] = useState<boolean>(false);
+  const emailSignupMutation = useMutation({
+    mutationFn: emailSignup,
+    onSuccess: () => {
+      navigation.navigate("Home");
+    },
+    onError: (error) => {
+      setErrorVisible(true);
+      setErrorMessage(error.message);
+    },
+  });
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Sign Up</Text>
+        <TextInput
+          value={email}
+          onChangeText={setEmail}
+          textContentType={"emailAddress"}
+          keyboardType={"email-address"}
+          placeholder={"Email"}
+        />
+        <TextInput
+          value={password}
+          onChangeText={setPassword}
+          textContentType={"password"}
+          placeholder={"Password"}
+          secureTextEntry
+        />
+        {/* Receive Promotions */}
+        <TouchableOpacity
+          onPress={() => {
+            setReceivePromotions(!receivePromotions);
+          }}
+        >
+          <Text>Receive Promotions</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            if (email && password) {
+              emailSignupMutation.mutate({
+                email: email.toLowerCase(),
+                password,
+                receivePromotions,
+              });
+            } else {
+              setErrorVisible(true);
+              setErrorMessage("Email and password are required");
+            }
+          }}
+        >
+          <Text>Sign In</Text>
+        </TouchableOpacity>
+        {errorVisible && errorMessage && <ErrorToast message={errorMessage} />}
       </View>
     </View>
   );
