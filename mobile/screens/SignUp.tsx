@@ -1,6 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
 import { StyleSheet, Text, View } from "react-native";
-import { Button } from "tamagui";
 
 export default function SignUpScreen() {
   const navigation = useNavigation();

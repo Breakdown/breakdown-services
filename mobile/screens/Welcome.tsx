@@ -1,6 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
-import { StyleSheet, Text, View } from "react-native";
-import { Button } from "tamagui";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 
 export default function WelcomeScreen() {
   const navigation = useNavigation();
@@ -8,20 +7,22 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Welcome to Breakdown</Text>
-        <Button
-          width="100%"
-          margin="$3"
+        <TouchableOpacity
+          style={{
+            width: "100%",
+          }}
           onPress={() => navigation.navigate("SignIn")}
         >
           Sign In
-        </Button>
-        <Button
-          width="100%"
-          margin="$3"
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            width: "100%",
+          }}
           onPress={() => navigation.navigate("SignUp")}
         >
           Sign Up
-        </Button>
+        </TouchableOpacity>
       </View>
     </View>
   );
