@@ -5,6 +5,7 @@ import { emailSignin } from "../data/appService";
 import { useState } from "react";
 import ErrorToast from "../components/ErrorToast";
 import { TextInput } from "dripsy";
+import useAuth from "../hooks/useAuth";
 
 export default function SignInScreen() {
   const [errorVisible, setErrorVisible] = useState(false);
@@ -13,11 +14,12 @@ export default function SignInScreen() {
   );
   const [email, setEmail] = useState<string | undefined>(undefined);
   const [password, setPassword] = useState<string | undefined>(undefined);
-
+  const { refetch } = useAuth({ allowUnauth: true });
   const navigation = useNavigation();
   const emailSigninMutation = useMutation({
     mutationFn: emailSignin,
     onSuccess: () => {
+      refetch();
       navigation.navigate("Home");
     },
     onError: (error) => {

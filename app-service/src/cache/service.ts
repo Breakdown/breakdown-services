@@ -129,6 +129,10 @@ class CacheService {
         return this.hashKey(`rep_vote_on_bill:${representativeId}:${billId}`);
       case CacheDataKeys.FEATURED_REPS:
         return this.hashKey(`featured_reps`);
+      case CacheDataKeys.BILLS_SPONSORED_BY_MY_REPS:
+        return this.hashKey(`bills_sponsored_by_my_reps:${userId}`);
+      case CacheDataKeys.FEATURED_ISSUES:
+        return this.hashKey(`featured_issues`);
       default:
         throw new Error("Invalid cache key");
     }
@@ -184,6 +188,10 @@ class CacheService {
       case CacheDataKeys.REP_VOTE_ON_BILL:
         return 3600;
       case CacheDataKeys.FEATURED_REPS:
+        return 60 * 60 * 24 * 7; // 1 week
+      case CacheDataKeys.BILLS_SPONSORED_BY_MY_REPS:
+        return 60 * 60 * 24; // 1 day
+      case CacheDataKeys.FEATURED_ISSUES:
         return 60 * 60 * 24 * 7; // 1 week
       default:
         throw new InternalError("Invalid cache key");

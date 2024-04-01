@@ -10,9 +10,11 @@ import {
   getRepVotesById,
 } from "../data/appService";
 import { useQuery } from "@tanstack/react-query";
+import useAuth from "../hooks/useAuth";
 
 export default function RepresentativeScreen({ route }: RouteWithIdProps) {
   const { id } = route.params;
+  useAuth();
 
   const rep = useQuery({
     queryKey: [GET_REP_BY_ID, id],

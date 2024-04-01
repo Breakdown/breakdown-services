@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { Environment } from "../utils/env";
 import { getDeviceId } from "../utils/device";
 import {
@@ -92,14 +92,21 @@ const fetch = async <T>({
         ...headers,
       },
       data: JSON.stringify(body),
-    }).catch((err) => {
-      // TODO: Display error here?
-      if (err.response?.data?.error?.message) {
-        throw new Error(err.response.data.error.message);
-      } else {
-        throw new Error(err);
+    }).catch(
+      async (err: AxiosError<{ error: { message: string; name: string } }>) => {
+        // TODO: Display error here?
+        if (err.response?.status === 401) {
+          // Unauthorized
+          // Remove the jwt from async storage
+          await SecureStore.deleteItemAsync("jwt");
+        }
+        if (err.response?.data?.error?.message) {
+          throw new Error(err.response.data.error.message);
+        } else {
+          throw new Error(err.response?.data?.error?.name || "Unknown error");
+        }
       }
-    });
+    );
     if (response.data?.data?.accessToken) {
       await SecureStore.setItemAsync("jwt", response.data.data.accessToken);
     }

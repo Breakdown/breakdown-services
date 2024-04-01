@@ -30,7 +30,7 @@ export default function HomeScreen() {
     refetchInterval: 1000 * 60 * 15, // 15 minutes
   });
   const billsSponsoredByYourReps = useQuery({
-    queryKey: [GET_YOUR_REPS_SPONSORED_BILLS],
+    queryKey: [GET_YOUR_REPS_SPONSORED_BILLS, auth.user?.id],
     queryFn: getYourRepsSponsoredBills,
     refetchInterval: 1000 * 60 * 15, // 15 minutes
   });

@@ -3,8 +3,10 @@ import { StyleSheet, Text, View } from "react-native";
 import { RouteWithIdProps } from "./types";
 import { useQuery } from "@tanstack/react-query";
 import { GET_ISSUE_BY_ID, getIssueById } from "../data/appService";
+import useAuth from "../hooks/useAuth";
 
 export default function IssueScreen({ route }: RouteWithIdProps) {
+  useAuth();
   const { id } = route.params;
 
   const issue = useQuery({

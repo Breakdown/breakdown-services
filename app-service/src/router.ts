@@ -5,6 +5,7 @@ import issuesRouter from "./issues/router.js";
 import locationRouter from "./location/router.js";
 import repsRouter from "./reps/router.js";
 import usersRouter from "./users/router.js";
+import votesRouter from "./votes/router.js";
 
 const baseRouter = Router();
 
@@ -14,5 +15,6 @@ baseRouter.use("/issues", issuesRouter);
 baseRouter.use("/location", locationRouter);
 baseRouter.use("/reps", repsRouter);
 baseRouter.use("/users", usersRouter);
+baseRouter.use("/votes", votesRouter);
 
 export default baseRouter;

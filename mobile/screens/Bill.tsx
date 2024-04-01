@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { StyleSheet, Text, View } from "react-native";
 import { GET_BILL_BY_ID, getBillById } from "../data/appService";
 import { RouteWithIdProps } from "./types";
+import useAuth from "../hooks/useAuth";
 
 export default function BillScreen({ route }: RouteWithIdProps) {
+  useAuth();
   const { id } = route.params;
 
   const bill = useQuery({
