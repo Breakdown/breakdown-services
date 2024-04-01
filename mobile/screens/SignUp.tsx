@@ -15,7 +15,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined
   );
-  useAuth({ allowUnauth: true });
+  useAuth({ unauth: true });
   const [receivePromotions, setReceivePromotions] = useState<boolean>(false);
   const emailSignupMutation = useMutation({
     mutationFn: emailSignup,

@@ -14,7 +14,7 @@ export default function SignInScreen() {
   );
   const [email, setEmail] = useState<string | undefined>(undefined);
   const [password, setPassword] = useState<string | undefined>(undefined);
-  const { refetch } = useAuth({ allowUnauth: true });
+  const { refetch } = useAuth({ unauth: true });
   const navigation = useNavigation();
   const emailSigninMutation = useMutation({
     mutationFn: emailSignin,

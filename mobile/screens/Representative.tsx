@@ -11,9 +11,12 @@ import {
 } from "../data/appService";
 import { useQuery } from "@tanstack/react-query";
 import useAuth from "../hooks/useAuth";
+import { RepresentativeScreenProps } from "../navigation/types";
 
-export default function RepresentativeScreen({ route }: RouteWithIdProps) {
-  const { id } = route.params;
+export default function RepresentativeScreen({
+  route,
+}: RepresentativeScreenProps) {
+  const { repId: id } = route.params;
   useAuth();
 
   const rep = useQuery({

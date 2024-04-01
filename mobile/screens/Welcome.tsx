@@ -5,7 +5,7 @@ import useAuth from "../hooks/useAuth";
 
 export default function WelcomeScreen() {
   const navigation = useNavigation();
-  useAuth({ allowUnauth: true });
+  useAuth({ unauth: true });
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>

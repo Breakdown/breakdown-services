@@ -4,15 +4,16 @@ import { RouteWithIdProps } from "./types";
 import { useQuery } from "@tanstack/react-query";
 import { GET_ISSUE_BY_ID, getIssueById } from "../data/appService";
 import useAuth from "../hooks/useAuth";
+import { IssueScreenProps } from "../navigation/types";
 
-export default function IssueScreen({ route }: RouteWithIdProps) {
+export default function IssueScreen({ route }: IssueScreenProps) {
   useAuth();
-  const { id } = route.params;
+  const { issueId } = route.params;
 
   const issue = useQuery({
-    queryKey: [GET_ISSUE_BY_ID, id],
-    enabled: !!id,
-    queryFn: () => getIssueById({ id }),
+    queryKey: [GET_ISSUE_BY_ID, issueId],
+    enabled: !!issueId,
+    queryFn: () => getIssueById({ id: issueId }),
     refetchInterval: 1000 * 60 * 15, // 15 minutes
   });
 
