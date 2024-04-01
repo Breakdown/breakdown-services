@@ -20,9 +20,7 @@ router.get(
     const representativesService = new RepresentativesService();
     const reps = await representativesService.getFeaturedReps();
     const data = {
-      data: {
-        representatives: reps,
-      },
+      data: reps,
     };
     await cacheGenericResponse(request, data);
 
@@ -40,9 +38,7 @@ router.get(
       req.userId as string
     );
     const data = {
-      data: {
-        representatives: reps,
-      },
+      data: reps,
     };
     await cacheUserSpecificResponse(req, data, req.userId as string);
     res.status(200).send(data);
@@ -59,9 +55,7 @@ router.get(
       req.userId as string
     );
     const data = {
-      data: {
-        bills,
-      },
+      data: bills,
     };
     await cacheUserSpecificResponse(req, data, req.userId as string);
     res.status(200).send(data);
@@ -78,9 +72,7 @@ router.get(
       req.userId as string
     );
     const data = {
-      data: {
-        representatives: reps,
-      },
+      data: reps,
     };
     await cacheUserSpecificResponse(req, data, req.userId as string);
     res.status(200).send(data);
@@ -97,9 +89,7 @@ router.get(
     const representativesService = new RepresentativesService();
     const rep = await representativesService.getRepById(req.params.id);
     const response = {
-      data: {
-        representative: rep,
-      },
+      data: rep,
     };
     await cacheGenericResponse(req, response);
     res.status(200).send(response);
@@ -118,9 +108,7 @@ router.get(
       req.params.id
     );
     const data = {
-      data: {
-        stats: response,
-      },
+      data: response,
     };
     await cacheGenericResponse(req, data);
     res.status(200).send(data);
@@ -139,9 +127,7 @@ router.get(
       req.params.id
     );
     const data = {
-      data: {
-        votes: response,
-      },
+      data: response,
     };
     await cacheGenericResponse(req, data);
     res.status(200).send();
@@ -161,9 +147,7 @@ router.get(
     );
 
     const data = {
-      data: {
-        bills: response,
-      },
+      data: response,
     };
     await cacheGenericResponse(req, data);
     res.status(200).send(data);
@@ -182,9 +166,7 @@ router.get(
       req.params.id
     );
     const data = {
-      data: {
-        bills: response,
-      },
+      data: response,
     };
     await cacheGenericResponse(req, data);
     res.status(200).send(data);
@@ -233,9 +215,7 @@ router.get(
     );
 
     const data = {
-      data: {
-        vote,
-      },
+      data: vote,
     };
     await cacheGenericResponse(req, data);
     res.status(200).send(data);

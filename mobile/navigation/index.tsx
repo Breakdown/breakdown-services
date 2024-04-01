@@ -17,41 +17,25 @@ import IssueScreen from "../screens/Issue";
 
 const Stack = createNativeStackNavigator();
 
-const UnauthenticatedStack = () => {
+const RootNavigator = () => {
+  const { authenticated } = useAuth({ unauth: true });
+  // return <UnauthenticatedStack />;
   return (
     <Stack.Navigator
-      initialRouteName="Welcome"
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
-      <Stack.Screen name="SignIn" component={SignInScreen} />
-      <Stack.Screen name="SignUp" component={SignUpScreen} />
-    </Stack.Navigator>
-  );
-};
-
-export const AuthenticatedStack = () => {
-  return (
-    <Stack.Navigator
-      initialRouteName="Home"
+      initialRouteName={authenticated ? "Home" : "Welcome"}
       screenOptions={{
         headerShown: false,
       }}
     >
       <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="SignIn" component={SignInScreen} />
+      <Stack.Screen name="SignUp" component={SignUpScreen} />
       <Stack.Screen name="Bill" component={BillScreen} />
       <Stack.Screen name="Representative" component={RepresentativeScreen} />
       <Stack.Screen name="Issue" component={IssueScreen} />
     </Stack.Navigator>
   );
-};
-
-const RootNavigator = () => {
-  const { authenticated } = useAuth({ allowUnauth: true });
-  // return <UnauthenticatedStack />;
-  return authenticated ? <AuthenticatedStack /> : <UnauthenticatedStack />;
 };
 
 interface Props {

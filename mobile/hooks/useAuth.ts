@@ -3,6 +3,7 @@ import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
 import { User } from "../data/types";
 import { GET_ME, getMe } from "../data/appService";
+import { useNavigation } from "@react-navigation/native";
 
 interface UseAuthExport {
   authenticated: boolean;
@@ -11,44 +12,57 @@ interface UseAuthExport {
   logout: () => void;
 }
 
-export default function useAuth({
-  allowUnauth,
-}: {
-  allowUnauth?: boolean;
-} = {}): UseAuthExport {
+export default function useAuth(
+  {
+    unauth,
+  }: {
+    unauth?: boolean;
+  } = {
+    unauth: false,
+  }
+): UseAuthExport {
   const [user, setUser] = useState<User | null>(null);
-  const [authenticated, setAuthenticated] = useState(false);
 
-  const { data, error, refetch } = useQuery({
+  const navigation = useNavigation();
+
+  const { data, error, refetch, isLoading, isError } = useQuery({
     queryKey: [GET_ME, user?.id],
     queryFn: getMe,
-    refetchInterval: authenticated ? 1000 * 60 * 15 : 30000, // 15 minutes or 30 sec
+    refetchInterval: 30000,
     refetchOnWindowFocus: false,
     retry: false,
   });
 
+  const authenticated = !!data && !isError;
+
   const logout = useCallback(async () => {
     await SecureStore.deleteItemAsync("jwt");
-    setAuthenticated(false);
     setUser(null);
-  }, [setAuthenticated, refetch, setUser]);
+  }, [refetch, setUser]);
 
   useEffect(() => {
     if (data) {
       setUser(data.data);
-      setAuthenticated(true);
     }
-  }, [data, setAuthenticated, setUser]);
+  }, [data, setUser]);
 
   useEffect(() => {
-    if (error) {
+    if (error && !isLoading) {
       setUser(null);
-      setAuthenticated(false);
-      if (!allowUnauth) {
+      if (!unauth) {
         logout();
       }
     }
-  }, [error, allowUnauth, logout, setAuthenticated, setUser]);
+  }, [error, unauth, logout, setUser]);
+
+  // Navigate accordingly based on authed and page state
+  useEffect(() => {
+    if (unauth && authenticated && !isLoading) {
+      navigation.navigate("Home");
+    } else if (!unauth && !authenticated && !isLoading) {
+      navigation.navigate("Welcome");
+    }
+  }, [unauth, authenticated, navigation, isLoading]);
 
   return { user, authenticated, refetch, logout };
 }

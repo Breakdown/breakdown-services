@@ -112,7 +112,6 @@ const fetch = async <T>({
     }
     return response.data;
   } catch (err: any) {
-    console.log(err);
     console.error(`error fetching url ${API_URL}${url}`, err);
     throw new Error(err);
   }

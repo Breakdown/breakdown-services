@@ -82,7 +82,7 @@ export const cacheUserSpecificResponse = async (
   data: StructuredResponse,
   userId: string
 ) => {
-  const requestKey = `${req.method}:${req.originalUrl}-${userId}`;
+  const requestKey = `${req.method}:${req.originalUrl}:${userId}`;
   // Cache response
   const cacheService = new CacheService();
   return await cacheService.set(requestKey, JSON.stringify(data));

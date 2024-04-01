@@ -5,9 +5,9 @@ export type RootStackParamList = {
   SignIn: undefined;
   SignUp: undefined;
   Welcome: undefined;
-  Bill: { billId: number };
-  Representative: { repId: number };
-  Issue: { issueId: number };
+  Bill: { billId: string };
+  Representative: { repId: string };
+  Issue: { issueId: string };
 };
 
 export type SignUpScreenProps = NativeStackScreenProps<

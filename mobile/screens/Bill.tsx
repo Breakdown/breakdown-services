@@ -4,15 +4,16 @@ import { StyleSheet, Text, View } from "react-native";
 import { GET_BILL_BY_ID, getBillById } from "../data/appService";
 import { RouteWithIdProps } from "./types";
 import useAuth from "../hooks/useAuth";
+import { BillScreenProps } from "../navigation/types";
 
-export default function BillScreen({ route }: RouteWithIdProps) {
+export default function BillScreen({ route }: BillScreenProps) {
   useAuth();
-  const { id } = route.params;
+  const { billId } = route.params;
 
   const bill = useQuery({
-    queryKey: [GET_BILL_BY_ID, id],
-    enabled: !!id,
-    queryFn: () => getBillById({ id }),
+    queryKey: [GET_BILL_BY_ID, billId],
+    enabled: !!billId,
+    queryFn: () => getBillById({ id: billId }),
     refetchInterval: 1000 * 60 * 15, // 15 minutes
   });
 

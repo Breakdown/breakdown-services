@@ -21,9 +21,7 @@ router.get(
     const billsService = new BillsService();
     const bills = await billsService.getBillsForUser(req.userId as string);
     const response = {
-      data: {
-        bills,
-      },
+      data: bills,
     };
     await cacheUserSpecificResponse(req, response, req.userId as string);
     res.status(200).send(response);
@@ -38,9 +36,7 @@ router.get(
     const billsService = new BillsService();
     const bills = await billsService.getFollowingBills(req.userId as string);
     const response = {
-      data: {
-        bills,
-      },
+      data: bills,
     };
     await cacheUserSpecificResponse(req, response, req.userId as string);
     res.status(200).send(response);
@@ -55,9 +51,7 @@ router.get(
     const billsService = new BillsService();
     const bills = await billsService.getUpcomingBills();
     const response = {
-      data: {
-        bills,
-      },
+      data: bills,
     };
     await cacheGenericResponse(req, response);
     res.status(200).send(response);
@@ -74,9 +68,7 @@ router.get(
       req.userId as string
     );
     const response = {
-      data: {
-        bills,
-      },
+      data: bills,
     };
     await cacheUserSpecificResponse(req, response, req.userId as string);
     res.status(200).send(response);
@@ -93,9 +85,7 @@ router.get(
     const billsService = new BillsService();
     const bill = await billsService.getBillById(req.params.id);
     const response = {
-      data: {
-        bill,
-      },
+      data: bill,
     };
 
     await cacheGenericResponse(req, response);
@@ -113,9 +103,7 @@ router.get(
     const billsService = new BillsService();
     const sponsor = await billsService.getBillSponsor(req.params.id);
     const response = {
-      data: {
-        sponsor,
-      },
+      data: sponsor,
     };
     await cacheGenericResponse(req, response);
     res.status(200).send(response);
