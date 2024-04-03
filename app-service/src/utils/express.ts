@@ -180,7 +180,7 @@ export const verifyToken = async (
   const token = req.headers["x-access-token"];
 
   if (!token) {
-    throw new UnauthorizedError("No token provided", 403);
+    throw new UnauthorizedError("Unauthorized: No token provided", 403);
   }
 
   try {
@@ -188,6 +188,6 @@ export const verifyToken = async (
     req.userId = (decoded as SignedJWT)?.id;
     next();
   } catch (err) {
-    throw new UnauthorizedError("Invalid JWT", 401);
+    throw new UnauthorizedError("Unauthorized: Invalid JWT", 401);
   }
 };

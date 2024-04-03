@@ -83,6 +83,9 @@ const fetch = async <T>({
       deviceId = newDeviceId;
     }
 
+    // Delete JWT
+    // await SecureStore.deleteItemAsync("jwt");
+
     const response = await axios(`${API_URL}${url}`, {
       method,
       headers: {

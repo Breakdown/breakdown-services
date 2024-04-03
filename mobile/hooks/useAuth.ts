@@ -30,12 +30,13 @@ export default function useAuth(
     queryFn: getMe,
     refetchInterval: 30000,
     refetchOnWindowFocus: false,
-    retry: false,
+    retry: 2,
   });
 
   const authenticated = !!data && !isError;
 
   const logout = useCallback(async () => {
+    console.log("logging out");
     await SecureStore.deleteItemAsync("jwt");
     setUser(null);
   }, [refetch, setUser]);
@@ -49,7 +50,8 @@ export default function useAuth(
   useEffect(() => {
     if (error && !isLoading) {
       setUser(null);
-      if (!unauth) {
+      // If error is Unauthorized, log out
+      if (!unauth && error.message.includes("Unauthorized")) {
         logout();
       }
     }
