@@ -79,10 +79,9 @@ export default function SignInScreen() {
   });
 
   const onSubmitSms = async () => {
-    if (phone) {
+    if (formattedPhone) {
       // Remove () - and spaces from phone number
       const cleanPhoneNumber = formattedPhone.replace(/[- )(]/g, "");
-      console.log("clean", cleanPhoneNumber);
       if (phoneInput.current?.isValidNumber(cleanPhoneNumber)) {
         smsSigninMutation.mutate({
           phone: cleanPhoneNumber,
