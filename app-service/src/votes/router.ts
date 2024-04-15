@@ -17,9 +17,7 @@ router.get(
     const votesService = new VotesService();
     const user = await votesService.getVotesForUser(req.userId as string);
     res.status(200).send({
-      data: {
-        user,
-      },
+      data: user,
     });
   })
 );
@@ -37,16 +35,14 @@ router.get(
     );
 
     res.status(200).send({
-      data: {
-        vote,
-      },
+      data: vote,
     });
   })
 );
 
 router.post(
   "/:billId",
-  [param("billId").exists(), body("vote").exists()],
+  [param("billId").exists(), body("position").exists()],
   errorPassthrough(handleValidationErrors),
   errorPassthrough(verifyToken),
   errorPassthrough(async (req: Request, res: Response) => {
@@ -57,9 +53,7 @@ router.post(
       user: { connect: { id: req.userId as string } },
     });
     res.status(201).send({
-      data: {
-        vote: response,
-      },
+      data: response,
     });
   })
 );

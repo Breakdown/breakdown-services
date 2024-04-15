@@ -111,8 +111,9 @@ export const userSpecificCachedRequest = async (
   const requestKey = `${req.method}:${req.originalUrl}:${req.userId}`;
   // Get from cache
   const cacheService = new CacheService();
-  const cachedResponse = cacheService.getJson(requestKey);
-  if (cachedResponse) {
+  // TODO: Don't use any here
+  const cachedResponse = await cacheService.getJson<any>(requestKey);
+  if (cachedResponse && cachedResponse?.data) {
     return res.status(200).send(cachedResponse);
   }
   next();

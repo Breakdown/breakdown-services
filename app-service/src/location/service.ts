@@ -18,7 +18,7 @@ class LocationService {
 
   async getDistrictAndStateFromAddress(
     address: string
-  ): Promise<{ district: string; state: string; formattedAddress: string }> {
+  ): Promise<{ district: number; state: string; formattedAddress: string }> {
     // Call Geocodio API to get district and state
     const response = await axios.get(
       `${GEOCODIO_BASE_API_URI}geocode?q=${address}&fields=cd&api_key=${this.geocodioApiKey}`
@@ -42,7 +42,7 @@ class LocationService {
   async getDistrictAndStateFromLatLon(
     lat: number,
     lon: number
-  ): Promise<{ district: string; state: string; formattedAddress: string }> {
+  ): Promise<{ district: number; state: string; formattedAddress: string }> {
     // Call Geocodio API to get district and state
     const response = await axios.get(
       `${GEOCODIO_BASE_API_URI}reverse?q=${lat},${lon}&fields=cd&api_key=${this.geocodioApiKey}`
@@ -77,7 +77,7 @@ class LocationService {
         userId,
       },
       data: {
-        district,
+        district: String(district),
         state,
         address: formattedAddress,
       },
@@ -85,7 +85,7 @@ class LocationService {
     // Update user's myReps
     const userService = new UsersService(userId);
     await userService.updateUserLocationAndReps({
-      district,
+      district: String(district),
       state,
       formattedAddress,
       latitude: lat,
@@ -105,7 +105,7 @@ class LocationService {
     // Update user with district and state
     const userService = new UsersService(userId);
     await userService.updateUserLocationAndReps({
-      district,
+      district: String(district),
       state,
       formattedAddress,
     });

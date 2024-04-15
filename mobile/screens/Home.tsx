@@ -15,6 +15,7 @@ import {
 } from "../data/appService";
 import useAuth from "../hooks/useAuth";
 import { useMemo } from "react";
+import BillCard from "../components/BillCard";
 
 export default function HomeScreen() {
   const auth = useAuth();
@@ -45,10 +46,21 @@ export default function HomeScreen() {
     refetchInterval: 1000 * 60 * 15, // 15 minutes
   });
 
+  console.log("billsSponsored", billsSponsoredByYourReps);
+
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Home</Text>
+        {billsSponsoredByYourReps.isLoading && <Text>Loading...</Text>}
+        {billsSponsoredByYourReps.data?.data.length ? (
+          <Text>
+            RepSponsored Bills: {billsSponsoredByYourReps.data.data.length}
+          </Text>
+        ) : null}
+        {billsSponsoredByYourReps.data?.data?.map((bill) => (
+          <BillCard key={bill.id} bill={bill} />
+        ))}
       </View>
     </View>
   );

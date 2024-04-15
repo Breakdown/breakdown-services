@@ -1,10 +1,11 @@
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { GET_BILL_BY_ID, getBillById } from "../data/appService";
 import { RouteWithIdProps } from "./types";
 import useAuth from "../hooks/useAuth";
 import { BillScreenProps } from "../navigation/types";
+import BillVoteWidget from "../components/BillVoteWidget";
 
 export default function BillScreen({ route }: BillScreenProps) {
   useAuth();
@@ -22,6 +23,11 @@ export default function BillScreen({ route }: BillScreenProps) {
     <View style={styles.container}>
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Bill</Text>
+        <Text style={styles.title}>
+          {loading ? "Loading..." : bill.data?.data.title}
+        </Text>
+        {/* Vote Functionality */}
+        <BillVoteWidget billId={billId} />
       </View>
     </View>
   );

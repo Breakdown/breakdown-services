@@ -57,7 +57,7 @@ class UsersService {
         OR: [
           {
             // Congressmen and Delegates
-            district,
+            district: String(district),
             state,
             OR: [
               {
