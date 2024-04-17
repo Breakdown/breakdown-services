@@ -236,7 +236,7 @@ export const setFollowingBill = async ({
   following: boolean;
 }): Promise<GenericSuccessBoolResponse> => {
   return fetch({
-    url: `/bills/${id}/follow`,
+    url: `/bills/${id}/following`,
     method: "POST",
     body: { following },
   });
@@ -299,6 +299,20 @@ export const getBillsForIssueId = async ({
   return fetch({
     url: `/issues/${id}/bills`,
     method: "GET",
+  });
+};
+// Set following issue
+export const setFollowingIssue = async ({
+  id,
+  following,
+}: {
+  id: string;
+  following: boolean;
+}): Promise<GenericSuccessBoolResponse> => {
+  return fetch({
+    url: `/issues/${id}/following`,
+    method: "POST",
+    body: { following },
   });
 };
 // Get following issues

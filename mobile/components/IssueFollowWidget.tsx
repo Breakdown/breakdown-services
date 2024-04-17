@@ -2,36 +2,39 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Text } from "dripsy";
 import { TouchableOpacity } from "react-native";
 import {
+  GET_FOLLOWING_ISSUES,
   GET_FOLLOWING_REPS,
+  getFollowingIssues,
   getFollowingReps,
+  setFollowingIssue,
   setFollowingRep,
 } from "../data/appService";
 import useAuth from "../hooks/useAuth";
 
 interface Props {
-  repId: string;
+  issueId: string;
 }
 
-const RepFollowWidget = ({ repId }: Props) => {
+const IssueFollowWidget = ({ issueId }: Props) => {
   const auth = useAuth();
 
-  const followingReps = useQuery({
+  const followingIssues = useQuery({
     enabled: !!auth?.user?.id,
-    queryKey: [GET_FOLLOWING_REPS, auth?.user?.id],
-    queryFn: getFollowingReps,
+    queryKey: [GET_FOLLOWING_ISSUES, auth?.user?.id],
+    queryFn: getFollowingIssues,
     refetchInterval: 1000 * 60 * 15, // 15 minutes
   });
-  const followRep = useMutation({
-    mutationFn: setFollowingRep,
+  const followIssue = useMutation({
+    mutationFn: setFollowingIssue,
     onSuccess: () => {
-      followingReps.refetch();
+      followingIssues.refetch();
     },
   });
 
-  const following = followingReps.data?.data.some((r) => r.id === repId);
+  const following = followingIssues.data?.data?.some((r) => r.id === issueId);
 
   const onPress = () => {
-    followRep.mutate({ id: repId, following: !following });
+    followIssue.mutate({ id: issueId, following: !following });
   };
 
   return (
@@ -41,4 +44,4 @@ const RepFollowWidget = ({ repId }: Props) => {
   );
 };
 
-export default RepFollowWidget;
+export default IssueFollowWidget;

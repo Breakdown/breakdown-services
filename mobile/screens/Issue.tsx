@@ -5,23 +5,26 @@ import { useQuery } from "@tanstack/react-query";
 import { GET_ISSUE_BY_ID, getIssueById } from "../data/appService";
 import useAuth from "../hooks/useAuth";
 import { IssueScreenProps } from "../navigation/types";
+import IssueFollowWidget from "../components/IssueFollowWidget";
 
 export default function IssueScreen({ route }: IssueScreenProps) {
   useAuth();
   const { issueId } = route.params;
 
-  const issue = useQuery({
+  const issueQuery = useQuery({
     queryKey: [GET_ISSUE_BY_ID, issueId],
     enabled: !!issueId,
     queryFn: () => getIssueById({ id: issueId }),
     refetchInterval: 1000 * 60 * 15, // 15 minutes
   });
 
-  const loading = issue.isLoading;
+  const issue = issueQuery.data?.data;
+  const loading = issueQuery.isLoading;
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
-        <Text style={styles.title}>Issue</Text>
+        <Text style={styles.title}>{issue?.name}</Text>
+        <IssueFollowWidget issueId={issueId} />
       </View>
     </View>
   );

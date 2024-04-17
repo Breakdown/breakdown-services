@@ -12,12 +12,16 @@ import {
   getFeaturedIssues,
   GET_MY_VOTES,
   getMyVotes,
+  GET_ISSUES,
+  getIssues,
 } from "../data/appService";
 import useAuth from "../hooks/useAuth";
 import { useMemo } from "react";
 import BillCard from "../components/BillCard";
 import RepCard from "../components/RepCard";
 import { ScrollView } from "dripsy";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import IssueCard from "../components/IssueCard";
 
 export default function HomeScreen() {
   const auth = useAuth();
@@ -38,7 +42,7 @@ export default function HomeScreen() {
     queryFn: getYourRepsSponsoredBills,
     refetchInterval: 1000 * 60 * 15, // 15 minutes
   });
-  const activeIssues = useQuery({
+  const featuredIssues = useQuery({
     queryKey: [GET_FEATURED_ISSUES],
     queryFn: getFeaturedIssues,
     refetchInterval: 1000 * 60 * 15, // 15 minutes
@@ -50,10 +54,25 @@ export default function HomeScreen() {
     refetchInterval: 1000 * 60 * 15, // 15 minutes
   });
 
+  // For testing
+  const allIssues = useQuery({
+    queryKey: [GET_ISSUES],
+    queryFn: getIssues,
+  });
+
+  const insets = useSafeAreaInsets();
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.container}>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={{
+        ...styles.container,
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+      }}
+    >
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Home</Text>
+        {/* Bills */}
         {billsSponsoredByYourReps.isLoading && <Text>Loading...</Text>}
         {billsSponsoredByYourReps.data?.data.length ? (
           <Text>
@@ -64,10 +83,17 @@ export default function HomeScreen() {
         {billsSponsoredByYourReps.data?.data?.map((bill) => (
           <BillCard key={bill.id} bill={bill} />
         ))}
+        {/* Reps */}
         <Text>Reps to watch: </Text>
         {repsToWatch.isLoading && <Text>Loading...</Text>}
-        {repsToWatch.data?.data.map((rep) => (
-          <RepCard rep={rep} />
+        {repsToWatch.data?.data?.slice(0, 3).map((rep) => (
+          <RepCard rep={rep} key={rep.id} />
+        ))}
+        {/* Issues */}
+        <Text>Issues: </Text>
+        {allIssues.isLoading && <Text>Loading...</Text>}
+        {allIssues.data?.data?.slice(0, 3).map((issue) => (
+          <IssueCard issue={issue} />
         ))}
       </View>
     </ScrollView>
