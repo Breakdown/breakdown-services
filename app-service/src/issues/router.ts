@@ -1,109 +1,41 @@
 import { Router, Request, Response } from "express";
 import IssuesService from "./service.js";
 import {
-  cacheGenericResponse,
-  cacheUserSpecificResponse,
   errorPassthrough,
-  genericCachedRequest,
   handleValidationErrors,
   verifyToken,
-  userSpecificCachedRequest,
 } from "../utils/express.js";
-import { param } from "express-validator";
+import { body, param } from "express-validator";
 
 const router = Router();
 
 router.get(
   "/",
-  errorPassthrough(verifyToken),
-  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const issuesService = new IssuesService();
     const issues = await issuesService.getIssues();
     const response = {
       data: issues,
     };
-    await cacheGenericResponse(req, response);
     res.status(200).send(response);
   })
 );
 
 router.get(
   "/featured",
-  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const issuesService = new IssuesService();
     const issues = await issuesService.getFeaturedIssues();
     const response = {
       data: issues,
     };
-    await cacheGenericResponse(req, response);
     res.status(200).send(response);
   })
 );
-
-router.get(
-  "/:id",
-  [param("id").exists()],
-  errorPassthrough(handleValidationErrors),
-  errorPassthrough(genericCachedRequest),
-  // errorPassthrough(verifyToken),
-  errorPassthrough(async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const issuesService = new IssuesService();
-    const issue = await issuesService.getIssueById(id);
-    const response = {
-      data: issue,
-    };
-    await cacheGenericResponse(req, response);
-    res.status(200).send(response);
-  })
-);
-
-router.get(
-  "/:id/bills",
-  [param("id").exists()],
-  errorPassthrough(handleValidationErrors),
-  // errorPassthrough(verifyToken),
-  errorPassthrough(genericCachedRequest),
-  errorPassthrough(async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const issuesService = new IssuesService();
-    const bills = await issuesService.getBillsForIssueId(id);
-    const response = {
-      data: bills,
-    };
-    await cacheGenericResponse(req, response);
-    res.status(200).send(response);
-  })
-);
-
-router.post(":id/follow", errorPassthrough(verifyToken), async (req, res) => {
-  const { id } = req.params;
-  const issuesService = new IssuesService();
-  await issuesService.followIssue(id, req.userId as string);
-  res.status(200).send({
-    data: {
-      success: true,
-    },
-  });
-});
-
-router.post(":id/unfollow", errorPassthrough(verifyToken), async (req, res) => {
-  const { id } = req.params;
-  const issuesService = new IssuesService();
-  await issuesService.unfollowIssue(id, req.userId as string);
-  res.status(200).send({
-    data: {
-      success: true,
-    },
-  });
-});
 
 router.get(
   "/following",
   errorPassthrough(verifyToken),
-  errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req, res) => {
     const issuesService = new IssuesService();
     const issues = await issuesService.getFollowingIssuesFromUserId(
@@ -112,8 +44,59 @@ router.get(
     const response = {
       data: issues,
     };
-    await cacheUserSpecificResponse(req, response, req.userId as string);
     res.status(200).send(response);
+  })
+);
+
+router.get(
+  "/:id",
+  [param("id").exists()],
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const issuesService = new IssuesService();
+    const issue = await issuesService.getIssueById(id);
+    const response = {
+      data: issue,
+    };
+    res.status(200).send(response);
+  })
+);
+
+router.get(
+  "/:id/bills",
+  [param("id").exists()],
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const issuesService = new IssuesService();
+    const bills = await issuesService.getBillsForIssueId(id);
+    const response = {
+      data: bills,
+    };
+    res.status(200).send(response);
+  })
+);
+
+router.post(
+  "/:id/following",
+  [body("following").isBoolean().exists()],
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(verifyToken),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const issuesService = new IssuesService();
+    if (req.body.following) {
+      await issuesService.followIssue(id, req.userId as string);
+    }
+    if (req.body.following === false) {
+      await issuesService.unfollowIssue(id, req.userId as string);
+    }
+    res.status(200).send({
+      data: {
+        success: true,
+      },
+    });
   })
 );
 

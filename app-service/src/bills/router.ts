@@ -7,7 +7,6 @@ import {
   genericCachedRequest,
   handleValidationErrors,
   verifyToken,
-  userSpecificCachedRequest,
 } from "../utils/express.js";
 import BillsService from "./service.js";
 
@@ -16,14 +15,12 @@ const router = Router();
 router.get(
   "/me",
   errorPassthrough(verifyToken),
-  errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
     const bills = await billsService.getBillsForUser(req.userId as string);
     const response = {
       data: bills,
     };
-    await cacheUserSpecificResponse(req, response, req.userId as string);
     res.status(200).send(response);
   })
 );
@@ -31,14 +28,12 @@ router.get(
 router.get(
   "/following",
   errorPassthrough(verifyToken),
-  errorPassthrough(userSpecificCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
     const bills = await billsService.getFollowingBills(req.userId as string);
     const response = {
       data: bills,
     };
-    await cacheUserSpecificResponse(req, response, req.userId as string);
     res.status(200).send(response);
   })
 );
@@ -46,7 +41,6 @@ router.get(
 router.get(
   "/upcoming",
   errorPassthrough(verifyToken),
-  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
     const bills = await billsService.getUpcomingBills({
@@ -56,7 +50,6 @@ router.get(
     const response = {
       data: bills,
     };
-    await cacheGenericResponse(req, response);
     res.status(200).send(response);
   })
 );
@@ -64,9 +57,6 @@ router.get(
 router.get(
   "/:id",
   [param("id").exists()],
-  // errorPassthrough(handleValidationErrors),
-  // errorPassthrough(verifyToken),
-  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
     const bill = await billsService.getBillById(req.params.id);
@@ -83,15 +73,12 @@ router.get(
   "/:id/sponsor",
   [param("id").exists()],
   errorPassthrough(handleValidationErrors),
-  // errorPassthrough(verifyToken),
-  errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
     const sponsor = await billsService.getBillSponsor(req.params.id);
     const response = {
       data: sponsor,
     };
-    await cacheGenericResponse(req, response);
     res.status(200).send(response);
   })
 );
@@ -113,7 +100,7 @@ router.post(
 );
 
 router.post(
-  "/:id/follow",
+  "/:id/following",
   [param("id").exists(), body("following").isBoolean()],
   errorPassthrough(handleValidationErrors),
   errorPassthrough(verifyToken),
