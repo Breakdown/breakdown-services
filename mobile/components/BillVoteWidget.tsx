@@ -16,6 +16,7 @@ interface Props {
 const BillVoteWidget = ({ billId }: Props) => {
   const auth = useAuth();
   const { data, refetch } = useQuery({
+    enabled: !!auth.user?.id,
     queryKey: [GET_MY_VOTE_ON_BILL, billId, auth.user?.id],
     queryFn: () => getMyVoteOnBill({ billId }),
     refetchInterval: 1000 * 60 * 15, // 15 minutes

@@ -2,9 +2,11 @@ import { useNavigation } from "@react-navigation/native";
 import { StyleSheet, Text, View } from "react-native";
 import { RouteWithIdProps } from "./types";
 import {
+  GET_FOLLOWING_REPS,
   GET_REP_BY_ID,
   GET_REP_STATS_BY_ID,
   GET_REP_VOTES_BY_ID,
+  getFollowingReps,
   getRepById,
   getRepStatsById,
   getRepVotesById,
@@ -12,12 +14,13 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import useAuth from "../hooks/useAuth";
 import { RepresentativeScreenProps } from "../navigation/types";
+import RepFollowWidget from "../components/RepFollowWidget";
 
 export default function RepresentativeScreen({
   route,
 }: RepresentativeScreenProps) {
   const { repId: id } = route.params;
-  useAuth();
+  const auth = useAuth();
 
   const rep = useQuery({
     queryKey: [GET_REP_BY_ID, id],
@@ -39,10 +42,17 @@ export default function RepresentativeScreen({
     queryFn: () => getRepStatsById({ id }),
     refetchInterval: 1000 * 60 * 15, // 15 minutes
   });
+
+  const representative = rep.data?.data;
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
-        <Text style={styles.title}>Representative</Text>
+        <Text style={styles.title}>
+          {representative?.firstName} {representative?.lastName}
+        </Text>
+        {/* Follow functionality */}
+        {rep.isLoading && <Text>Loading...</Text>}
+        {representative && <RepFollowWidget repId={representative?.id} />}
       </View>
     </View>
   );

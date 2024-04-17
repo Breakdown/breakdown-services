@@ -388,7 +388,7 @@ export const setFollowingRep = async ({
   following: boolean;
 }): Promise<GenericSuccessBoolResponse> => {
   return fetch({
-    url: `/reps/${id}/follow`,
+    url: `/reps/${id}/following`,
     method: "POST",
     body: { following },
   });

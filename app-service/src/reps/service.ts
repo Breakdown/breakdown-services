@@ -223,7 +223,9 @@ class RepresentativesService {
         userId,
       }
     );
+
     if (cachedResponse) {
+      console.log("returning cached response");
       return cachedResponse;
     }
     const dbResponse = await dbClient.user.findUnique({
