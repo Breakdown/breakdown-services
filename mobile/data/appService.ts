@@ -250,15 +250,6 @@ export const getFollowingBills = async (): Promise<
     method: "GET",
   });
 };
-// Get user rep sponsored bills
-export const getUserRepSponsoredBills = async (): Promise<
-  AppServiceResponse<Bill[]>
-> => {
-  return fetch({
-    url: `/bills/rep-sponsored`,
-    method: "GET",
-  });
-};
 // Get upcoming bills
 export const getUpcomingBills = async (): Promise<
   AppServiceResponse<Bill[]>

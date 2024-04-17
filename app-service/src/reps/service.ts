@@ -349,7 +349,15 @@ class RepresentativesService {
     return dbResponse;
   }
 
-  async getFeaturedReps(): Promise<Representative[] | null> {
+  async getFeaturedReps({
+    limit = 10,
+    offset = 0,
+  }: {
+    limit?: number;
+    offset?: number;
+  }): Promise<Representative[] | null> {
+    console.log("limit", limit);
+    console.log("offset", offset);
     const cachedResponse = await this.cacheService.getData<Representative[]>(
       CacheDataKeys.FEATURED_REPS
     );
@@ -411,6 +419,8 @@ class RepresentativesService {
           },
         ],
       },
+      take: limit,
+      skip: offset,
     });
     await this.cacheService.setData(CacheDataKeys.FEATURED_REPS, reps);
     return reps;

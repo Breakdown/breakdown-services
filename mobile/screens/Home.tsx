@@ -16,6 +16,8 @@ import {
 import useAuth from "../hooks/useAuth";
 import { useMemo } from "react";
 import BillCard from "../components/BillCard";
+import RepCard from "../components/RepCard";
+import { ScrollView } from "dripsy";
 
 export default function HomeScreen() {
   const auth = useAuth();
@@ -46,29 +48,37 @@ export default function HomeScreen() {
     refetchInterval: 1000 * 60 * 15, // 15 minutes
   });
 
-  console.log("billsSponsored", billsSponsoredByYourReps);
-
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.root} contentContainerStyle={styles.container}>
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Home</Text>
         {billsSponsoredByYourReps.isLoading && <Text>Loading...</Text>}
         {billsSponsoredByYourReps.data?.data.length ? (
           <Text>
-            RepSponsored Bills: {billsSponsoredByYourReps.data.data.length}
+            Bills sponsored by your reps:{" "}
+            {billsSponsoredByYourReps.data.data.length}
           </Text>
         ) : null}
         {billsSponsoredByYourReps.data?.data?.map((bill) => (
           <BillCard key={bill.id} bill={bill} />
         ))}
+        <Text>Reps to watch: </Text>
+        {repsToWatch.isLoading && <Text>Loading...</Text>}
+        {repsToWatch.data?.data.map((rep) => (
+          <RepCard rep={rep} />
+        ))}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
+    width: "100%",
+    height: "100%",
+  },
+  container: {
     alignItems: "center",
     justifyContent: "center",
   },

@@ -18,7 +18,10 @@ router.get(
   errorPassthrough(genericCachedRequest),
   errorPassthrough(async (request: Request, res: Response) => {
     const representativesService = new RepresentativesService();
-    const reps = await representativesService.getFeaturedReps();
+    const reps = await representativesService.getFeaturedReps({
+      limit: request.query.limit ? Number(request.query.limit) : undefined,
+      offset: request.query.offset ? Number(request.query.offset) : undefined,
+    });
     const data = {
       data: reps,
     };

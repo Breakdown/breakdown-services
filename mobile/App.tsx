@@ -5,6 +5,7 @@ import { Navigation } from "./navigation";
 import { DripsyProvider } from "dripsy";
 import dripsyTheme from "./utils/theme";
 import { RootSiblingParent } from "react-native-root-siblings";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function App() {
   const queryClient = new QueryClient({
@@ -15,7 +16,9 @@ export default function App() {
     <RootSiblingParent>
       <QueryClientProvider client={queryClient}>
         <DripsyProvider theme={dripsyTheme}>
-          <Navigation colorScheme={colorScheme} />
+          <SafeAreaProvider>
+            <Navigation colorScheme={colorScheme} />
+          </SafeAreaProvider>
         </DripsyProvider>
       </QueryClientProvider>
     </RootSiblingParent>

@@ -360,7 +360,13 @@ class BillsService {
     return [...bills, ...(user?.followingBills || [])];
   }
 
-  async getUpcomingBills(): Promise<Bill[]> {
+  async getUpcomingBills({
+    limit = 10,
+    offset = 0,
+  }: {
+    limit?: number;
+    offset?: number;
+  }): Promise<Bill[]> {
     const bills = await dbClient.bill.findMany({
       where: {
         // scheduledAt is in the next month
@@ -369,46 +375,8 @@ class BillsService {
           lt: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
         },
       },
-    });
-    return bills;
-  }
-
-  async getUserRelevantSponsoredBills(userId: string): Promise<Bill[]> {
-    const user = await dbClient.user.findUnique({
-      where: {
-        id: userId,
-      },
-      include: {
-        myReps: true,
-        followingReps: true,
-      },
-    });
-
-    const repIds = (
-      user?.followingReps?.map((rep: Representative) => rep.id) || []
-    ).concat(user?.myReps?.map((rep: Representative) => rep.id) || []);
-
-    const bills = await dbClient.bill.findMany({
-      where: {
-        OR: [
-          {
-            sponsor: {
-              id: {
-                in: repIds,
-              },
-            },
-          },
-          {
-            cosponsors: {
-              some: {
-                id: {
-                  in: repIds,
-                },
-              },
-            },
-          },
-        ],
-      },
+      take: limit,
+      skip: offset,
     });
     return bills;
   }

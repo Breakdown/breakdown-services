@@ -49,28 +49,14 @@ router.get(
   errorPassthrough(genericCachedRequest),
   errorPassthrough(async (req: Request, res: Response) => {
     const billsService = new BillsService();
-    const bills = await billsService.getUpcomingBills();
+    const bills = await billsService.getUpcomingBills({
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
+      offset: req.query.offset ? Number(req.query.offset) : undefined,
+    });
     const response = {
       data: bills,
     };
     await cacheGenericResponse(req, response);
-    res.status(200).send(response);
-  })
-);
-
-router.get(
-  "/rep-sponsored",
-  errorPassthrough(verifyToken),
-  errorPassthrough(userSpecificCachedRequest),
-  errorPassthrough(async (req: Request, res: Response) => {
-    const billsService = new BillsService();
-    const bills = await billsService.getUserRelevantSponsoredBills(
-      req.userId as string
-    );
-    const response = {
-      data: bills,
-    };
-    await cacheUserSpecificResponse(req, response, req.userId as string);
     res.status(200).send(response);
   })
 );
