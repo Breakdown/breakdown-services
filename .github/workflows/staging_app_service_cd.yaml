@@ -1,0 +1,61 @@
+name: Staging app-service CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "app-service/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - id: "auth"
+        name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v1"
+        with:
+          token_format: access_token
+          workload_identity_provider: "projects/1024927118268/locations/global/workloadIdentityPools/pool-gha-staging/providers/gha-provider-staging"
+          service_account: "terraform@staging-420920.iam.gserviceaccount.com"
+          access_token_lifetime: 600s
+
+      - name: Login to Artifact Registry
+        uses: docker/login-action@v1
+        with:
+          registry: us-west2-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Authenticate Docker
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: app-service/Dockerfile
+          push: true
+          platform: linux/amd64
+          tags: |
+            us-central1-docker.pkg.dev/staging-420920/app-service-staging/app-service:${{ github.sha }}
+            us-central1-docker.pkg.dev/staging-420920/app-service-staging/app-service:latest
+
+      - name: Deploy to Cloud Run
+        uses: "google-github-actions/deploy-cloudrun@v1"
+        with:
+          image: us-central1-docker.pkg.dev/staging-420920/app-service-staging/app-service:${{ github.sha }}
+          service: app-service
+          region: us-central1
+          platform: managed
+          project: staging-420920
+          allow-unauthenticated: true
