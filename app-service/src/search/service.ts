@@ -2,24 +2,25 @@ import { Meilisearch } from "meilisearch";
 import InternalError from "../utils/errors/InternalError.js";
 import { Bill, Issue, Representative } from "@prisma/client";
 import dbClient from "../utils/prisma.js";
+import stateCodes from "../seed/data/stateCodes.json" assert { type: "json" };
 
 export enum MeiliSearchIndex {
   BILLS = "bills",
-  REPRESENTATIVES = "representatives",
+  REPRESENTATIVES = "reps",
   ISSUES = "issues",
 }
 
 export interface MeilisearchBill {
-  id: string;
+  id: string | null;
   title: string | null;
-  short_title: string | null;
+  shortTitle: string | null;
   summary: string | null;
-  short_summary: string | null;
-  human_short_summary: string | null;
-  ai_summary: string | null;
-  ai_short_summary: string | null;
-  sponsor_name: string | null;
-  primary_issue: string | null;
+  shortSummary: string | null;
+  humanShortSummary: string | null;
+  aiSummary: string | null;
+  aiShortSummary: string | null;
+  sponsorName: string | null;
+  primaryIssue: string | null;
   issues: string[] | null;
 }
 
@@ -30,7 +31,7 @@ export interface MeilisearchRep {
   state: string | null;
   party: string | null;
   title: string | null;
-  short_title: string | null;
+  shortTitle: string | null;
 }
 
 export interface MeilisearchIssue {
@@ -50,88 +51,89 @@ class MeilisearchService {
     });
   }
 
-  transformDbBillToMeiliBill(
+  getStateNameFromStateCode = (stateCode: string): string => {
+    const stateName = stateCodes[stateCode as keyof typeof stateCodes];
+    return stateName || stateCode;
+  };
+
+  getPartyNameFromPartyCode = (partyCode: string): string => {
+    switch (partyCode) {
+      case "D":
+        return "Democrat";
+      case "R":
+        return "Republican";
+      case "ID":
+        return "Independent";
+      default:
+        return partyCode;
+    }
+  };
+
+  transformDbBillToMeiliBill = (
     bill: Bill & {
       sponsor: Representative | null;
       issues: Issue[] | null;
       primaryIssue: Issue | null;
     }
-  ): MeilisearchBill {
+  ): MeilisearchBill => {
     return {
       id: bill.id,
       title: bill.title,
-      short_title: bill.shortTitle,
+      shortTitle: bill.shortTitle,
       summary: bill.summary,
-      short_summary: bill.summaryShort,
-      human_short_summary: bill.humanShortSummary,
-      ai_summary: bill.aiSummary,
-      ai_short_summary: bill.aiShortSummary,
-      sponsor_name: bill.sponsor
+      shortSummary: bill.summaryShort,
+      humanShortSummary: bill.humanShortSummary,
+      aiSummary: bill.aiSummary,
+      aiShortSummary: bill.aiShortSummary,
+      sponsorName: bill.sponsor
         ? `${bill.sponsor.firstName} ${bill.sponsor.lastName}`
         : null,
       issues: bill.issues?.map((issue: Issue) => issue.name) || null,
-      primary_issue: bill.primaryIssue?.name || null,
+      primaryIssue: bill.primaryIssue?.name || null,
     };
-  }
+  };
 
-  transformDbRepToMeiliRep(rep: Representative): MeilisearchRep {
+  transformDbRepToMeiliRep = (rep: Representative): MeilisearchRep => {
     return {
       firstName: rep.firstName,
       lastName: rep.lastName,
       district: rep.district,
-      state: rep.state,
-      party: rep.party,
+      state: rep.state ? this.getStateNameFromStateCode(rep.state) : null,
+      party: rep.party ? this.getPartyNameFromPartyCode(rep.party) : null,
       title: rep.title,
-      short_title: rep.shortTitle,
+      shortTitle: rep.shortTitle,
     };
-  }
+  };
 
-  transformDbIssueToMeiliIssue(issue: Issue): MeilisearchIssue {
+  transformDbIssueToMeiliIssue = (issue: Issue): MeilisearchIssue => {
     return {
       id: issue.id,
       name: issue.name,
     };
-  }
+  };
 
-  async createIndex(indexName: string) {
+  createIndex = async (indexName: string) => {
     try {
       return await this.client.createIndex(indexName);
     } catch (error) {
       throw new InternalError((error as Error).message);
     }
-  }
+  };
 
-  async upsertBills(bills: MeilisearchBill[]) {
+  addDocsToIndex = async (
+    index: MeiliSearchIndex,
+    documents: (MeilisearchRep | MeilisearchBill | MeilisearchIssue)[]
+  ) => {
     try {
-      return await this.client
-        .index(MeiliSearchIndex.BILLS)
-        .addDocuments(bills);
+      const response = await this.client.index(index).addDocuments(documents);
+      console.log("res", response);
+      return response;
     } catch (error) {
       throw new InternalError((error as Error).message);
     }
-  }
+  };
 
-  async upsertRepresentatives(representatives: MeilisearchRep[]) {
-    try {
-      return await this.client
-        .index(MeiliSearchIndex.REPRESENTATIVES)
-        .addDocuments(representatives);
-    } catch (error) {
-      throw new InternalError((error as Error).message);
-    }
-  }
-
-  async upsertIssues(issues: MeilisearchIssue[]) {
-    try {
-      return await this.client
-        .index(MeiliSearchIndex.ISSUES)
-        .addDocuments(issues);
-    } catch (error) {
-      throw new InternalError((error as Error).message);
-    }
-  }
-
-  async search(query: string) {
+  search = async (query: string) => {
     try {
       const response = await this.client.multiSearch({
         queries: [
@@ -149,12 +151,13 @@ class MeilisearchService {
           },
         ],
       });
+      return response;
     } catch (error) {
       throw new InternalError((error as Error).message);
     }
-  }
+  };
 
-  async globalSync() {
+  globalSync = async () => {
     // All bills
     const allBills = await dbClient.bill.findMany({
       include: {
@@ -180,15 +183,17 @@ class MeilisearchService {
     await this.createIndex(MeiliSearchIndex.REPRESENTATIVES);
     await this.createIndex(MeiliSearchIndex.ISSUES);
 
+    // TODO: Add searchable attributes (ordered by priority)
+
     // Upsert bills
-    await this.upsertBills(meiliBills);
+    await this.addDocsToIndex(MeiliSearchIndex.BILLS, meiliBills);
     // Upsert issues
-    await this.upsertIssues(meiliIssues);
+    await this.addDocsToIndex(MeiliSearchIndex.ISSUES, meiliIssues);
     // Upsert reps
-    await this.upsertRepresentatives(meiliReps);
+    await this.addDocsToIndex(MeiliSearchIndex.REPRESENTATIVES, meiliReps);
 
     return;
-  }
+  };
 }
 
 export default MeilisearchService;

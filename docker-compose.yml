@@ -27,7 +27,7 @@ services:
     networks:
       - breakdown-dev
   meilisearch:
-    image: getmeili/meilisearch:v1.6
+    image: getmeili/meilisearch:v1.7
     container_name: meilisearch
     restart: always
     ports:
