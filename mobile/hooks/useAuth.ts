@@ -36,7 +36,6 @@ export default function useAuth(
   const authenticated = !!data && !isError;
 
   const logout = useCallback(async () => {
-    console.log("logging out");
     await SecureStore.deleteItemAsync("jwt");
     setUser(null);
   }, [refetch, setUser]);

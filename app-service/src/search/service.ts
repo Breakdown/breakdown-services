@@ -126,7 +126,6 @@ class MeilisearchService {
   ) => {
     try {
       const response = await this.client.index(index).addDocuments(documents);
-      console.log("res", response);
       return response;
     } catch (error) {
       throw new InternalError((error as Error).message);

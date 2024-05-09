@@ -85,8 +85,6 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   });
 
   const onSubmitSms = async () => {
-    console.log("phone", phone);
-    console.log("formattedPhone", formattedPhone);
     if (phone) {
       if (phoneInput.current?.isValidNumber(phone)) {
         smsSignupMutation.mutate({

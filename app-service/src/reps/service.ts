@@ -1,4 +1,9 @@
-import { Bill, Representative, RepresentativeVote } from "@prisma/client";
+import {
+  Bill,
+  Representative,
+  RepresentativeVote,
+  UserBillVote,
+} from "@prisma/client";
 import dbClient from "../utils/prisma.js";
 import BadRequestError from "../utils/errors/BadRequestError.js";
 import CacheService, { CacheDataKeys } from "../cache/service.js";
@@ -10,6 +15,20 @@ interface RepresentativeStats {
   billsSponsored: number;
   billsCosponsored: number;
 }
+
+interface RepresentativeUserVoteMatch {
+  repId: string;
+  matchPercentage?: number;
+}
+
+enum RepBillVotePosition {
+  NOT_VOTING = "Not Voting",
+  NO = "No",
+  PRESENT = "Present",
+  SPEAKER = "Speaker",
+  YES = "Yes",
+}
+
 class RepresentativesService {
   cacheService: CacheService;
   constructor() {
@@ -225,7 +244,6 @@ class RepresentativesService {
     );
 
     if (cachedResponse) {
-      console.log("returning cached response");
       return cachedResponse;
     }
     const dbResponse = await dbClient.user.findUnique({
@@ -351,6 +369,102 @@ class RepresentativesService {
     return dbResponse;
   }
 
+  convertRepVoteToUserEqualityBool(position: RepBillVotePosition): boolean {
+    switch (position) {
+      case "Not Voting":
+        return false;
+      case "No":
+        return false;
+      case "Present":
+        return false;
+      case "Speaker":
+        return false;
+      case "Yes":
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  async getRepUserVoteMatch({
+    repId,
+    userId,
+  }: {
+    repId: string;
+    userId: string;
+  }): Promise<RepresentativeUserVoteMatch | null> {
+    const cachedResponse =
+      await this.cacheService.getData<RepresentativeUserVoteMatch>(
+        CacheDataKeys.REP_USER_VOTE_MATCH,
+        {
+          representativeId: repId,
+          userId,
+        }
+      );
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    let response: RepresentativeUserVoteMatch = {
+      repId,
+      matchPercentage: undefined,
+    };
+
+    // Create match count var
+    let matchCount = 0;
+    // Get all user bill votes
+    const userVotes = await dbClient.userBillVote.findMany({
+      where: {
+        userId,
+      },
+    });
+    if (!userVotes?.length) {
+      return response;
+    }
+    // Store them in a map with their billId as key
+    let userVotesMap: { [key: string]: UserBillVote } = {};
+    userVotes.forEach((vote) => {
+      userVotesMap[vote.billId] = vote;
+    });
+    // Get all rep bill votes
+    const repVotes = await dbClient.representativeVote.findMany({
+      where: {
+        representativeId: repId,
+      },
+    });
+    // Store them in a map with their billId as key
+    let repVotesMap: { [key: string]: RepresentativeVote } = {};
+    repVotes.forEach((vote) => {
+      repVotesMap[vote.billId] = vote;
+    });
+    // Compare the two maps, looping over the user map
+    for (const [billId, userVote] of Object.entries(userVotesMap)) {
+      const repVote = repVotesMap[billId];
+      // If the rep map has the same vote, increment match count
+      if (repVote && userVote) {
+        if (
+          this.convertRepVoteToUserEqualityBool(
+            repVote.position as RepBillVotePosition
+          ) === userVote.position
+        ) {
+          matchCount++;
+        }
+      }
+    }
+    // Divide match count by total votes to get match percentage
+    response.matchPercentage = matchCount / Object.keys(userVotesMap).length;
+
+    await this.cacheService.setData(
+      CacheDataKeys.REP_USER_VOTE_MATCH,
+      response,
+      {
+        representativeId: repId,
+        userId,
+      }
+    );
+    return response;
+  }
+
   async getFeaturedReps({
     limit = 10,
     offset = 0,
@@ -358,8 +472,6 @@ class RepresentativesService {
     limit?: number;
     offset?: number;
   }): Promise<Representative[] | null> {
-    console.log("limit", limit);
-    console.log("offset", offset);
     const cachedResponse = await this.cacheService.getData<Representative[]>(
       CacheDataKeys.FEATURED_REPS
     );
