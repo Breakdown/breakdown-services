@@ -113,7 +113,53 @@ router.get(
     const data = {
       data: response,
     };
-    res.status(200).send();
+    res.status(200).send(data);
+  })
+);
+
+router.get(
+  "/:id/vote-match",
+  [param("id").exists()],
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(verifyToken),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    const response = await representativesService.getRepUserVoteMatch({
+      repId: req.params.id,
+      userId: req.userId as string,
+    });
+    const data = {
+      data: response,
+    };
+    res.status(200).send(data);
+  })
+);
+
+router.post(
+  "/:id/following",
+  [param("id").exists(), body("following").isBoolean()],
+  errorPassthrough(handleValidationErrors),
+  errorPassthrough(verifyToken),
+  errorPassthrough(async (req: Request, res: Response) => {
+    const representativesService = new RepresentativesService();
+    if (req.body.following) {
+      await representativesService.followRep(
+        req.params.id,
+        req.userId as string
+      );
+    }
+    if (req.body.following === false) {
+      await representativesService.unfollowRep(
+        req.params.id,
+        req.userId as string
+      );
+    }
+
+    res.status(201).send({
+      data: {
+        success: true,
+      },
+    });
   })
 );
 
@@ -149,34 +195,6 @@ router.get(
       data: response,
     };
     res.status(200).send(data);
-  })
-);
-
-router.post(
-  "/:id/following",
-  [param("id").exists(), body("following").isBoolean()],
-  errorPassthrough(handleValidationErrors),
-  errorPassthrough(verifyToken),
-  errorPassthrough(async (req: Request, res: Response) => {
-    const representativesService = new RepresentativesService();
-    if (req.body.following) {
-      await representativesService.followRep(
-        req.params.id,
-        req.userId as string
-      );
-    }
-    if (req.body.following === false) {
-      await representativesService.unfollowRep(
-        req.params.id,
-        req.userId as string
-      );
-    }
-
-    res.status(201).send({
-      data: {
-        success: true,
-      },
-    });
   })
 );
 

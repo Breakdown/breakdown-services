@@ -24,6 +24,7 @@ export enum CacheDataKeys {
   USERS_INTERESTED_IN_BILL, // BUSTED - Bust when user follows or unfollows a bill, their reps change, their following reps change, following issues change
   REP_STATS_BY_ID, // BUSTED - Bust when stats are updated - job
   REP_VOTES_BY_ID, // BUSTED - Bust when rep votes are updated - job
+  REP_USER_VOTE_MATCH, // TODO
   SPONSORED_BILLS_BY_REP_ID, // TODO: Bust when sponsor changes on bill where sponsor ID is rep ID - job
   COSPONSORED_BILLS_BY_REP_ID, // TODO: Bust when cosponsor changes on bill where cosponsor ID is rep ID - job
   REPS_BY_STATE_AND_DISTRICT, // TODO: Bust when new reps are elected in state and district - job
@@ -58,10 +59,10 @@ class CacheService {
     return value ? (JSON.parse(value) as T) : undefined;
   }
 
-  private async hashKey(key: string): Promise<string> {
-    const hashedKey = await bcrypt.hash(key, 10);
-    return hashedKey;
-  }
+  // private async hashKey(key: string): Promise<string> {
+  //   const hashedKey = await bcrypt.hash(key, 10);
+  //   return hashedKey;
+  // }
 
   private async createCacheKeyFromKeyAndData(
     key: CacheDataKeys,
@@ -78,61 +79,62 @@ class CacheService {
     switch (key) {
       // ProPublica-related
       case CacheDataKeys.PROPUBLICA_FETCH_BILLS:
-        return this.hashKey(`propublica_fetch_bills:${propublicaUrl}`);
+        return `propublica_fetch_bills:${propublicaUrl}`;
       case CacheDataKeys.PROPUBLICA_SUBJECTS_FOR_BILL:
-        return this.hashKey(`propublica_subjects_for_bill:${propublicaUrl}`);
+        return `propublica_subjects_for_bill:${propublicaUrl}`;
       case CacheDataKeys.PROPUBLICA_FETCH_COSPONSORS_FOR_BILL:
-        return this.hashKey(
-          `propublica_fetch_cosponsors_for_bill:${propublicaUrl}`
-        );
+        return `propublica_fetch_cosponsors_for_bill:${propublicaUrl}`;
       case CacheDataKeys.PROPUBLICA_FETCH_VOTES_FOR_BILL:
-        return this.hashKey(`propublica_fetch_votes_for_bill:${propublicaUrl}`);
+        return `propublica_fetch_votes_for_bill:${propublicaUrl}`;
       case CacheDataKeys.PROPUBLICA_FETCH_MEMBERS:
-        return this.hashKey(`propublica_fetch_members:${propublicaUrl}`);
+        return `propublica_fetch_members:${propublicaUrl}`;
       case CacheDataKeys.PROPUBLICA_FETCH_REP_VOTES_FOR_BILL_VOTE:
-        return this.hashKey(
-          `propublica_fetch_rep_votes_for_bill_vote:${propublicaUrl}`
-        );
+        return `propublica_fetch_rep_votes_for_bill_vote:${propublicaUrl}`;
+
       // User-related
       case CacheDataKeys.BILLS_FOR_USER:
-        return this.hashKey(`bills_for_user:${userId}`);
+        return `bills_for_user:${userId}`;
       case CacheDataKeys.LOCAL_REPS:
-        return this.hashKey(`local_reps:${userId}`);
+        return `local_reps:${userId}`;
       case CacheDataKeys.USER_FOLLOWING_ISSUES:
-        return this.hashKey(`user_following_issues:${userId}`);
+        return `user_following_issues:${userId}`;
       case CacheDataKeys.USER_FOLLOWING_REPS:
-        return this.hashKey(`user_following_reps:${userId}`);
+        return `user_following_reps:${userId}`;
       case CacheDataKeys.USER_FOLLOWING_BILLS:
-        return this.hashKey(`user_following_bills:${userId}`);
+        return `user_following_bills:${userId}`;
+      case CacheDataKeys.REP_USER_VOTE_MATCH:
+        return `rep_user_vote_match:${userId}:${representativeId}`;
+      case CacheDataKeys.BILLS_SPONSORED_BY_MY_REPS:
+        return `bills_sponsored_by_my_reps:${userId}`;
+
       // Non-user-related
       case CacheDataKeys.ALL_ISSUES:
-        return this.hashKey(`all_issues`);
+        return `all_issues`;
       case CacheDataKeys.BILL_SPONSOR:
-        return this.hashKey(`bill_sponsor:${billId}`);
+        return `bill_sponsor:${billId}`;
       case CacheDataKeys.BILL_COSPONSORS:
-        return this.hashKey(`bill_cosponsors:${billId}`);
+        return `bill_cosponsors:${billId}`;
       case CacheDataKeys.BILLS_FOR_ISSUE:
-        return this.hashKey(`bills_for_issue:${issueId}`);
+        return `bills_for_issue:${issueId}`;
       case CacheDataKeys.USERS_INTERESTED_IN_BILL:
-        return this.hashKey(`users_interested_in_bill:${billId}`);
+        return `users_interested_in_bill:${billId}`;
       case CacheDataKeys.REP_STATS_BY_ID:
-        return this.hashKey(`rep_stats_by_id:${representativeId}`);
+        return `rep_stats_by_id:${representativeId}`;
       case CacheDataKeys.REP_VOTES_BY_ID:
-        return this.hashKey(`rep_votes_by_id:${representativeId}`);
+        return `rep_votes_by_id:${representativeId}`;
       case CacheDataKeys.SPONSORED_BILLS_BY_REP_ID:
-        return this.hashKey(`sponsored_bills_by_rep_id:${representativeId}`);
+        return `sponsored_bills_by_rep_id:${representativeId}`;
       case CacheDataKeys.COSPONSORED_BILLS_BY_REP_ID:
-        return this.hashKey(`cosponsored_bills_by_rep_id:${representativeId}`);
+        return `cosponsored_bills_by_rep_id:${representativeId}`;
       case CacheDataKeys.REPS_BY_STATE_AND_DISTRICT:
-        return this.hashKey(`reps_by_state_and_district:${state}:${district}`);
+        return `reps_by_state_and_district:${state}:${district}`;
       case CacheDataKeys.REP_VOTE_ON_BILL:
-        return this.hashKey(`rep_vote_on_bill:${representativeId}:${billId}`);
+        return `rep_vote_on_bill:${representativeId}:${billId}`;
       case CacheDataKeys.FEATURED_REPS:
-        return this.hashKey(`featured_reps`);
-      case CacheDataKeys.BILLS_SPONSORED_BY_MY_REPS:
-        return this.hashKey(`bills_sponsored_by_my_reps:${userId}`);
+        return `featured_reps`;
       case CacheDataKeys.FEATURED_ISSUES:
-        return this.hashKey(`featured_issues`);
+        return `featured_issues`;
+
       default:
         throw new Error("Invalid cache key");
     }
@@ -164,6 +166,8 @@ class CacheService {
         return 60 * 60 * 24 * 7; // 1 week
       case CacheDataKeys.USER_FOLLOWING_BILLS:
         return 60 * 60 * 24 * 7; // 1 week
+      case CacheDataKeys.REP_USER_VOTE_MATCH:
+        return 60 * 60 * 24; // 1 day
       // Non-user-related
       case CacheDataKeys.ALL_ISSUES:
         return 60 * 60 * 24 * 7; // 1 Week

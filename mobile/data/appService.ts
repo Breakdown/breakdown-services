@@ -9,6 +9,7 @@ import {
   Issue,
   Representative,
   RepresentativeStats,
+  RepresentativeUserVoteMatch,
   RepresentativeVote,
   User,
   UserBillVote,
@@ -46,6 +47,7 @@ export const GET_REP_VOTE_ON_BILL = "GET_REP_VOTE_ON_BILL";
 export const GET_MY_VOTE_ON_BILL = "GET_MY_VOTE_ON_BILL";
 export const GET_MY_VOTES = "GET_MY_VOTES";
 export const GET_ME = "GET_ME";
+export const GET_REP_VOTE_MATCH_PERCENT = "GET_REP_VOTE_MATCH_PERCENT";
 
 // Response interfaces
 interface GenericSuccessBoolResponse {
@@ -471,6 +473,17 @@ export const getRepVoteOnBill = async ({
 }): Promise<AppServiceResponse<RepresentativeVote | null>> => {
   return fetch({
     url: `/reps/${id}/bills/${billId}/vote`,
+    method: "GET",
+  });
+};
+// Get rep match percentage with user
+export const getRepVotesMatchPercent = async ({
+  repId,
+}: {
+  repId: string;
+}): Promise<AppServiceResponse<RepresentativeUserVoteMatch>> => {
+  return fetch({
+    url: `/reps/${repId}/vote-match`,
     method: "GET",
   });
 };

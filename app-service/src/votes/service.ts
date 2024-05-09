@@ -1,8 +1,12 @@
 import { Prisma, UserBillVote } from "@prisma/client";
 import dbClient from "../utils/prisma.js";
+import CacheService from "../cache/service.js";
 
 class VotesService {
-  constructor() {}
+  cacheService: CacheService;
+  constructor() {
+    this.cacheService = new CacheService();
+  }
 
   async upsertVote(
     vote: Prisma.UserBillVoteCreateInput & {

@@ -101,8 +101,8 @@ class JobService {
     // Repeat every 12 hours at 09:00 and 21:00
     meilisearchSyncQueue.add(
       "global-sync-meilisearch",
-      {}
-      // { repeat: { pattern: "0 9,21 * * *" } }
+      {},
+      { repeat: { pattern: "0 9,21 * * *" } }
     );
   }
 
