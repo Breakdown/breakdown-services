@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import useAuth from "../hooks/useAuth";
 import { RepresentativeScreenProps } from "../navigation/types";
 import RepFollowWidget from "../components/RepFollowWidget";
+import VoteMatchPercentage from "../components/VoteMatchPercentage";
 
 export default function RepresentativeScreen({
   route,
@@ -53,6 +54,7 @@ export default function RepresentativeScreen({
         {/* Follow functionality */}
         {rep.isLoading && <Text>Loading...</Text>}
         {representative && <RepFollowWidget repId={representative?.id} />}
+        {representative && <VoteMatchPercentage repId={representative?.id} />}
       </View>
     </View>
   );

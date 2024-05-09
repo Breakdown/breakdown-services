@@ -232,3 +232,8 @@ export interface UserBillVote {
 export interface AccessTokenResponse {
   accessToken: string;
 }
+
+export interface RepresentativeUserVoteMatch {
+  repId: string;
+  matchPercentage?: number;
+}
