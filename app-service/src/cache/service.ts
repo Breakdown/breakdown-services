@@ -43,6 +43,7 @@ interface CacheKeyData {
   district?: string;
   state?: string;
 }
+
 class CacheService {
   redis: Redis;
 
