@@ -64,6 +64,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
       MEILI_HOST: ${MEILI_HOST}
+      CONGRESS_GOV_API_KEY: ${CONGRESS_GOV_API_KEY}
 
 networks:
   breakdown-dev:
